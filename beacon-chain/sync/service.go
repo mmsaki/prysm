@@ -138,6 +138,8 @@ type Service struct {
 	seenBlockCache                   *lru.Cache
 	seenBlobLock                     sync.RWMutex
 	seenBlobCache                    *lru.Cache
+	seenDataColumnLock               sync.RWMutex
+	seenDataColumnCache              *lru.Cache
 	seenAggregatedAttestationLock    sync.RWMutex
 	seenAggregatedAttestationCache   *lru.Cache
 	seenUnAggregatedAttestationLock  sync.RWMutex
@@ -281,6 +283,7 @@ func (s *Service) Status() error {
 func (s *Service) initCaches() {
 	s.seenBlockCache = lruwrpr.New(seenBlockSize)
 	s.seenBlobCache = lruwrpr.New(seenBlobSize)
+	s.seenDataColumnCache = lruwrpr.New(seenDataColumnSize)
 	s.seenAggregatedAttestationCache = lruwrpr.New(seenAggregatedAttSize)
 	s.seenUnAggregatedAttestationCache = lruwrpr.New(seenUnaggregatedAttSize)
 	s.seenSyncMessageCache = lruwrpr.New(seenSyncMsgSize)
