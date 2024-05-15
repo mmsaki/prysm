@@ -38,6 +38,7 @@ import (
 	"github.com/prysmaticlabs/prysm/v5/beacon-chain/sync/backfill/coverage"
 	"github.com/prysmaticlabs/prysm/v5/beacon-chain/verification"
 	lruwrpr "github.com/prysmaticlabs/prysm/v5/cache/lru"
+	"github.com/prysmaticlabs/prysm/v5/config/features"
 	"github.com/prysmaticlabs/prysm/v5/config/params"
 	"github.com/prysmaticlabs/prysm/v5/consensus-types/blocks"
 	"github.com/prysmaticlabs/prysm/v5/consensus-types/interfaces"
@@ -246,6 +247,11 @@ func (s *Service) Start() {
 
 	// Update sync metrics.
 	async.RunEvery(s.ctx, syncMetricsInterval, s.updateMetrics)
+
+	// Run data column sampling
+	if features.Get().EnablePeerDAS {
+		go s.dataColumnSampling(s.ctx)
+	}
 }
 
 // Stop the regular sync service.
