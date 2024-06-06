@@ -39,6 +39,7 @@ import (
 	"github.com/prysmaticlabs/prysm/v5/beacon-chain/verification"
 	lruwrpr "github.com/prysmaticlabs/prysm/v5/cache/lru"
 	"github.com/prysmaticlabs/prysm/v5/config/features"
+	fieldparams "github.com/prysmaticlabs/prysm/v5/config/fieldparams"
 	"github.com/prysmaticlabs/prysm/v5/config/params"
 	"github.com/prysmaticlabs/prysm/v5/consensus-types/blocks"
 	"github.com/prysmaticlabs/prysm/v5/consensus-types/interfaces"
@@ -166,6 +167,8 @@ type Service struct {
 	newBlobVerifier                  verification.NewBlobVerifier
 	availableBlocker                 coverage.AvailableBlocker
 	dataColumsnReconstructionLock    sync.Mutex
+	receivedDataColumnsFromRoot      map[[fieldparams.RootLength]byte]map[uint64]bool
+	receivedDataColumnsFromRootLock  sync.RWMutex
 	ctxMap                           ContextByteVersions
 }
 
