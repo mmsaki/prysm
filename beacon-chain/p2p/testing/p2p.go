@@ -14,6 +14,7 @@ import (
 	"github.com/ethereum/go-ethereum/p2p/enr"
 	"github.com/libp2p/go-libp2p"
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
+	"github.com/libp2p/go-libp2p/config"
 	core "github.com/libp2p/go-libp2p/core"
 	"github.com/libp2p/go-libp2p/core/control"
 	"github.com/libp2p/go-libp2p/core/host"
@@ -23,9 +24,11 @@ import (
 	"github.com/libp2p/go-libp2p/p2p/transport/tcp"
 	"github.com/multiformats/go-multiaddr"
 	ssz "github.com/prysmaticlabs/fastssz"
+	"github.com/prysmaticlabs/prysm/v5/beacon-chain/core/peerdas"
 	"github.com/prysmaticlabs/prysm/v5/beacon-chain/p2p/encoder"
 	"github.com/prysmaticlabs/prysm/v5/beacon-chain/p2p/peers"
 	"github.com/prysmaticlabs/prysm/v5/beacon-chain/p2p/peers/scorers"
+	"github.com/prysmaticlabs/prysm/v5/config/params"
 	ethpb "github.com/prysmaticlabs/prysm/v5/proto/prysm/v1alpha1"
 	"github.com/prysmaticlabs/prysm/v5/proto/prysm/v1alpha1/metadata"
 	"github.com/prysmaticlabs/prysm/v5/testing/require"
@@ -52,9 +55,17 @@ type TestP2P struct {
 }
 
 // NewTestP2P initializes a new p2p test service.
-func NewTestP2P(t *testing.T) *TestP2P {
+func NewTestP2P(t *testing.T, userOptions ...config.Option) *TestP2P {
 	ctx := context.Background()
-	h, err := libp2p.New(libp2p.ResourceManager(&network.NullResourceManager{}), libp2p.Transport(tcp.NewTCPTransport), libp2p.DefaultListenAddrs)
+	options := []config.Option{
+		libp2p.ResourceManager(&network.NullResourceManager{}),
+		libp2p.Transport(tcp.NewTCPTransport),
+		libp2p.DefaultListenAddrs,
+	}
+
+	options = append(options, userOptions...)
+
+	h, err := libp2p.New(options...)
 	require.NoError(t, err)
 	ps, err := pubsub.NewFloodSub(ctx, h,
 		pubsub.WithMessageSigning(false),
@@ -278,7 +289,7 @@ func (*TestP2P) ENR() *enr.Record {
 }
 
 // NodeID returns the node id of the local peer.
-func (_ *TestP2P) NodeID() enode.ID {
+func (*TestP2P) NodeID() enode.ID {
 	return [32]byte{}
 }
 
@@ -427,10 +438,25 @@ func (*TestP2P) InterceptUpgraded(network.Conn) (allow bool, reason control.Disc
 	return true, 0
 }
 
-func (_ *TestP2P) CustodyCountFromRemotePeer(peer.ID) uint64 {
-	return 0
+func (s *TestP2P) CustodyCountFromRemotePeer(pid peer.ID) uint64 {
+	// By default, we assume the peer custodies the minimum number of subnets.
+	custodyRequirement := params.BeaconConfig().CustodyRequirement
+
+	// Retrieve the ENR of the peer.
+	record, err := s.peers.ENR(pid)
+	if err != nil {
+		return custodyRequirement
+	}
+
+	// Retrieve the custody subnets count from the ENR.
+	custodyCount, err := peerdas.CustodyCountFromRecord(record)
+	if err != nil {
+		return custodyRequirement
+	}
+
+	return custodyCount
 }
 
-func (_ *TestP2P) GetValidCustodyPeers(peers []peer.ID) ([]peer.ID, error) {
+func (*TestP2P) GetValidCustodyPeers(peers []peer.ID) ([]peer.ID, error) {
 	return peers, nil
 }
