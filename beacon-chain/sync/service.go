@@ -169,6 +169,7 @@ type Service struct {
 	receivedDataColumnsFromRoot      map[[fieldparams.RootLength]byte]map[uint64]bool
 	receivedDataColumnsFromRootLock  sync.RWMutex
 	ctxMap                           ContextByteVersions
+	sampler                          DataColumnSampler
 }
 
 // NewService initializes new regular sync service.
@@ -253,7 +254,8 @@ func (s *Service) Start() {
 
 	// Run data column sampling
 	if params.PeerDASEnabled() {
-		go s.DataColumnSamplingRoutine(s.ctx)
+		s.sampler = newDataColumnSampler1D(s.cfg.p2p, s.cfg.clock, s.ctxMap, s.cfg.stateNotifier)
+		go s.sampler.Run(s.ctx)
 	}
 }
 
