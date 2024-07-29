@@ -253,12 +253,6 @@ func (s *Service) Start() {
 
 	// Update sync metrics.
 	async.RunEvery(s.ctx, syncMetricsInterval, s.updateMetrics)
-
-	// Run data column sampling
-	if params.PeerDASEnabled() {
-		s.sampler = newDataColumnSampler1D(s.cfg.p2p, s.cfg.clock, s.ctxMap, s.cfg.stateNotifier)
-		go s.sampler.Run(s.ctx)
-	}
 }
 
 // Stop the regular sync service.
@@ -358,6 +352,12 @@ func (s *Service) startTasksPostInitialSync() {
 
 		// Start the fork watcher.
 		go s.forkWatcher()
+
+		// Start data columns sampling if peerDAS is enabled.
+		if params.PeerDASEnabled() {
+			s.sampler = newDataColumnSampler1D(s.cfg.p2p, s.cfg.clock, s.ctxMap, s.cfg.stateNotifier)
+			go s.sampler.Run(s.ctx)
+		}
 
 	case <-s.ctx.Done():
 		log.Debug("Context closed, exiting goroutine")
