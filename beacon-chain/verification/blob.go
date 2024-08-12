@@ -17,6 +17,7 @@ import (
 
 const (
 	RequireBlobIndexInBounds Requirement = iota
+	RequireDataColumnIndexInBounds
 	RequireNotFromFutureSlot
 	RequireSlotAboveFinalized
 	RequireValidProposerSignature
