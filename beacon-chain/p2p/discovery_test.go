@@ -525,7 +525,7 @@ func createAndConnectPeer(t *testing.T, p2pService *testp2p.TestP2P, offset int)
 
 	// Add the peer and connect it.
 	p2pService.Peers().Add(&enr.Record{}, peer.PeerID(), nil, network.DirOutbound)
-	p2pService.Peers().SetConnectionState(peer.PeerID(), peers.PeerConnected)
+	p2pService.Peers().SetConnectionState(peer.PeerID(), peers.Connected)
 	p2pService.Connect(peer)
 }
 

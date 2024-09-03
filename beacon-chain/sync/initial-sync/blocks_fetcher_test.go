@@ -1548,7 +1548,7 @@ func createAndConnectPeer(
 
 	// Add the peer and connect it.
 	p2pService.Peers().Add(enr, peer.PeerID(), nil, network.DirOutbound)
-	p2pService.Peers().SetConnectionState(peer.PeerID(), peers.PeerConnected)
+	p2pService.Peers().SetConnectionState(peer.PeerID(), peers.Connected)
 	p2pService.Connect(peer)
 
 	return peer

@@ -115,7 +115,7 @@ func createAndConnectPeer(
 
 	// Add the peer and connect it.
 	p2pService.Peers().Add(enr, peer.PeerID(), nil, network.DirOutbound)
-	p2pService.Peers().SetConnectionState(peer.PeerID(), peers.PeerConnected)
+	p2pService.Peers().SetConnectionState(peer.PeerID(), peers.Connected)
 	p2pService.Connect(peer)
 
 	return peer
@@ -276,7 +276,7 @@ func TestDataColumnSampler1D_PeerManagement(t *testing.T) {
 		// prune peers
 		for peer := range tc.prunePeers {
 			err := test.p2pSvc.Disconnect(test.peers[peer].PeerID())
-			test.p2pSvc.Peers().SetConnectionState(test.peers[peer].PeerID(), peers.PeerDisconnected)
+			test.p2pSvc.Peers().SetConnectionState(test.peers[peer].PeerID(), peers.Disconnected)
 			require.NoError(t, err)
 		}
 		sampler.refreshPeerInfo()
