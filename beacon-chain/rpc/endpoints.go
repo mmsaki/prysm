@@ -221,6 +221,16 @@ func (s *Service) validatorEndpoints(
 			methods: []string{http.MethodPost},
 		},
 		{
+			template: "/eth/v2/validator/aggregate_and_proofs",
+			name:     namespace + ".SubmitAggregateAndProofsV2",
+			middleware: []middleware.Middleware{
+				middleware.ContentTypeHandler([]string{api.JsonMediaType}),
+				middleware.AcceptHeaderHandler([]string{api.JsonMediaType}),
+			},
+			handler: server.SubmitAggregateAndProofsV2,
+			methods: []string{http.MethodPost},
+		},
+		{
 			template: "/eth/v1/validator/sync_committee_contribution",
 			name:     namespace + ".ProduceSyncCommitteeContribution",
 			middleware: []middleware.Middleware{
@@ -455,31 +465,31 @@ func (s *Service) beaconEndpoints(
 	coreService *core.Service,
 ) []endpoint {
 	server := &beacon.Server{
-		CanonicalHistory:              ch,
-		BeaconDB:                      s.cfg.BeaconDB,
-		AttestationCache:              s.cfg.AttestationCache,
-		AttestationsPool:              s.cfg.AttestationsPool,
-		SlashingsPool:                 s.cfg.SlashingsPool,
-		ChainInfoFetcher:              s.cfg.ChainInfoFetcher,
-		GenesisTimeFetcher:            s.cfg.GenesisTimeFetcher,
-		BlockNotifier:                 s.cfg.BlockNotifier,
-		OperationNotifier:             s.cfg.OperationNotifier,
-		Broadcaster:                   s.cfg.Broadcaster,
-		BlockReceiver:                 s.cfg.BlockReceiver,
-		StateGenService:               s.cfg.StateGen,
-		Stater:                        stater,
-		Blocker:                       blocker,
-		OptimisticModeFetcher:         s.cfg.OptimisticModeFetcher,
-		HeadFetcher:                   s.cfg.HeadFetcher,
-		TimeFetcher:                   s.cfg.GenesisTimeFetcher,
-		VoluntaryExitsPool:            s.cfg.ExitPool,
-		V1Alpha1ValidatorServer:       validatorServer,
-		SyncChecker:                   s.cfg.SyncService,
-		ExecutionPayloadReconstructor: s.cfg.ExecutionPayloadReconstructor,
-		BLSChangesPool:                s.cfg.BLSChangesPool,
-		FinalizationFetcher:           s.cfg.FinalizationFetcher,
-		ForkchoiceFetcher:             s.cfg.ForkchoiceFetcher,
-		CoreService:                   coreService,
+		CanonicalHistory:        ch,
+		BeaconDB:                s.cfg.BeaconDB,
+		AttestationCache:        s.cfg.AttestationCache,
+		AttestationsPool:        s.cfg.AttestationsPool,
+		SlashingsPool:           s.cfg.SlashingsPool,
+		ChainInfoFetcher:        s.cfg.ChainInfoFetcher,
+		GenesisTimeFetcher:      s.cfg.GenesisTimeFetcher,
+		BlockNotifier:           s.cfg.BlockNotifier,
+		OperationNotifier:       s.cfg.OperationNotifier,
+		Broadcaster:             s.cfg.Broadcaster,
+		BlockReceiver:           s.cfg.BlockReceiver,
+		StateGenService:         s.cfg.StateGen,
+		Stater:                  stater,
+		Blocker:                 blocker,
+		OptimisticModeFetcher:   s.cfg.OptimisticModeFetcher,
+		HeadFetcher:             s.cfg.HeadFetcher,
+		TimeFetcher:             s.cfg.GenesisTimeFetcher,
+		VoluntaryExitsPool:      s.cfg.ExitPool,
+		V1Alpha1ValidatorServer: validatorServer,
+		SyncChecker:             s.cfg.SyncService,
+		ExecutionReconstructor:  s.cfg.ExecutionReconstructor,
+		BLSChangesPool:          s.cfg.BLSChangesPool,
+		FinalizationFetcher:     s.cfg.FinalizationFetcher,
+		ForkchoiceFetcher:       s.cfg.ForkchoiceFetcher,
+		CoreService:             coreService,
 	}
 
 	const namespace = "beacon"
@@ -588,6 +598,15 @@ func (s *Service) beaconEndpoints(
 			methods: []string{http.MethodGet},
 		},
 		{
+			template: "/eth/v2/beacon/blocks/{block_id}/attestations",
+			name:     namespace + ".GetBlockAttestationsV2",
+			middleware: []middleware.Middleware{
+				middleware.AcceptHeaderHandler([]string{api.JsonMediaType}),
+			},
+			handler: server.GetBlockAttestations,
+			methods: []string{http.MethodGet},
+		},
+		{
 			template: "/eth/v1/beacon/blinded_blocks/{block_id}",
 			name:     namespace + ".GetBlindedBlock",
 			middleware: []middleware.Middleware{
@@ -612,6 +631,15 @@ func (s *Service) beaconEndpoints(
 				middleware.AcceptHeaderHandler([]string{api.JsonMediaType}),
 			},
 			handler: server.ListAttestations,
+			methods: []string{http.MethodGet},
+		},
+		{
+			template: "/eth/v2/beacon/pool/attestations",
+			name:     namespace + ".ListAttestationsV2",
+			middleware: []middleware.Middleware{
+				middleware.AcceptHeaderHandler([]string{api.JsonMediaType}),
+			},
+			handler: server.ListAttestationsV2,
 			methods: []string{http.MethodGet},
 		},
 		{
@@ -682,13 +710,32 @@ func (s *Service) beaconEndpoints(
 			methods: []string{http.MethodGet},
 		},
 		{
+			template: "/eth/v2/beacon/pool/attester_slashings",
+			name:     namespace + ".GetAttesterSlashingsV2",
+			middleware: []middleware.Middleware{
+				middleware.AcceptHeaderHandler([]string{api.JsonMediaType}),
+			},
+			handler: server.GetAttesterSlashingsV2,
+			methods: []string{http.MethodGet},
+		},
+		{
 			template: "/eth/v1/beacon/pool/attester_slashings",
-			name:     namespace + ".SubmitAttesterSlashing",
+			name:     namespace + ".SubmitAttesterSlashings",
 			middleware: []middleware.Middleware{
 				middleware.ContentTypeHandler([]string{api.JsonMediaType}),
 				middleware.AcceptHeaderHandler([]string{api.JsonMediaType}),
 			},
-			handler: server.SubmitAttesterSlashing,
+			handler: server.SubmitAttesterSlashings,
+			methods: []string{http.MethodPost},
+		},
+		{
+			template: "/eth/v2/beacon/pool/attester_slashings",
+			name:     namespace + ".SubmitAttesterSlashingsV2",
+			middleware: []middleware.Middleware{
+				middleware.ContentTypeHandler([]string{api.JsonMediaType}),
+				middleware.AcceptHeaderHandler([]string{api.JsonMediaType}),
+			},
+			handler: server.SubmitAttesterSlashingsV2,
 			methods: []string{http.MethodPost},
 		},
 		{
@@ -774,6 +821,15 @@ func (s *Service) beaconEndpoints(
 			},
 			handler: server.GetValidatorBalances,
 			methods: []string{http.MethodGet, http.MethodPost},
+		},
+		{
+			template: "/eth/v1/beacon/deposit_snapshot",
+			name:     namespace + ".GetDepositSnapshot",
+			middleware: []middleware.Middleware{
+				middleware.AcceptHeaderHandler([]string{api.JsonMediaType}),
+			},
+			handler: server.GetDepositSnapshot,
+			methods: []string{http.MethodGet},
 		},
 	}
 }

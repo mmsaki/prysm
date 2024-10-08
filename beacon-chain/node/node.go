@@ -400,7 +400,7 @@ func initSyncWaiter(ctx context.Context, complete chan struct{}) func() error {
 }
 
 // StateFeed implements statefeed.Notifier.
-func (b *BeaconNode) StateFeed() *event.Feed {
+func (b *BeaconNode) StateFeed() event.SubscriberSender {
 	return b.stateFeed
 }
 
@@ -410,7 +410,7 @@ func (b *BeaconNode) BlockFeed() *event.Feed {
 }
 
 // OperationFeed implements opfeed.Notifier.
-func (b *BeaconNode) OperationFeed() *event.Feed {
+func (b *BeaconNode) OperationFeed() event.SubscriberSender {
 	return b.opFeed
 }
 
@@ -800,6 +800,7 @@ func (b *BeaconNode) registerPOWChainService() error {
 		execution.WithBeaconNodeStatsUpdater(bs),
 		execution.WithFinalizedStateAtStartup(b.finalizedStateAtStartUp),
 		execution.WithJwtId(b.cliCtx.String(flags.JwtId.Name)),
+		execution.WithVerifierWaiter(b.verifyInitWaiter),
 	)
 	web3Service, err := execution.NewService(b.ctx, opts...)
 	if err != nil {
@@ -843,7 +844,7 @@ func (b *BeaconNode) registerSyncService(initialSyncComplete chan struct{}, bFil
 		regularsync.WithStateGen(b.stateGen),
 		regularsync.WithSlasherAttestationsFeed(b.slasherAttestationsFeed),
 		regularsync.WithSlasherBlockHeadersFeed(b.slasherBlockHeadersFeed),
-		regularsync.WithPayloadReconstructor(web3Service),
+		regularsync.WithReconstructor(web3Service),
 		regularsync.WithClockWaiter(b.clockWaiter),
 		regularsync.WithInitialSyncComplete(initialSyncComplete),
 		regularsync.WithStateNotifier(b),
@@ -958,56 +959,56 @@ func (b *BeaconNode) registerRPCService(router *http.ServeMux) error {
 
 	p2pService := b.fetchP2P()
 	rpcService := rpc.NewService(b.ctx, &rpc.Config{
-		ExecutionEngineCaller:         web3Service,
-		ExecutionPayloadReconstructor: web3Service,
-		Host:                          host,
-		Port:                          port,
-		BeaconMonitoringHost:          beaconMonitoringHost,
-		BeaconMonitoringPort:          beaconMonitoringPort,
-		CertFlag:                      cert,
-		KeyFlag:                       key,
-		BeaconDB:                      b.db,
-		Broadcaster:                   p2pService,
-		PeersFetcher:                  p2pService,
-		PeerManager:                   p2pService,
-		MetadataProvider:              p2pService,
-		ChainInfoFetcher:              chainService,
-		HeadFetcher:                   chainService,
-		CanonicalFetcher:              chainService,
-		ForkFetcher:                   chainService,
-		ForkchoiceFetcher:             chainService,
-		FinalizationFetcher:           chainService,
-		BlockReceiver:                 chainService,
-		BlobReceiver:                  chainService,
-		AttestationReceiver:           chainService,
-		GenesisTimeFetcher:            chainService,
-		GenesisFetcher:                chainService,
-		OptimisticModeFetcher:         chainService,
-		AttestationCache:              b.attestationCache,
-		AttestationsPool:              b.attestationPool,
-		ExitPool:                      b.exitPool,
-		SlashingsPool:                 b.slashingsPool,
-		BLSChangesPool:                b.blsToExecPool,
-		SyncCommitteeObjectPool:       b.syncCommitteePool,
-		ExecutionChainService:         web3Service,
-		ExecutionChainInfoFetcher:     web3Service,
-		ChainStartFetcher:             chainStartFetcher,
-		MockEth1Votes:                 mockEth1DataVotes,
-		SyncService:                   syncService,
-		DepositFetcher:                depositFetcher,
-		PendingDepositFetcher:         b.depositCache,
-		BlockNotifier:                 b,
-		StateNotifier:                 b,
-		OperationNotifier:             b,
-		StateGen:                      b.stateGen,
-		EnableDebugRPCEndpoints:       enableDebugRPCEndpoints,
-		MaxMsgSize:                    maxMsgSize,
-		BlockBuilder:                  b.fetchBuilderService(),
-		Router:                        router,
-		ClockWaiter:                   b.clockWaiter,
-		BlobStorage:                   b.BlobStorage,
-		TrackedValidatorsCache:        b.trackedValidatorsCache,
-		PayloadIDCache:                b.payloadIDCache,
+		ExecutionEngineCaller:     web3Service,
+		ExecutionReconstructor:    web3Service,
+		Host:                      host,
+		Port:                      port,
+		BeaconMonitoringHost:      beaconMonitoringHost,
+		BeaconMonitoringPort:      beaconMonitoringPort,
+		CertFlag:                  cert,
+		KeyFlag:                   key,
+		BeaconDB:                  b.db,
+		Broadcaster:               p2pService,
+		PeersFetcher:              p2pService,
+		PeerManager:               p2pService,
+		MetadataProvider:          p2pService,
+		ChainInfoFetcher:          chainService,
+		HeadFetcher:               chainService,
+		CanonicalFetcher:          chainService,
+		ForkFetcher:               chainService,
+		ForkchoiceFetcher:         chainService,
+		FinalizationFetcher:       chainService,
+		BlockReceiver:             chainService,
+		BlobReceiver:              chainService,
+		AttestationReceiver:       chainService,
+		GenesisTimeFetcher:        chainService,
+		GenesisFetcher:            chainService,
+		OptimisticModeFetcher:     chainService,
+		AttestationCache:          b.attestationCache,
+		AttestationsPool:          b.attestationPool,
+		ExitPool:                  b.exitPool,
+		SlashingsPool:             b.slashingsPool,
+		BLSChangesPool:            b.blsToExecPool,
+		SyncCommitteeObjectPool:   b.syncCommitteePool,
+		ExecutionChainService:     web3Service,
+		ExecutionChainInfoFetcher: web3Service,
+		ChainStartFetcher:         chainStartFetcher,
+		MockEth1Votes:             mockEth1DataVotes,
+		SyncService:               syncService,
+		DepositFetcher:            depositFetcher,
+		PendingDepositFetcher:     b.depositCache,
+		BlockNotifier:             b,
+		StateNotifier:             b,
+		OperationNotifier:         b,
+		StateGen:                  b.stateGen,
+		EnableDebugRPCEndpoints:   enableDebugRPCEndpoints,
+		MaxMsgSize:                maxMsgSize,
+		BlockBuilder:              b.fetchBuilderService(),
+		Router:                    router,
+		ClockWaiter:               b.clockWaiter,
+		BlobStorage:               b.BlobStorage,
+		TrackedValidatorsCache:    b.trackedValidatorsCache,
+		PayloadIDCache:            b.payloadIDCache,
 	})
 
 	return b.services.RegisterService(rpcService)
