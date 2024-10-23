@@ -33,7 +33,6 @@ func NewWrappedUpdate(m proto.Message) (interfaces.LightClientUpdate, error) {
 // In addition to the proto object being wrapped, we store some fields that have to be
 // constructed from the proto, so that we don't have to reconstruct them every time
 // in getters.
-
 type updateAltair struct {
 	p                       *pb.LightClientUpdateAltair
 	attestedHeader          interfaces.LightClientHeader
@@ -140,9 +139,7 @@ func (u *updateAltair) SetNextSyncCommitteeBranch(branch [][]byte) error {
 		return err
 	}
 	u.nextSyncCommitteeBranch = b
-
 	u.p.NextSyncCommitteeBranch = branch
-
 	return nil
 }
 
@@ -311,9 +308,7 @@ func (u *updateCapella) SetNextSyncCommitteeBranch(branch [][]byte) error {
 		return err
 	}
 	u.nextSyncCommitteeBranch = b
-
 	u.p.NextSyncCommitteeBranch = branch
-
 	return nil
 }
 
@@ -482,9 +477,7 @@ func (u *updateDeneb) SetNextSyncCommitteeBranch(branch [][]byte) error {
 		return err
 	}
 	u.nextSyncCommitteeBranch = b
-
 	u.p.NextSyncCommitteeBranch = branch
-
 	return nil
 }
 
@@ -654,9 +647,7 @@ func (u *updateElectra) SetNextSyncCommitteeBranch(branch [][]byte) error {
 		return err
 	}
 	u.nextSyncCommitteeBranch = b
-
 	u.p.NextSyncCommitteeBranch = branch
-
 	return nil
 }
 
@@ -670,6 +661,7 @@ func (u *updateElectra) SetNextSyncCommitteeBranchElectra(branch [][]byte) error
 		return err
 	}
 	u.nextSyncCommitteeBranch = b
+	u.p.NextSyncCommitteeBranch = branch
 	return nil
 }
 
@@ -684,7 +676,6 @@ func (u *updateElectra) SetFinalizedHeader(header interfaces.LightClientHeader) 
 	}
 	u.p.FinalizedHeader = proto
 	u.finalizedHeader = header
-	u.p.FinalityBranch = branch
 	return nil
 }
 
@@ -702,6 +693,7 @@ func (u *updateElectra) SetFinalityBranch(branch [][]byte) error {
 		return err
 	}
 	u.finalityBranch = b
+	u.p.FinalityBranch = branch
 	return nil
 }
 
