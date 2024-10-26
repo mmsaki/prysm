@@ -20,6 +20,7 @@ go_library(
         "//beacon-chain/core/helpers:go_default_library",
         "//beacon-chain/core/time:go_default_library",
         "//config/params:go_default_library",
+        "//consensus-types/interfaces:go_default_library",
         "//consensus-types/payload-attribute:go_default_library",
         "//consensus-types/primitives:go_default_library",
         "//monitoring/tracing/trace:go_default_library",
