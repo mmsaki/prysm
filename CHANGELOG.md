@@ -16,6 +16,8 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
 - Added SubmitPoolAttesterSlashingV2 endpoint.
 - Added SubmitAggregateAndProofsRequestV2 endpoint.
 - Updated the `beacon-chain/monitor` package to Electra. [PR](https://github.com/prysmaticlabs/prysm/pull/14562)
+- Added ListAttestationsV2 endpoint.
+- Add ability to rollback node's internal state during processing.
 
 ### Changed
 
@@ -49,6 +51,7 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
 - Certain deb files were returning a 404 which made building new docker images without an existing
   cache impossible. This has been fixed with updates to rules_oci and bazel-lib.
 - Fixed an issue where the length check between block body KZG commitments and the existing cache from the database was incompatible.
+- Fix `--backfill-oldest-slot` handling - this flag was totally broken, the code would always backfill to the default slot [pr](https://github.com/prysmaticlabs/prysm/pull/14584)
 
 ### Security
 
