@@ -98,6 +98,19 @@ func (s *Service) registerRPCHandlersAltair() {
 	)
 	s.registerRPC(
 		p2p.RPCLightClientBootstrapTopicV1,
+		s.lightClientBootstrapRPCHandler,
+	)
+	s.registerRPC(
+		p2p.RPCLightClientUpdatesByRangeTopicV1,
+		s.lightClientUpdatesByRangeRPCHandler,
+	)
+	s.registerRPC(
+		p2p.RPCLightClientFinalityUpdateTopicV1,
+		s.lightClientFinalityUpdateRPCHandler,
+	)
+	s.registerRPC(
+		p2p.RPCLightClientOptimisticUpdateTopicV1,
+		s.lightClientOptimisticUpdateRPCHandler,
 	)
 }
 
@@ -159,8 +172,8 @@ func (s *Service) registerRPC(baseTopic string, handle rpcHandler) {
 
 		ctx, span := trace.StartSpan(ctx, "sync.rpc")
 		defer span.End()
-		span.AddAttributes(trace.StringAttribute("topic", topic))
-		span.AddAttributes(trace.StringAttribute("peer", stream.Conn().RemotePeer().String()))
+		span.SetAttributes(trace.StringAttribute("topic", topic))
+		span.SetAttributes(trace.StringAttribute("peer", stream.Conn().RemotePeer().String()))
 		log := log.WithField("peer", stream.Conn().RemotePeer().String()).WithField("topic", string(stream.Protocol()))
 
 		// Check before hand that peer is valid.

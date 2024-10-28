@@ -9,7 +9,6 @@ go_library(
     deps = [
         "//consensus-types/primitives:go_default_library",
         "//crypto/bls:go_default_library",
-        "//proto/prysm/v1alpha1:go_default_library",
         "//time:go_default_library",
         "@com_github_prysmaticlabs_go_bitfield//:go_default_library",
     ],

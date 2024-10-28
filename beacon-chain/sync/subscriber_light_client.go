@@ -9,9 +9,9 @@ import (
 // TODO: event feed
 
 func (s *Service) lightClientFinalityUpdateSubscriber(_ context.Context, msg proto.Message) error {
-
+	return nil
 }
 
 func (s *Service) lightClientOptimisticUpdateSubscriber(_ context.Context, msg proto.Message) error {
-
+	return nil
 }

@@ -7,10 +7,10 @@ import (
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
 	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/prysmaticlabs/prysm/v5/config/params"
+	"github.com/prysmaticlabs/prysm/v5/consensus-types/interfaces"
 	"github.com/prysmaticlabs/prysm/v5/monitoring/tracing"
-	"github.com/prysmaticlabs/prysm/v5/proto/eth/v2"
+	"github.com/prysmaticlabs/prysm/v5/monitoring/tracing/trace"
 	"github.com/prysmaticlabs/prysm/v5/time/slots"
-	"go.opencensus.io/trace"
 )
 
 func (s *Service) validateLightClientFinalityUpdate(ctx context.Context, pid peer.ID, msg *pubsub.Message) (pubsub.ValidationResult, error) {
@@ -35,7 +35,7 @@ func (s *Service) validateLightClientFinalityUpdate(ctx context.Context, pid pee
 		return pubsub.ValidationReject, err
 	}
 
-	update, ok := m.(*eth.LightClientFinalityUpdate)
+	update, ok := m.(interfaces.LightClientFinalityUpdate)
 	if !ok {
 		return pubsub.ValidationReject, errWrongMessage
 	}
@@ -48,10 +48,10 @@ func (s *Service) validateLightClientFinalityUpdate(ctx context.Context, pid pee
 		// [IGNORE] The finalized_header.beacon.slot is greater than that of all previously forwarded finality_updates,
 		// or it matches the highest previously forwarded slot and also has a sync_aggregate indicating supermajority (> 2/3)
 		// sync committee participation while the previously forwarded finality_update for that slot did not indicate supermajority
-		if update.FinalizedHeader.Beacon.Slot < last.slot {
+		if update.FinalizedHeader().Beacon().Slot < last.slot {
 			return pubsub.ValidationIgnore, nil
 		}
-		if update.FinalizedHeader.Beacon.Slot == last.slot && (last.hasSupermajority || !update.HasSupermajority()) {
+		if update.FinalizedHeader().Beacon().Slot == last.slot && (last.hasSupermajority || !update.HasSupermajority()) {
 			return pubsub.ValidationIgnore, nil
 		}
 	}
@@ -59,7 +59,7 @@ func (s *Service) validateLightClientFinalityUpdate(ctx context.Context, pid pee
 	// to propagate through the network -- i.e. validate that one-third of finality_update.signature_slot
 	// has transpired (SECONDS_PER_SLOT / INTERVALS_PER_SLOT seconds after the start of the slot,
 	// with a MAXIMUM_GOSSIP_CLOCK_DISPARITY allowance)
-	earliestValidTime := slots.StartTime(uint64(s.cfg.clock.GenesisTime().Unix()), update.FinalizedHeader.Beacon.Slot).
+	earliestValidTime := slots.StartTime(uint64(s.cfg.clock.GenesisTime().Unix()), update.FinalizedHeader().Beacon().Slot).
 		Add(time.Second * time.Duration(params.BeaconConfig().SecondsPerSlot/params.BeaconConfig().IntervalsPerSlot)).
 		Add(-params.BeaconConfig().MaximumGossipClockDisparityDuration())
 	if s.cfg.clock.Now().Before(earliestValidTime) {
@@ -67,7 +67,7 @@ func (s *Service) validateLightClientFinalityUpdate(ctx context.Context, pid pee
 	}
 
 	s.lastLCFinalityUpdate = &lcFinalityUpdateInfo{
-		slot:             update.FinalizedHeader.Beacon.Slot,
+		slot:             update.FinalizedHeader().Beacon().Slot,
 		hasSupermajority: update.HasSupermajority(),
 	}
 
@@ -96,7 +96,7 @@ func (s *Service) validateLightClientOptimisticUpdate(ctx context.Context, pid p
 		return pubsub.ValidationReject, err
 	}
 
-	update, ok := m.(*eth.LightClientOptimisticUpdate)
+	update, ok := m.(interfaces.LightClientOptimisticUpdate)
 	if !ok {
 		return pubsub.ValidationReject, errWrongMessage
 	}
@@ -107,7 +107,7 @@ func (s *Service) validateLightClientOptimisticUpdate(ctx context.Context, pid p
 	last := s.lastLCOptimisticUpdate
 	if last != nil {
 		// [IGNORE] The attested_header.beacon.slot is greater than that of all previously forwarded optimistic_updates
-		if update.AttestedHeader.Beacon.Slot <= last.slot {
+		if update.AttestedHeader().Beacon().Slot <= last.slot {
 			return pubsub.ValidationIgnore, nil
 		}
 	}
@@ -115,7 +115,7 @@ func (s *Service) validateLightClientOptimisticUpdate(ctx context.Context, pid p
 	// to propagate through the network -- i.e. validate that one-third of optimistic_update.signature_slot
 	// has transpired (SECONDS_PER_SLOT / INTERVALS_PER_SLOT seconds after the start of the slot,
 	// with a MAXIMUM_GOSSIP_CLOCK_DISPARITY allowance)
-	earliestValidTime := slots.StartTime(uint64(s.cfg.clock.GenesisTime().Unix()), update.AttestedHeader.Beacon.Slot).
+	earliestValidTime := slots.StartTime(uint64(s.cfg.clock.GenesisTime().Unix()), update.AttestedHeader().Beacon().Slot).
 		Add(time.Second * time.Duration(params.BeaconConfig().SecondsPerSlot/params.BeaconConfig().IntervalsPerSlot)).
 		Add(-params.BeaconConfig().MaximumGossipClockDisparityDuration())
 	if s.cfg.clock.Now().Before(earliestValidTime) {
@@ -123,7 +123,7 @@ func (s *Service) validateLightClientOptimisticUpdate(ctx context.Context, pid p
 	}
 
 	s.lastLCOptimisticUpdate = &lcOptimisticUpdateInfo{
-		slot: update.AttestedHeader.Beacon.Slot,
+		slot: update.AttestedHeader().Beacon().Slot,
 	}
 
 	return pubsub.ValidationAccept, nil

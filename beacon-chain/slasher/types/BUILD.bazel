@@ -9,8 +9,5 @@ go_library(
         "//cmd/prysmctl:__subpackages__",
         "//testing/slasher/simulator:__subpackages__",
     ],
-    deps = [
-        "//consensus-types/primitives:go_default_library",
-        "//proto/prysm/v1alpha1:go_default_library",
-    ],
+    deps = ["//consensus-types/primitives:go_default_library"],
 )

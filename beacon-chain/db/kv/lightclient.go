@@ -17,6 +17,10 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
+func (s *Store) LightClientBootstrap(ctx context.Context, root [32]byte) (interfaces.LightClientBootstrap, error) {
+	return nil, nil
+}
+
 func (s *Store) SaveLightClientUpdate(ctx context.Context, period uint64, update interfaces.LightClientUpdate) error {
 	_, span := trace.StartSpan(ctx, "BeaconDB.SaveLightClientUpdate")
 	defer span.End()

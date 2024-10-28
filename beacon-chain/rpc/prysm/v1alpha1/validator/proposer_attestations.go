@@ -128,6 +128,7 @@ func (a proposerAtts) filter(ctx context.Context, st state.BeaconState) (propose
 	validAtts := make([]ethpb.Att, 0, len(a))
 	invalidAtts := make([]ethpb.Att, 0, len(a))
 
+	primitives.Slot(0).Add(uint64(params.BeaconConfig().SlotsPerEpoch) * uint64(params.BeaconConfig().EpochsPerSyncCommitteePeriod))
 	for _, att := range a {
 		if err := blocks.VerifyAttestationNoVerifySignature(ctx, st, att); err == nil {
 			validAtts = append(validAtts, att)

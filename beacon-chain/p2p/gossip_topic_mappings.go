@@ -5,7 +5,6 @@ import (
 
 	"github.com/prysmaticlabs/prysm/v5/config/params"
 	"github.com/prysmaticlabs/prysm/v5/consensus-types/primitives"
-	"github.com/prysmaticlabs/prysm/v5/proto/eth/v2"
 	ethpb "github.com/prysmaticlabs/prysm/v5/proto/prysm/v1alpha1"
 	"google.golang.org/protobuf/proto"
 )
@@ -23,8 +22,8 @@ var gossipTopicMappings = map[string]func() proto.Message{
 	SyncCommitteeSubnetTopicFormat:            func() proto.Message { return &ethpb.SyncCommitteeMessage{} },
 	BlsToExecutionChangeSubnetTopicFormat:     func() proto.Message { return &ethpb.SignedBLSToExecutionChange{} },
 	BlobSubnetTopicFormat:                     func() proto.Message { return &ethpb.BlobSidecar{} },
-	LightClientFinalityUpdateTopicFormat:      func() proto.Message { return &eth.LightClientFinalityUpdate{} },
-	LightClientOptimisticUpdateTopicFormat:    func() proto.Message { return &eth.LightClientOptimisticUpdate{} },
+	LightClientFinalityUpdateTopicFormat:      func() proto.Message { return &ethpb.LightClientFinalityUpdateAltair{} },
+	LightClientOptimisticUpdateTopicFormat:    func() proto.Message { return &ethpb.LightClientOptimisticUpdateAltair{} },
 }
 
 // GossipTopicMappings is a function to return the assigned data type
@@ -61,6 +60,22 @@ func GossipTopicMappings(topic string, epoch primitives.Epoch) proto.Message {
 	case AggregateAndProofSubnetTopicFormat:
 		if epoch >= params.BeaconConfig().ElectraForkEpoch {
 			return &ethpb.SignedAggregateAttestationAndProofElectra{}
+		}
+		return gossipMessage(topic)
+	case LightClientFinalityUpdateTopicFormat:
+		if epoch >= params.BeaconConfig().DenebForkEpoch {
+			return &ethpb.LightClientFinalityUpdateDeneb{}
+		}
+		if epoch >= params.BeaconConfig().CapellaForkEpoch {
+			return &ethpb.LightClientFinalityUpdateCapella{}
+		}
+		return gossipMessage(topic)
+	case LightClientOptimisticUpdateTopicFormat:
+		if epoch >= params.BeaconConfig().DenebForkEpoch {
+			return &ethpb.LightClientOptimisticUpdateDeneb{}
+		}
+		if epoch >= params.BeaconConfig().CapellaForkEpoch {
+			return &ethpb.LightClientOptimisticUpdateCapella{}
 		}
 		return gossipMessage(topic)
 	default:
