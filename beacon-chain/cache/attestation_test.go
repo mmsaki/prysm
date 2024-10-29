@@ -38,7 +38,7 @@ func TestAdd(t *testing.T) {
 			require.Equal(t, true, ok)
 			assert.Equal(t, primitives.Slot(123), group.slot)
 			require.Equal(t, 1, len(group.atts))
-			assert.Equal(t, group.atts[0], att)
+			assert.DeepEqual(t, group.atts[0], att)
 		})
 		t.Run("other ID exists", func(t *testing.T) {
 			c := NewAttestationCache()
@@ -65,7 +65,7 @@ func TestAdd(t *testing.T) {
 			require.Equal(t, true, ok)
 			assert.Equal(t, primitives.Slot(123), group.slot)
 			require.Equal(t, 1, len(group.atts))
-			assert.Equal(t, group.atts[0], att)
+			assert.DeepEqual(t, group.atts[0], att)
 		})
 	})
 	t.Run("aggregated", func(t *testing.T) {
@@ -93,8 +93,8 @@ func TestAdd(t *testing.T) {
 		require.Equal(t, true, ok)
 		assert.Equal(t, primitives.Slot(123), group.slot)
 		require.Equal(t, 2, len(group.atts))
-		assert.Equal(t, group.atts[0], existingAtt)
-		assert.Equal(t, group.atts[1], att)
+		assert.DeepEqual(t, group.atts[0], existingAtt)
+		assert.DeepEqual(t, group.atts[1], att)
 	})
 	t.Run("unaggregated - existing bit", func(t *testing.T) {
 		c := NewAttestationCache()
@@ -231,7 +231,7 @@ func TestDeleteCovered(t *testing.T) {
 
 		atts := c.atts[id].atts
 		require.Equal(t, 1, len(atts))
-		assert.Equal(t, att2, atts[0])
+		assert.DeepEqual(t, att2, atts[0])
 	})
 	t.Run("last att in group deleted", func(t *testing.T) {
 		att := &ethpb.Attestation{
