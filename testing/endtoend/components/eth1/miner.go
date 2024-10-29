@@ -121,7 +121,7 @@ func (m *Miner) initAttempt(ctx context.Context, attempt int) (*os.File, error) 
 		return nil, err
 	}
 
-	pwFile := m.DataDir("keystore", minerPasswordFile)
+	//pwFile := m.DataDir("keystore", minerPasswordFile)
 	args := []string{
 		"--nat=none", // disable nat traversal in e2e, it is failure prone and not needed
 		fmt.Sprintf("--datadir=%s", m.DataDir()),
@@ -143,26 +143,26 @@ func (m *Miner) initAttempt(ctx context.Context, attempt int) (*os.File, error) 
 		"--ws.origins=\"*\"",
 		"--ipcdisable",
 		"--verbosity=4",
-		"--mine",
+		//"--mine",
 		fmt.Sprintf("--unlock=%s", EthAddress),
 		"--allow-insecure-unlock",
 		"--syncmode=full",
-		fmt.Sprintf("--miner.etherbase=%s", EthAddress),
+		//fmt.Sprintf("--miner.etherbase=%s", EthAddress),
 		fmt.Sprintf("--txpool.locals=%s", EthAddress),
-		fmt.Sprintf("--password=%s", pwFile),
+		//fmt.Sprintf("--password=%s", pwFile),
 	}
 
-	keystorePath, err := e2e.TestParams.Paths.MinerKeyPath()
-	if err != nil {
-		return nil, err
-	}
-	if err = file.CopyFile(keystorePath, m.DataDir("keystore", minerFile)); err != nil {
-		return nil, errors.Wrapf(err, "error copying %s to %s", keystorePath, m.DataDir("keystore", minerFile))
-	}
-	err = file.WriteFile(pwFile, []byte(KeystorePassword))
-	if err != nil {
-		return nil, err
-	}
+	//keystorePath, err := e2e.TestParams.Paths.MinerKeyPath()
+	//if err != nil {
+	//	return nil, err
+	//}
+	//if err = file.CopyFile(keystorePath, m.DataDir("keystore", minerFile)); err != nil {
+	//	return nil, errors.Wrapf(err, "error copying %s to %s", keystorePath, m.DataDir("keystore", minerFile))
+	//}
+	//err = file.WriteFile(pwFile, []byte(KeystorePassword))
+	//if err != nil {
+	//	return nil, err
+	//}
 
 	runCmd := exec.CommandContext(ctx, binaryPath, args...) // #nosec G204 -- Safe
 	// redirect miner stderr to a log file
