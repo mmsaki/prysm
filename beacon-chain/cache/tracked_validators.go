@@ -2,6 +2,7 @@ package cache
 
 import (
 	"sync"
+	"time"
 
 	"github.com/prysmaticlabs/prysm/v5/consensus-types/primitives"
 )
@@ -10,10 +11,11 @@ type TrackedValidator struct {
 	Active       bool
 	FeeRecipient primitives.ExecutionAddress
 	Index        primitives.ValidatorIndex
+	LastUpdated  time.Time
 }
 
 type TrackedValidatorsCache struct {
-	sync.Mutex
+	sync.RWMutex
 	trackedValidators map[primitives.ValidatorIndex]TrackedValidator
 }
 
@@ -24,8 +26,8 @@ func NewTrackedValidatorsCache() *TrackedValidatorsCache {
 }
 
 func (t *TrackedValidatorsCache) Validator(index primitives.ValidatorIndex) (TrackedValidator, bool) {
-	t.Lock()
-	defer t.Unlock()
+	t.RLock()
+	defer t.RUnlock()
 	val, ok := t.trackedValidators[index]
 	return val, ok
 }
@@ -43,13 +45,13 @@ func (t *TrackedValidatorsCache) Prune() {
 }
 
 func (t *TrackedValidatorsCache) Validating() bool {
-	t.Lock()
-	defer t.Unlock()
+	t.RLock()
+	defer t.RUnlock()
 	return len(t.trackedValidators) > 0
 }
 
 func (t *TrackedValidatorsCache) Size() int {
-	t.Lock()
-	defer t.Unlock()
+	t.RLock()
+	defer t.RUnlock()
 	return len(t.trackedValidators)
 }

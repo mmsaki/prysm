@@ -761,6 +761,7 @@ func (s *Server) PrepareBeaconProposer(w http.ResponseWriter, r *http.Request) {
 			Active:       true, // TODO: either check or add the field in the request
 			Index:        primitives.ValidatorIndex(validatorIndex),
 			FeeRecipient: feeRecipient,
+			LastUpdated:  time.Now().UTC(),
 		}
 		s.TrackedValidatorsCache.Set(val)
 		validatorIndices = append(validatorIndices, primitives.ValidatorIndex(validatorIndex))
