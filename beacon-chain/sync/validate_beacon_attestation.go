@@ -336,5 +336,5 @@ func seenAttCacheKey(slot primitives.Slot, committeeID primitives.CommitteeIndex
 
 	// Avoid copying to reduce allocation when casting. It is guaranteed to be immutable as the
 	// slice is only created in this method and isn't accessed/returned anywhere else.
-	return unsafe.String(&key[0], len(key))
+	return unsafe.String(&key[0], len(key)) // #nosec G103
 }
