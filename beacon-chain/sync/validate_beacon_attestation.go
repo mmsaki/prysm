@@ -2,9 +2,11 @@ package sync
 
 import (
 	"context"
+	"encoding/binary"
 	"fmt"
 	"reflect"
 	"strings"
+	"unsafe"
 
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
 	"github.com/libp2p/go-libp2p/core/peer"
@@ -306,9 +308,7 @@ func (s *Service) validateBitLength(
 func (s *Service) hasSeenCommitteeIndicesSlot(slot primitives.Slot, committeeID primitives.CommitteeIndex, aggregateBits []byte) bool {
 	s.seenUnAggregatedAttestationLock.RLock()
 	defer s.seenUnAggregatedAttestationLock.RUnlock()
-	b := append(bytesutil.Bytes32(uint64(slot)), bytesutil.Bytes32(uint64(committeeID))...)
-	b = append(b, aggregateBits...)
-	_, seen := s.seenUnAggregatedAttestationCache.Get(string(b))
+	_, seen := s.seenUnAggregatedAttestationCache.Get(seenAttCacheKey(slot, committeeID, aggregateBits))
 	return seen
 }
 
@@ -316,9 +316,7 @@ func (s *Service) hasSeenCommitteeIndicesSlot(slot primitives.Slot, committeeID 
 func (s *Service) setSeenCommitteeIndicesSlot(slot primitives.Slot, committeeID primitives.CommitteeIndex, aggregateBits []byte) {
 	s.seenUnAggregatedAttestationLock.Lock()
 	defer s.seenUnAggregatedAttestationLock.Unlock()
-	b := append(bytesutil.Bytes32(uint64(slot)), bytesutil.Bytes32(uint64(committeeID))...)
-	b = append(b, bytesutil.SafeCopyBytes(aggregateBits)...)
-	s.seenUnAggregatedAttestationCache.Add(string(b), true)
+	s.seenUnAggregatedAttestationCache.Add(seenAttCacheKey(slot, committeeID, aggregateBits), true)
 }
 
 // hasBlockAndState returns true if the beacon node knows about a block and associated state in the
@@ -327,4 +325,16 @@ func (s *Service) hasBlockAndState(ctx context.Context, blockRoot [32]byte) bool
 	hasStateSummary := s.cfg.beaconDB.HasStateSummary(ctx, blockRoot)
 	hasState := hasStateSummary || s.cfg.beaconDB.HasState(ctx, blockRoot)
 	return hasState && s.cfg.chain.HasBlock(ctx, blockRoot)
+}
+
+func seenAttCacheKey(slot primitives.Slot, committeeID primitives.CommitteeIndex, aggregationBits []byte) string {
+	totalLen := 8 + 8 + len(aggregationBits)
+	key := make([]byte, totalLen)
+	binary.LittleEndian.PutUint64(key[:8], uint64(slot))
+	binary.LittleEndian.PutUint64(key[8:16], uint64(committeeID))
+	copy(key[16:], aggregationBits)
+
+	// Avoid copying to reduce allocation when casting. It is guaranteed to be immutable as the
+	// slice is only created in this method and isn't accessed/returned anywhere else.
+	return unsafe.String(&key[0], len(key))
 }

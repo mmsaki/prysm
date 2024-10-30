@@ -327,3 +327,11 @@ func TestService_setSeenCommitteeIndicesSlot(t *testing.T) {
 	require.Equal(t, false, s.hasSeenCommitteeIndicesSlot(0, 2, b1))
 	require.Equal(t, true, s.hasSeenCommitteeIndicesSlot(1, 2, b1))
 }
+
+func TestAttestationCacheKey(t *testing.T) {
+	stringKey := seenAttCacheKey(1, 1024, []byte("aggregation"))
+	wantedKey := append(bytesutil.Bytes8(1), bytesutil.Bytes8(1024)...)
+	wantedKey = append(wantedKey, []byte("aggregation")...)
+
+	require.Equal(t, string(wantedKey), stringKey)
+}
