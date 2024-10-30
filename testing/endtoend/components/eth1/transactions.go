@@ -265,8 +265,15 @@ func RandomBlobTx(rpc *rpc.Client, f *filler.Filler, sender common.Address, nonc
 		}
 		return New4844Tx(nonce, &to, gas, chainID, tip, feecap, value, code, big.NewInt(1000000), data, make(types.AccessList, 0)), nil
 	case 1:
-		// 4844 transaction with AL
-		tx := types.NewTransaction(nonce, to, value, gas, gasPrice, code)
+		// 4844 transaction with AL nonce, to, value, gas, gasPrice, code
+		tx := types.NewTx(&types.AccessListTx{
+			Nonce:    nonce,
+			To:       &to,
+			Value:    value,
+			Gas:      gas,
+			GasPrice: gasPrice,
+			Data:     code,
+		})
 		al, err := txfuzz.CreateAccessList(rpc, tx, sender)
 		if err != nil {
 			return nil, err

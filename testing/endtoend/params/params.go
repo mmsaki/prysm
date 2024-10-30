@@ -159,7 +159,7 @@ const (
 
 	jaegerTracingPort = 9150
 
-	startupBufferSecs = 15
+	startupBufferSecs = 5
 )
 
 func logDir() string {
@@ -209,8 +209,7 @@ func Init(t *testing.T, beaconNodeCount int) error {
 		return err
 	}
 
-	//genTime := uint64(time.Now().Unix()) + startupBufferSecs
-	genTime := uint64(time.Now().Unix())
+	genTime := uint64(time.Now().Unix()) + startupBufferSecs
 	TestParams = &params{
 		TestPath:               filepath.Join(testPath, fmt.Sprintf("shard-%d", testShardIndex)),
 		LogPath:                logPath,
