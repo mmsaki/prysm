@@ -133,7 +133,7 @@ func GethTestnetGenesis(genesisTime uint64, cfg *clparams.BeaconChainConfig) *co
 
 	//shanghaiTime := GethShanghaiTime(genesisTime, cfg)
 	cancunTime := GethCancunTime(genesisTime, cfg)
-	shanghaiTime := uint64(0)
+	shanghaiTime := genesisTime
 	//cancunTime := uint64(0)
 	pragueTime := GethPragueTime(genesisTime, cfg)
 	cc := &params.ChainConfig{

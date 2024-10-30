@@ -209,7 +209,8 @@ func Init(t *testing.T, beaconNodeCount int) error {
 		return err
 	}
 
-	genTime := uint64(time.Now().Unix()) + startupBufferSecs
+	//genTime := uint64(time.Now().Unix()) + startupBufferSecs
+	genTime := uint64(time.Now().Unix())
 	TestParams = &params{
 		TestPath:               filepath.Join(testPath, fmt.Sprintf("shard-%d", testShardIndex)),
 		LogPath:                logPath,
