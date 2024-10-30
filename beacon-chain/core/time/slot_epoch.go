@@ -99,6 +99,12 @@ func CanUpgradeToElectra(slot primitives.Slot) bool {
 	return epochStart && electraEpoch
 }
 
+func CanUpgradeToEpbs(slot primitives.Slot) bool {
+	epochStart := slots.IsEpochStart(slot)
+	epbsEpoch := slots.ToEpoch(slot) == params.BeaconConfig().EPBSForkEpoch
+	return epochStart && epbsEpoch
+}
+
 // CanProcessEpoch checks the eligibility to process epoch.
 // The epoch can be processed at the end of the last slot of every epoch.
 //

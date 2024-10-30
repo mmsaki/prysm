@@ -59,7 +59,7 @@ func (v *validator) ProposeBlock(ctx context.Context, slot primitives.Slot, pubK
 	span.SetAttributes(trace.StringAttribute("validator", fmtKey))
 	log := log.WithField("pubkey", fmt.Sprintf("%#x", bytesutil.Trunc(pubKey[:])))
 
-	if params.BeaconConfig().EPBSForkEpoch > slots.ToEpoch(slot) {
+	if slots.ToEpoch(slot) >= params.BeaconConfig().EPBSForkEpoch {
 		if err := v.SubmitHeader(ctx, slot, pubKey); err != nil {
 			log.WithError(err).Error("Failed to submit header")
 			return
@@ -178,18 +178,12 @@ func (v *validator) ProposeBlock(ctx context.Context, slot primitives.Slot, pubK
 		return
 	}
 
-	if params.BeaconConfig().EPBSForkEpoch > slots.ToEpoch(slot) {
+	if slots.ToEpoch(slot) >= params.BeaconConfig().EPBSForkEpoch {
 		if err := v.SubmitExecutionPayloadEnvelope(ctx, slot, pubKey); err != nil {
 			log.WithError(err).Error("Failed to submit header")
 			return
 		}
 	}
-
-	span.AddAttributes(
-		trace.StringAttribute("blockRoot", fmt.Sprintf("%#x", blkResp.BlockRoot)),
-		trace.Int64Attribute("numDeposits", int64(len(blk.Block().Body().Deposits()))),
-		trace.Int64Attribute("numAttestations", int64(len(blk.Block().Body().Attestations()))),
-	)
 
 	if err := logProposedBlock(log, blk, blkResp.BlockRoot); err != nil {
 		log.WithError(err).Error("Failed to log proposed block")

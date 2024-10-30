@@ -7,6 +7,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/prysmaticlabs/prysm/v5/beacon-chain/core/epbs"
 	"github.com/prysmaticlabs/prysm/v5/beacon-chain/core/helpers"
+	"github.com/prysmaticlabs/prysm/v5/beacon-chain/state"
 	"github.com/prysmaticlabs/prysm/v5/config/params"
 	"github.com/prysmaticlabs/prysm/v5/consensus-types/blocks"
 	"github.com/prysmaticlabs/prysm/v5/consensus-types/interfaces"
@@ -14,8 +15,8 @@ import (
 	"github.com/prysmaticlabs/prysm/v5/encoding/ssz"
 	enginev1 "github.com/prysmaticlabs/prysm/v5/proto/engine/v1"
 	eth "github.com/prysmaticlabs/prysm/v5/proto/prysm/v1alpha1"
+	"github.com/prysmaticlabs/prysm/v5/runtime/version"
 	"github.com/prysmaticlabs/prysm/v5/time/slots"
-	"go.opencensus.io/trace"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
@@ -78,11 +79,13 @@ func (vs *Server) SubmitSignedExecutionPayloadHeader(ctx context.Context, h *eng
 	}
 
 	vs.signedExecutionPayloadHeader = h
+	log.Info("Cached signed execution payload header ", h.Message.Slot, h.Message.BuilderIndex)
 
-	headState, err := vs.HeadFetcher.HeadStateReadOnly(ctx)
+	headState, _, err := vs.getParentState(ctx, h.Message.Slot)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to retrieve head state: %v", err)
 	}
+
 	proposerIndex, err := helpers.BeaconProposerIndexAtSlot(ctx, headState, h.Message.Slot)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to retrieve proposer index: %v", err)
@@ -120,14 +123,10 @@ func (vs *Server) computePostPayloadStateRoot(ctx context.Context, envelope inte
 	}
 	log.WithField("beaconStateRoot", fmt.Sprintf("%#x", root)).Debugf("Computed state root at execution stage")
 	return root[:], nil
-	return nil, nil
 }
 
 // GetLocalHeader returns the local header for a given slot and proposer index.
 func (vs *Server) GetLocalHeader(ctx context.Context, req *eth.HeaderRequest) (*enginev1.ExecutionPayloadHeaderEPBS, error) {
-	ctx, span := trace.StartSpan(ctx, "ProposerServer.GetLocalHeader")
-	defer span.End()
-
 	if vs.SyncChecker.Syncing() {
 		return nil, status.Error(codes.FailedPrecondition, "Syncing to latest head, not ready to respond")
 	}
@@ -180,4 +179,39 @@ func (vs *Server) GetLocalHeader(ctx context.Context, req *eth.HeaderRequest) (*
 		Value:                  0,
 		BlobKzgCommitmentsRoot: kzgRoot[:],
 	}, nil
+}
+
+// Set payload attestations for the block if it meets the following conditions:
+// - Block version is ePBS or higher
+// - Parent block's slot is exactly one less than the current block's slot
+// - Local chain view is respected to determine whether the parent slot is full or empty:
+//   - If the parent slot is empty, pack a "WITHHELD" status
+//   - If the parent slot is full, pack a "PRESENT" status
+func (vs *Server) setPayloadAttestations(block interfaces.SignedBeaconBlock, state state.BeaconState) error {
+	if block.Version() < version.EPBS {
+		return nil
+	}
+
+	parentRoot := block.Block().ParentRoot()
+	parentSlot, err := vs.ForkchoiceFetcher.RecentBlockSlot(parentRoot)
+	if err != nil {
+		return err
+	}
+
+	if parentSlot+1 != block.Block().Slot() {
+		return nil
+	}
+
+	lastFullSlot, err := state.LatestFullSlot()
+	if err != nil {
+		return err
+	}
+	payloadIsPresent := lastFullSlot+1 == block.Block().Slot()
+	status := primitives.PAYLOAD_WITHHELD
+	if payloadIsPresent {
+		status = primitives.PAYLOAD_PRESENT
+	}
+
+	payloadAttestation := vs.PayloadAttestationCache.Get(parentRoot, status)
+	return block.SetPayloadAttestations([]*eth.PayloadAttestation{payloadAttestation})
 }

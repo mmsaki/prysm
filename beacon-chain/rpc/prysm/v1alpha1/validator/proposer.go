@@ -223,6 +223,11 @@ func (vs *Server) BuildBlockParallel(ctx context.Context, sBlk interfaces.Signed
 
 		// Set bls to execution change. New in Capella.
 		vs.setBlsToExecData(sBlk, head)
+
+		// Set payload attestations to block. New in ePBS
+		if err := vs.setPayloadAttestations(sBlk, head); err != nil {
+			log.WithError(err).Error("Could not set payload attestations on block")
+		}
 	}()
 
 	winningBid := primitives.ZeroWei()

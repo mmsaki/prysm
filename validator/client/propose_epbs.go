@@ -10,6 +10,7 @@ import (
 	enginev1 "github.com/prysmaticlabs/prysm/v5/proto/engine/v1"
 	ethpb "github.com/prysmaticlabs/prysm/v5/proto/prysm/v1alpha1"
 	"github.com/prysmaticlabs/prysm/v5/time/slots"
+	"github.com/sirupsen/logrus"
 )
 
 // SubmitHeader submits a signed execution payload header to the validator client.
@@ -17,14 +18,18 @@ func (v *validator) SubmitHeader(ctx context.Context, slot primitives.Slot, pubK
 	if params.BeaconConfig().EPBSForkEpoch > slots.ToEpoch(slot) {
 		return nil
 	}
+	log.WithFields(logrus.Fields{
+		"slot":   slot,
+		"pubkey": fmt.Sprintf("%x", pubKey),
+	}).Info("Submitting header")
 
-	proposerIndex, ok := v.pubkeyToValidatorIndex[pubKey]
+	proposerIndex, ok := v.pubkeyToStatus[pubKey]
 	if !ok {
 		return fmt.Errorf("validator index not found for pubkey %v", pubKey)
 	}
 	header, err := v.validatorClient.GetLocalHeader(ctx, &ethpb.HeaderRequest{
 		Slot:          slot,
-		ProposerIndex: proposerIndex,
+		ProposerIndex: proposerIndex.index,
 	})
 	if err != nil {
 		return errors.Wrap(err, "failed to get local header")
@@ -50,14 +55,18 @@ func (v *validator) SubmitExecutionPayloadEnvelope(ctx context.Context, slot pri
 	if params.BeaconConfig().EPBSForkEpoch > slots.ToEpoch(slot) {
 		return nil
 	}
+	log.WithFields(logrus.Fields{
+		"slot":   slot,
+		"pubkey": fmt.Sprintf("%x", pubKey),
+	}).Info("Submitting payload envelope")
 
-	proposerIndex, ok := v.pubkeyToValidatorIndex[pubKey]
+	proposerIndex, ok := v.pubkeyToStatus[pubKey]
 	if !ok {
 		return fmt.Errorf("validator index not found for pubkey %v", pubKey)
 	}
 	env, err := v.validatorClient.GetExecutionPayloadEnvelope(ctx, &ethpb.PayloadEnvelopeRequest{
 		Slot:          slot,
-		ProposerIndex: proposerIndex,
+		ProposerIndex: proposerIndex.index,
 	})
 	if err != nil {
 		return errors.Wrap(err, "failed to get execution payload envelope")
