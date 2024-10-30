@@ -17,12 +17,31 @@ type attGroup struct {
 	atts []ethpb.Att
 }
 
+// AttestationCache holds a map of attGroup items that group together all attestations for a single slot.
+// When we add an attestation to the cache by calling Add, we either create a new group with this attestation
+// (if this is the first attestation for some slot) or two things can happen:
+//
+//   - If the attestation is unaggregated, we add its attestation bit to attestation bits of the first
+//     attestation in the group.
+//   - If the attestation is aggregated, we append it to the group. There should be no redundancy
+//     in the list because we ignore redundant aggregates in gossip.
+//
+// The first bullet point above means that we keep one aggregate attestation to which we keep appending bits
+// as new single-bit attestations arrive. This means that at any point during seconds 0-4 of a slot
+// we will have only one attestation for this slot in the cache.
+//
+// NOTE: This design in principle can result in worse aggregates since we lose the ability to aggregate some
+// single bit attestations in case of overlaps with incoming aggregates.
+//
+// The cache also keeps forkchoice attestations in a separate struct. These attestations are used for
+// forkchoice-related operations.
 type AttestationCache struct {
 	atts map[attestation.Id]*attGroup
 	sync.RWMutex
 	forkchoiceAtts *forkchoice.Attestations
 }
 
+// NewAttestationCache --
 func NewAttestationCache() *AttestationCache {
 	return &AttestationCache{
 		atts:           make(map[attestation.Id]*attGroup),
@@ -30,6 +49,11 @@ func NewAttestationCache() *AttestationCache {
 	}
 }
 
+// Add does one of two things:
+//
+//   - For unaggregated attestations, it adds the attestation bit to attestation bits of the running aggregate,
+//     which is the first aggregate for the slot.
+//   - For aggregated attestations, it appends the attestation to the existng list of attestations for the slot.
 func (c *AttestationCache) Add(att ethpb.Att) error {
 	if att.IsNil() {
 		return nil
@@ -80,6 +104,7 @@ func (c *AttestationCache) Add(att ethpb.Att) error {
 	return nil
 }
 
+// GetAll returns all attestations in the cache, excluding forkchoice attestations.
 func (c *AttestationCache) GetAll() []ethpb.Att {
 	c.RLock()
 	defer c.RUnlock()
@@ -91,6 +116,7 @@ func (c *AttestationCache) GetAll() []ethpb.Att {
 	return result
 }
 
+// Count returns the number of all attestations in the cache, excluding forkchoice attestations.
 func (c *AttestationCache) Count() int {
 	c.RLock()
 	defer c.RUnlock()
@@ -102,6 +128,7 @@ func (c *AttestationCache) Count() int {
 	return count
 }
 
+// DeleteCovered removes all attestations whose attestation bits are a proper subset of the passed-in attestation.
 func (c *AttestationCache) DeleteCovered(att ethpb.Att) error {
 	if att.IsNil() {
 		return nil
@@ -138,6 +165,7 @@ func (c *AttestationCache) DeleteCovered(att ethpb.Att) error {
 	return nil
 }
 
+// PruneBefore removes all attestations whose slot is earlier than the passed-in slot.
 func (c *AttestationCache) PruneBefore(slot primitives.Slot) uint64 {
 	c.Lock()
 	defer c.Unlock()
@@ -152,6 +180,8 @@ func (c *AttestationCache) PruneBefore(slot primitives.Slot) uint64 {
 	return uint64(pruneCount)
 }
 
+// AggregateIsRedundant checks whether all attestation bits of the passed-in aggregate
+// are already included by any aggregate in the cache.
 func (c *AttestationCache) AggregateIsRedundant(att ethpb.Att) (bool, error) {
 	if att.IsNil() {
 		return true, nil
@@ -196,6 +226,9 @@ func (c *AttestationCache) DeleteForkchoiceAttestation(att ethpb.Att) error {
 	return c.forkchoiceAtts.DeleteForkchoiceAttestation(att)
 }
 
+// GetBySlotAndCommitteeIndex --
+//
+// NOTE: This function cannot be declared as a method on the AttestationCache because it is a generic function.
 func GetBySlotAndCommitteeIndex[T ethpb.Att](c *AttestationCache, slot primitives.Slot, committeeIndex primitives.CommitteeIndex) []T {
 	c.RLock()
 	defer c.RUnlock()
