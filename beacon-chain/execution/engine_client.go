@@ -216,6 +216,7 @@ func (s *Service) ForkchoiceUpdated(
 	}
 	switch attrs.Version() {
 	case version.Bellatrix:
+		log.Error("NOT BELLATRIX!!!!!!")
 		a, err := attrs.PbV1()
 		if err != nil {
 			return nil, nil, err
@@ -225,6 +226,7 @@ func (s *Service) ForkchoiceUpdated(
 			return nil, nil, handleRPCError(err)
 		}
 	case version.Capella:
+		log.Error("NOT CAPELLLAAAAAAA")
 		a, err := attrs.PbV2()
 		if err != nil {
 			return nil, nil, err
@@ -234,6 +236,7 @@ func (s *Service) ForkchoiceUpdated(
 			return nil, nil, handleRPCError(err)
 		}
 	case version.Deneb, version.Electra:
+		log.Error("AHHHHHHHHHHHHHHHHHHHH THIS SHOULD BE CALLED!!!!!!!!!!!!")
 		a, err := attrs.PbV3()
 		if err != nil {
 			return nil, nil, err

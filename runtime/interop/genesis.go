@@ -132,7 +132,9 @@ func GethTestnetGenesis(genesisTime uint64, cfg *clparams.BeaconChainConfig) *co
 	//}
 
 	//shanghaiTime := GethShanghaiTime(genesisTime, cfg)
-	//cancunTime := GethCancunTime(genesisTime, cfg)
+	cancunTime := GethCancunTime(genesisTime, cfg)
+	shanghaiTime := uint64(0)
+	//cancunTime := uint64(0)
 	pragueTime := GethPragueTime(genesisTime, cfg)
 	cc := &params.ChainConfig{
 		ChainID:             big.NewInt(defaultTestChainId),
@@ -152,13 +154,14 @@ func GethTestnetGenesis(genesisTime uint64, cfg *clparams.BeaconChainConfig) *co
 		GrayGlacierBlock:    bigz,
 		MergeNetsplitBlock:  bigz,
 		//TerminalTotalDifficulty:       ttd,
-		//TerminalTotalDifficultyPassed: false,
+		TerminalTotalDifficulty:       bigz,
+		TerminalTotalDifficultyPassed: true,
 		//Clique: &params.CliqueConfig{
 		//	Period: cfg.SecondsPerETH1Block,
 		//	Epoch:  20000,
 		//},
-		ShanghaiTime: &genesisTime,
-		CancunTime:   &genesisTime,
+		ShanghaiTime: &shanghaiTime,
+		CancunTime:   cancunTime,
 		PragueTime:   pragueTime,
 	}
 	da := defaultDepositContractAllocation(cfg.DepositContractAddress)
