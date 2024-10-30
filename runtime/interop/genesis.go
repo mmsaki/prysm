@@ -171,14 +171,14 @@ func GethTestnetGenesis(genesisTime uint64, cfg *clparams.BeaconChainConfig) *co
 	//	panic(fmt.Sprintf("unable to decode DefaultCliqueSigner, with error %v", err.Error()))
 	//}
 	return &core.Genesis{
-		Config: cc,
-		//Nonce:      0, // overridden for authorized signer votes in clique, so we should leave it empty?
+		Config:    cc,
+		Nonce:     0, // overridden for authorized signer votes in clique, so we should leave it empty?
 		Timestamp: genesisTime,
 		//ExtraData:  extra,
 		GasLimit:   cfg.DefaultBuilderGasLimit,
 		Difficulty: common.HexToHash(defaultDifficulty).Big(),
-		//Mixhash:    common.HexToHash(defaultMixhash),
-		//Coinbase:   common.HexToAddress(defaultCoinbase),
+		Mixhash:    common.HexToHash(defaultMixhash),
+		Coinbase:   common.HexToAddress(defaultCoinbase),
 		Alloc: types.GenesisAlloc{
 			da.Address: da.Account,
 			ma.Address: ma.Account,
