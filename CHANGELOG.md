@@ -37,6 +37,7 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
 - Use read only state when computing the active validator list.
 - Simplified `ExitedValidatorIndices`.
 - Simplified `EjectedValidatorIndices`.
+- `engine_newPayloadV4`,`engine_getPayloadV4` are changes due to new execution request serialization decisions, [PR](https://github.com/prysmaticlabs/prysm/pull/14580)
 - updated geth to 1.14 ~
 - e2e tests start from capella
 
@@ -60,6 +61,8 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
 - Fix keymanager API should return corrected error format for malformed tokens
 - Fix keymanager API so that get keys returns an empty response instead of a 500 error when using an unsupported keystore.
 - Small log imporvement, removing some redundant or duplicate logs
+- EIP7521 - Fixes withdrawal bug by accounting for pending partial withdrawals and deducting already withdrawn amounts from the sweep balance. [PR](https://github.com/prysmaticlabs/prysm/pull/14578)
+
 
 ### Security
 
