@@ -23,10 +23,6 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-const (
-	FinalityBranchNumOfLeaves = 6
-)
-
 func NewLightClientBootstrapFromBeaconState(
 	ctx context.Context,
 	currentSlot primitives.Slot,
