@@ -40,6 +40,7 @@ go_library(
         "//encoding/ssz/detect:go_default_library",
         "//network/forks:go_default_library",
         "//network/httputil:go_default_library",
+        "//proto/prysm/v1alpha1:go_default_library",
         "//runtime/interop:go_default_library",
         "//runtime/version:go_default_library",
         "//testing/endtoend/components:go_default_library",
