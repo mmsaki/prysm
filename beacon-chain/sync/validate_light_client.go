@@ -43,6 +43,10 @@ func (s *Service) validateLightClientFinalityUpdate(ctx context.Context, pid pee
 	s.lcFinalityUpdateLock.Lock()
 	defer s.lcFinalityUpdateLock.Unlock()
 
+	maxActiveParticipants := update.SyncAggregate().SyncCommitteeBits.Len()
+	numActiveParticipants := update.SyncAggregate().SyncCommitteeBits.Count()
+	hasSupermajority := numActiveParticipants*3 >= maxActiveParticipants*2
+
 	last := s.lastLCFinalityUpdate
 	if last != nil {
 		// [IGNORE] The finalized_header.beacon.slot is greater than that of all previously forwarded finality_updates,
@@ -51,7 +55,7 @@ func (s *Service) validateLightClientFinalityUpdate(ctx context.Context, pid pee
 		if update.FinalizedHeader().Beacon().Slot < last.slot {
 			return pubsub.ValidationIgnore, nil
 		}
-		if update.FinalizedHeader().Beacon().Slot == last.slot && (last.hasSupermajority || !update.HasSupermajority()) {
+		if update.FinalizedHeader().Beacon().Slot == last.slot && (last.hasSupermajority || !hasSupermajority) {
 			return pubsub.ValidationIgnore, nil
 		}
 	}
@@ -68,7 +72,7 @@ func (s *Service) validateLightClientFinalityUpdate(ctx context.Context, pid pee
 
 	s.lastLCFinalityUpdate = &lcFinalityUpdateInfo{
 		slot:             update.FinalizedHeader().Beacon().Slot,
-		hasSupermajority: update.HasSupermajority(),
+		hasSupermajority: hasSupermajority,
 	}
 
 	return pubsub.ValidationAccept, nil
