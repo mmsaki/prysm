@@ -10,6 +10,7 @@ import (
 	"github.com/prysmaticlabs/prysm/v5/beacon-chain/core/validators"
 	"github.com/prysmaticlabs/prysm/v5/beacon-chain/state"
 	"github.com/prysmaticlabs/prysm/v5/config/params"
+	"github.com/prysmaticlabs/prysm/v5/consensus-types/interfaces"
 	"github.com/prysmaticlabs/prysm/v5/consensus-types/primitives"
 )
 
@@ -47,7 +48,7 @@ func ProcessRegistryUpdates(ctx context.Context, st state.BeaconState) error {
 	eligibleForEjection := make([]primitives.ValidatorIndex, 0)
 	eligibleForActivation := make([]primitives.ValidatorIndex, 0)
 
-	if err := st.ReadFromEveryValidator(func(idx int, val state.ReadOnlyValidator) error {
+	if err := st.ReadFromEveryValidator(func(idx int, val interfaces.ReadOnlyValidator) error {
 		// Collect validators eligible to enter the activation queue.
 		if helpers.IsEligibleForActivationQueue(val, currentEpoch) {
 			eligibleForActivationQ = append(eligibleForActivationQ, primitives.ValidatorIndex(idx))

@@ -6,6 +6,7 @@ import (
 	"github.com/prysmaticlabs/prysm/v5/beacon-chain/core/helpers"
 	"github.com/prysmaticlabs/prysm/v5/beacon-chain/state"
 	"github.com/prysmaticlabs/prysm/v5/config/params"
+	"github.com/prysmaticlabs/prysm/v5/consensus-types/interfaces"
 	ethpb "github.com/prysmaticlabs/prysm/v5/proto/prysm/v1alpha1"
 )
 
@@ -39,7 +40,7 @@ func ProcessEffectiveBalanceUpdates(st state.BeaconState) error {
 	bals := st.Balances()
 
 	// Update effective balances with hysteresis.
-	validatorFunc := func(idx int, val state.ReadOnlyValidator) (newVal *ethpb.Validator, err error) {
+	validatorFunc := func(idx int, val interfaces.ReadOnlyValidator) (newVal *ethpb.Validator, err error) {
 		if val == nil {
 			return nil, fmt.Errorf("validator %d is nil in state", idx)
 		}

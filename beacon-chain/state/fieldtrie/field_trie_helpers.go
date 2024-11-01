@@ -9,6 +9,8 @@ import (
 	customtypes "github.com/prysmaticlabs/prysm/v5/beacon-chain/state/state-native/custom-types"
 	"github.com/prysmaticlabs/prysm/v5/beacon-chain/state/state-native/types"
 	"github.com/prysmaticlabs/prysm/v5/beacon-chain/state/stateutil"
+	"github.com/prysmaticlabs/prysm/v5/consensus-types/interfaces"
+	state_native "github.com/prysmaticlabs/prysm/v5/consensus-types/validator"
 	multi_value_slice "github.com/prysmaticlabs/prysm/v5/container/multi-value-slice"
 	pmath "github.com/prysmaticlabs/prysm/v5/math"
 	ethpb "github.com/prysmaticlabs/prysm/v5/proto/prysm/v1alpha1"
@@ -163,7 +165,16 @@ func handle32ByteMVslice(mv multi_value_slice.MultiValueSliceComposite[[32]byte]
 func handleValidatorMVSlice(mv multi_value_slice.MultiValueSliceComposite[*ethpb.Validator], indices []uint64, convertAll bool) ([][32]byte, error) {
 	length := len(indices)
 	if convertAll {
-		return stateutil.OptimizedValidatorRoots(mv.Value(mv.State()))
+		var err error
+		vals := mv.Value(mv.State())
+		roVals := make([]interfaces.ReadOnlyValidator, 0, len(vals))
+		for i := range vals {
+			roVals[i], err = state_native.NewValidator(vals[i])
+			if err != nil {
+				return nil, err
+			}
+		}
+		return stateutil.OptimizedValidatorRoots(roVals)
 	}
 	roots := make([][32]byte, 0, length)
 	rootCreator := func(input *ethpb.Validator) error {

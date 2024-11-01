@@ -15,7 +15,7 @@ import (
 	fieldparams "github.com/prysmaticlabs/prysm/v5/config/fieldparams"
 	"github.com/prysmaticlabs/prysm/v5/config/params"
 	"github.com/prysmaticlabs/prysm/v5/config/proposer"
-	"github.com/prysmaticlabs/prysm/v5/consensus-types/validator"
+	"github.com/prysmaticlabs/prysm/v5/consensus-types/primitives"
 	"github.com/prysmaticlabs/prysm/v5/encoding/bytesutil"
 	"github.com/prysmaticlabs/prysm/v5/testing/assert"
 	"github.com/prysmaticlabs/prysm/v5/testing/require"
@@ -109,7 +109,7 @@ func TestProposerSettingsLoader(t *testing.T) {
 							},
 							BuilderConfig: &proposer.BuilderConfig{
 								Enabled:  true,
-								GasLimit: validator.Uint64(30000000),
+								GasLimit: primitives.Uint64(30000000),
 							},
 						},
 					},
@@ -119,7 +119,7 @@ func TestProposerSettingsLoader(t *testing.T) {
 						},
 						BuilderConfig: &proposer.BuilderConfig{
 							Enabled:  true,
-							GasLimit: validator.Uint64(40000000),
+							GasLimit: primitives.Uint64(40000000),
 						},
 					},
 				}
@@ -160,7 +160,7 @@ func TestProposerSettingsLoader(t *testing.T) {
 						},
 						BuilderConfig: &proposer.BuilderConfig{
 							Enabled:  true,
-							GasLimit: validator.Uint64(params.BeaconConfig().DefaultBuilderGasLimit),
+							GasLimit: primitives.Uint64(params.BeaconConfig().DefaultBuilderGasLimit),
 						},
 					},
 				}
@@ -187,7 +187,7 @@ func TestProposerSettingsLoader(t *testing.T) {
 							},
 							BuilderConfig: &proposer.BuilderConfig{
 								Enabled:  true,
-								GasLimit: validator.Uint64(40000000),
+								GasLimit: primitives.Uint64(40000000),
 							},
 						},
 					},
@@ -197,7 +197,7 @@ func TestProposerSettingsLoader(t *testing.T) {
 						},
 						BuilderConfig: &proposer.BuilderConfig{
 							Enabled:  true,
-							GasLimit: validator.Uint64(params.BeaconConfig().DefaultBuilderGasLimit),
+							GasLimit: primitives.Uint64(params.BeaconConfig().DefaultBuilderGasLimit),
 						},
 					},
 				}
@@ -213,7 +213,7 @@ func TestProposerSettingsLoader(t *testing.T) {
 							},
 							BuilderConfig: &proposer.BuilderConfig{
 								Enabled:  true,
-								GasLimit: validator.Uint64(40000000),
+								GasLimit: primitives.Uint64(40000000),
 							},
 						},
 					},
@@ -254,7 +254,7 @@ func TestProposerSettingsLoader(t *testing.T) {
 						},
 						BuilderConfig: &proposer.BuilderConfig{
 							Enabled:  true,
-							GasLimit: validator.Uint64(params.BeaconConfig().DefaultBuilderGasLimit),
+							GasLimit: primitives.Uint64(params.BeaconConfig().DefaultBuilderGasLimit),
 						},
 					},
 				}
@@ -312,7 +312,7 @@ func TestProposerSettingsLoader(t *testing.T) {
 							},
 							BuilderConfig: &proposer.BuilderConfig{
 								Enabled:  true,
-								GasLimit: validator.Uint64(params.BeaconConfig().DefaultBuilderGasLimit),
+								GasLimit: primitives.Uint64(params.BeaconConfig().DefaultBuilderGasLimit),
 							},
 						},
 						bytesutil.ToBytes48(key2): {
@@ -321,7 +321,7 @@ func TestProposerSettingsLoader(t *testing.T) {
 							},
 							BuilderConfig: &proposer.BuilderConfig{
 								Enabled:  true,
-								GasLimit: validator.Uint64(35000000),
+								GasLimit: primitives.Uint64(35000000),
 							},
 						},
 					},
@@ -331,7 +331,7 @@ func TestProposerSettingsLoader(t *testing.T) {
 						},
 						BuilderConfig: &proposer.BuilderConfig{
 							Enabled:  true,
-							GasLimit: validator.Uint64(40000000),
+							GasLimit: primitives.Uint64(40000000),
 						},
 					},
 				}
@@ -397,7 +397,7 @@ func TestProposerSettingsLoader(t *testing.T) {
 						},
 						BuilderConfig: &proposer.BuilderConfig{
 							Enabled:  false,
-							GasLimit: validator.Uint64(params.BeaconConfig().DefaultBuilderGasLimit),
+							GasLimit: primitives.Uint64(params.BeaconConfig().DefaultBuilderGasLimit),
 						},
 					},
 				}
@@ -443,7 +443,7 @@ func TestProposerSettingsLoader(t *testing.T) {
 						},
 						BuilderConfig: &proposer.BuilderConfig{
 							Enabled:  true,
-							GasLimit: validator.Uint64(params.BeaconConfig().DefaultBuilderGasLimit),
+							GasLimit: primitives.Uint64(params.BeaconConfig().DefaultBuilderGasLimit),
 						},
 					},
 				}
@@ -509,7 +509,7 @@ func TestProposerSettingsLoader(t *testing.T) {
 						},
 						BuilderConfig: &proposer.BuilderConfig{
 							Enabled:  false,
-							GasLimit: validator.Uint64(50000000),
+							GasLimit: primitives.Uint64(50000000),
 						},
 					},
 				}
@@ -565,7 +565,7 @@ func TestProposerSettingsLoader(t *testing.T) {
 							},
 							BuilderConfig: &proposer.BuilderConfig{
 								Enabled:  true,
-								GasLimit: validator.Uint64(params.BeaconConfig().DefaultBuilderGasLimit),
+								GasLimit: primitives.Uint64(params.BeaconConfig().DefaultBuilderGasLimit),
 							},
 						},
 					},
@@ -575,7 +575,7 @@ func TestProposerSettingsLoader(t *testing.T) {
 						},
 						BuilderConfig: &proposer.BuilderConfig{
 							Enabled:  true,
-							GasLimit: validator.Uint64(params.BeaconConfig().DefaultBuilderGasLimit),
+							GasLimit: primitives.Uint64(params.BeaconConfig().DefaultBuilderGasLimit),
 						},
 					},
 				}
@@ -603,7 +603,7 @@ func TestProposerSettingsLoader(t *testing.T) {
 							},
 							BuilderConfig: &proposer.BuilderConfig{
 								Enabled:  true,
-								GasLimit: validator.Uint64(params.BeaconConfig().DefaultBuilderGasLimit),
+								GasLimit: primitives.Uint64(params.BeaconConfig().DefaultBuilderGasLimit),
 							},
 						},
 					},
@@ -613,7 +613,7 @@ func TestProposerSettingsLoader(t *testing.T) {
 						},
 						BuilderConfig: &proposer.BuilderConfig{
 							Enabled:  true,
-							GasLimit: validator.Uint64(params.BeaconConfig().DefaultBuilderGasLimit),
+							GasLimit: primitives.Uint64(params.BeaconConfig().DefaultBuilderGasLimit),
 						},
 					},
 				}
@@ -640,7 +640,7 @@ func TestProposerSettingsLoader(t *testing.T) {
 							},
 							BuilderConfig: &proposer.BuilderConfig{
 								Enabled:  true,
-								GasLimit: validator.Uint64(40000000),
+								GasLimit: primitives.Uint64(40000000),
 							},
 						},
 					},
@@ -650,7 +650,7 @@ func TestProposerSettingsLoader(t *testing.T) {
 						},
 						BuilderConfig: &proposer.BuilderConfig{
 							Enabled:  true,
-							GasLimit: validator.Uint64(params.BeaconConfig().DefaultBuilderGasLimit),
+							GasLimit: primitives.Uint64(params.BeaconConfig().DefaultBuilderGasLimit),
 						},
 					},
 				}
@@ -671,7 +671,7 @@ func TestProposerSettingsLoader(t *testing.T) {
 					DefaultConfig: &proposer.Option{
 						BuilderConfig: &proposer.BuilderConfig{
 							Enabled:  true,
-							GasLimit: validator.Uint64(params.BeaconConfig().DefaultBuilderGasLimit),
+							GasLimit: primitives.Uint64(params.BeaconConfig().DefaultBuilderGasLimit),
 						},
 					},
 				}
@@ -717,7 +717,7 @@ func TestProposerSettingsLoader(t *testing.T) {
 							},
 							BuilderConfig: &proposer.BuilderConfig{
 								Enabled:  true,
-								GasLimit: validator.Uint64(40000000),
+								GasLimit: primitives.Uint64(40000000),
 							},
 						},
 					},
@@ -727,7 +727,7 @@ func TestProposerSettingsLoader(t *testing.T) {
 						},
 						BuilderConfig: &proposer.BuilderConfig{
 							Enabled:  true,
-							GasLimit: validator.Uint64(params.BeaconConfig().DefaultBuilderGasLimit),
+							GasLimit: primitives.Uint64(params.BeaconConfig().DefaultBuilderGasLimit),
 						},
 					},
 				}
@@ -754,7 +754,7 @@ func TestProposerSettingsLoader(t *testing.T) {
 							},
 							BuilderConfig: &proposer.BuilderConfig{
 								Enabled:  true,
-								GasLimit: validator.Uint64(params.BeaconConfig().DefaultBuilderGasLimit),
+								GasLimit: primitives.Uint64(params.BeaconConfig().DefaultBuilderGasLimit),
 							},
 						},
 					},
@@ -764,7 +764,7 @@ func TestProposerSettingsLoader(t *testing.T) {
 						},
 						BuilderConfig: &proposer.BuilderConfig{
 							Enabled:  true,
-							GasLimit: validator.Uint64(params.BeaconConfig().DefaultBuilderGasLimit),
+							GasLimit: primitives.Uint64(params.BeaconConfig().DefaultBuilderGasLimit),
 						},
 					},
 				}
@@ -994,7 +994,7 @@ func Test_ProposerSettingsLoaderWithOnlyBuilder_DoesNotSaveInDB(t *testing.T) {
 				DefaultConfig: &proposer.Option{
 					BuilderConfig: &proposer.BuilderConfig{
 						Enabled:  true,
-						GasLimit: validator.Uint64(params.BeaconConfig().DefaultBuilderGasLimit),
+						GasLimit: primitives.Uint64(params.BeaconConfig().DefaultBuilderGasLimit),
 						Relays:   nil,
 					},
 				},

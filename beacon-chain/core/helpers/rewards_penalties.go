@@ -6,6 +6,7 @@ import (
 	"github.com/prysmaticlabs/prysm/v5/beacon-chain/cache"
 	"github.com/prysmaticlabs/prysm/v5/beacon-chain/state"
 	"github.com/prysmaticlabs/prysm/v5/config/params"
+	"github.com/prysmaticlabs/prysm/v5/consensus-types/interfaces"
 	"github.com/prysmaticlabs/prysm/v5/consensus-types/primitives"
 	mathutil "github.com/prysmaticlabs/prysm/v5/math"
 	"github.com/prysmaticlabs/prysm/v5/time/slots"
@@ -25,7 +26,7 @@ var balanceCache = cache.NewEffectiveBalanceCache()
 //	 Math safe up to ~10B ETH, after which this overflows uint64.
 //	 """
 //	 return Gwei(max(EFFECTIVE_BALANCE_INCREMENT, sum([state.validators[index].effective_balance for index in indices])))
-func TotalBalance(state state.ReadOnlyValidators, indices []primitives.ValidatorIndex) uint64 {
+func TotalBalance(state interfaces.ReadOnlyValidators, indices []primitives.ValidatorIndex) uint64 {
 	total := uint64(0)
 
 	for _, idx := range indices {
@@ -69,7 +70,7 @@ func TotalActiveBalance(s state.ReadOnlyBeaconState) (uint64, error) {
 
 	total := uint64(0)
 	epoch := slots.ToEpoch(s.Slot())
-	if err := s.ReadFromEveryValidator(func(idx int, val state.ReadOnlyValidator) error {
+	if err := s.ReadFromEveryValidator(func(idx int, val interfaces.ReadOnlyValidator) error {
 		if IsActiveValidatorUsingTrie(val, epoch) {
 			total += val.EffectiveBalance()
 		}

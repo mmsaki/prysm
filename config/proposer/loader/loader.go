@@ -11,7 +11,7 @@ import (
 	"github.com/prysmaticlabs/prysm/v5/config"
 	"github.com/prysmaticlabs/prysm/v5/config/params"
 	"github.com/prysmaticlabs/prysm/v5/config/proposer"
-	"github.com/prysmaticlabs/prysm/v5/consensus-types/validator"
+	"github.com/prysmaticlabs/prysm/v5/consensus-types/primitives"
 	validatorpb "github.com/prysmaticlabs/prysm/v5/proto/prysm/v1alpha1/validator-client"
 	"github.com/prysmaticlabs/prysm/v5/validator/db/iface"
 	log "github.com/sirupsen/logrus"
@@ -37,7 +37,7 @@ type settingsLoader struct {
 
 type flagOptions struct {
 	builderConfig *proposer.BuilderConfig
-	gasLimit      *validator.Uint64
+	gasLimit      *primitives.Uint64
 }
 
 // SettingsLoaderOption sets additional options that affect the proposer settings
@@ -49,7 +49,7 @@ func WithBuilderConfig() SettingsLoaderOption {
 		if cliCtx.Bool(flags.EnableBuilderFlag.Name) {
 			psl.options.builderConfig = &proposer.BuilderConfig{
 				Enabled:  true,
-				GasLimit: validator.Uint64(params.BeaconConfig().DefaultBuilderGasLimit),
+				GasLimit: primitives.Uint64(params.BeaconConfig().DefaultBuilderGasLimit),
 			}
 		}
 		return nil
@@ -68,7 +68,7 @@ func WithGasLimit() SettingsLoaderOption {
 			if gl == 0 {
 				log.Warnf("Gas limit was intentionally set to 0, this will be replaced with the default gas limit of %d", params.BeaconConfig().DefaultBuilderGasLimit)
 			}
-			rgl := reviewGasLimit(validator.Uint64(gl))
+			rgl := reviewGasLimit(primitives.Uint64(gl))
 			psl.options.gasLimit = &rgl
 		}
 		return nil
@@ -224,7 +224,7 @@ func (psl *settingsLoader) processProposerSettings(loadedSettings, dbSettings *v
 	newSettings := &validatorpb.ProposerSettingsPayload{}
 
 	var builderConfig *validatorpb.BuilderConfig
-	var gasLimitOnly *validator.Uint64
+	var gasLimitOnly *primitives.Uint64
 
 	if psl.options != nil {
 		if psl.options.builderConfig != nil {
@@ -277,7 +277,7 @@ func (psl *settingsLoader) processProposerSettings(loadedSettings, dbSettings *v
 	return newSettings
 }
 
-func processBuilderConfig(current *validatorpb.BuilderConfig, override *validatorpb.BuilderConfig, gasLimitOnly *validator.Uint64) *validatorpb.BuilderConfig {
+func processBuilderConfig(current *validatorpb.BuilderConfig, override *validatorpb.BuilderConfig, gasLimitOnly *primitives.Uint64) *validatorpb.BuilderConfig {
 	if current != nil {
 		current.GasLimit = reviewGasLimit(current.GasLimit)
 		if override != nil {
@@ -291,10 +291,10 @@ func processBuilderConfig(current *validatorpb.BuilderConfig, override *validato
 	return override
 }
 
-func reviewGasLimit(gasLimit validator.Uint64) validator.Uint64 {
+func reviewGasLimit(gasLimit primitives.Uint64) primitives.Uint64 {
 	// sets gas limit to default if not defined or set to 0
 	if gasLimit == 0 {
-		return validator.Uint64(params.BeaconConfig().DefaultBuilderGasLimit)
+		return primitives.Uint64(params.BeaconConfig().DefaultBuilderGasLimit)
 	}
 	// TODO(10810): add in warning for ranges
 	return gasLimit

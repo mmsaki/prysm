@@ -15,6 +15,7 @@ go_library(
         "slot.go",
         "sszbytes.go",
         "sszuint64.go",
+        "uint64.go",
         "validator.go",
         "wei.go",
     ],
@@ -37,6 +38,7 @@ go_test(
         "slot_test.go",
         "sszbytes_test.go",
         "sszuint64_test.go",
+        "uint64_test.go",
         "validator_test.go",
         "wei_test.go",
     ],
@@ -44,5 +46,6 @@ go_test(
     deps = [
         "//math:go_default_library",
         "//testing/require:go_default_library",
+        "@io_k8s_apimachinery//pkg/util/yaml:go_default_library",
     ],
 )

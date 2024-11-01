@@ -11,7 +11,6 @@ import (
 	sync "sync"
 
 	github_com_prysmaticlabs_prysm_v5_consensus_types_primitives "github.com/prysmaticlabs/prysm/v5/consensus-types/primitives"
-	github_com_prysmaticlabs_prysm_v5_consensus_types_validator "github.com/prysmaticlabs/prysm/v5/consensus-types/validator"
 	_ "github.com/prysmaticlabs/prysm/v5/proto/eth/ext"
 	v1alpha1 "github.com/prysmaticlabs/prysm/v5/proto/prysm/v1alpha1"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
@@ -565,9 +564,9 @@ type BuilderConfig struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Enabled  bool                                                               `protobuf:"varint,1,opt,name=enabled,proto3" json:"enabled,omitempty"`
-	GasLimit github_com_prysmaticlabs_prysm_v5_consensus_types_validator.Uint64 `protobuf:"varint,2,opt,name=gas_limit,json=gasLimit,proto3" json:"gas_limit,omitempty" cast-type:"github.com/prysmaticlabs/prysm/v5/consensus-types/validator.Uint64"`
-	Relays   []string                                                           `protobuf:"bytes,3,rep,name=relays,proto3" json:"relays,omitempty"`
+	Enabled  bool                                                                `protobuf:"varint,1,opt,name=enabled,proto3" json:"enabled,omitempty"`
+	GasLimit github_com_prysmaticlabs_prysm_v5_consensus_types_primitives.Uint64 `protobuf:"varint,2,opt,name=gas_limit,json=gasLimit,proto3" json:"gas_limit,omitempty" cast-type:"github.com/prysmaticlabs/prysm/v5/consensus-types/validator.Uint64"`
+	Relays   []string                                                            `protobuf:"bytes,3,rep,name=relays,proto3" json:"relays,omitempty"`
 }
 
 func (x *BuilderConfig) Reset() {
@@ -609,11 +608,11 @@ func (x *BuilderConfig) GetEnabled() bool {
 	return false
 }
 
-func (x *BuilderConfig) GetGasLimit() github_com_prysmaticlabs_prysm_v5_consensus_types_validator.Uint64 {
+func (x *BuilderConfig) GetGasLimit() github_com_prysmaticlabs_prysm_v5_consensus_types_primitives.Uint64 {
 	if x != nil {
 		return x.GasLimit
 	}
-	return github_com_prysmaticlabs_prysm_v5_consensus_types_validator.Uint64(0)
+	return github_com_prysmaticlabs_prysm_v5_consensus_types_primitives.Uint64(0)
 }
 
 func (x *BuilderConfig) GetRelays() []string {

@@ -19,7 +19,6 @@ import (
 	"github.com/prysmaticlabs/prysm/v5/config/params"
 	"github.com/prysmaticlabs/prysm/v5/config/proposer"
 	"github.com/prysmaticlabs/prysm/v5/consensus-types/primitives"
-	"github.com/prysmaticlabs/prysm/v5/consensus-types/validator"
 	"github.com/prysmaticlabs/prysm/v5/encoding/bytesutil"
 	"github.com/prysmaticlabs/prysm/v5/monitoring/tracing/trace"
 	"github.com/prysmaticlabs/prysm/v5/network/httputil"
@@ -788,7 +787,7 @@ func (s *Server) SetGasLimit(w http.ResponseWriter, r *http.Request) {
 		}
 		settings.ProposeConfig = make(map[[fieldparams.BLSPubkeyLength]byte]*proposer.Option)
 		option := settings.DefaultConfig.Clone()
-		option.BuilderConfig.GasLimit = validator.Uint64(gasLimit)
+		option.BuilderConfig.GasLimit = primitives.Uint64(gasLimit)
 		settings.ProposeConfig[bytesutil.ToBytes48(pubkey)] = option
 	} else {
 		proposerOption, found := settings.ProposeConfig[bytesutil.ToBytes48(pubkey)]
@@ -797,7 +796,7 @@ func (s *Server) SetGasLimit(w http.ResponseWriter, r *http.Request) {
 				httputil.HandleError(w, "Gas limit changes only apply when builder is enabled", http.StatusInternalServerError)
 				return
 			} else {
-				proposerOption.BuilderConfig.GasLimit = validator.Uint64(gasLimit)
+				proposerOption.BuilderConfig.GasLimit = primitives.Uint64(gasLimit)
 			}
 		} else {
 			if settings.DefaultConfig == nil {
@@ -805,7 +804,7 @@ func (s *Server) SetGasLimit(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 			option := settings.DefaultConfig.Clone()
-			option.BuilderConfig.GasLimit = validator.Uint64(gasLimit)
+			option.BuilderConfig.GasLimit = primitives.Uint64(gasLimit)
 			settings.ProposeConfig[bytesutil.ToBytes48(pubkey)] = option
 		}
 	}
@@ -840,7 +839,7 @@ func (s *Server) DeleteGasLimit(w http.ResponseWriter, r *http.Request) {
 				proposerOption.BuilderConfig.GasLimit = proposerSettings.DefaultConfig.BuilderConfig.GasLimit
 			} else {
 				// Fallback to using global default.
-				proposerOption.BuilderConfig.GasLimit = validator.Uint64(params.BeaconConfig().DefaultBuilderGasLimit)
+				proposerOption.BuilderConfig.GasLimit = primitives.Uint64(params.BeaconConfig().DefaultBuilderGasLimit)
 			}
 			// save the settings
 			if err := s.validatorService.SetProposerSettings(ctx, proposerSettings); err != nil {

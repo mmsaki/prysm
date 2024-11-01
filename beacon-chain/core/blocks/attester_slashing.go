@@ -7,6 +7,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/prysmaticlabs/prysm/v5/beacon-chain/core/helpers"
 	"github.com/prysmaticlabs/prysm/v5/beacon-chain/state"
+	"github.com/prysmaticlabs/prysm/v5/consensus-types/interfaces"
 	"github.com/prysmaticlabs/prysm/v5/consensus-types/primitives"
 	"github.com/prysmaticlabs/prysm/v5/container/slice"
 	ethpb "github.com/prysmaticlabs/prysm/v5/proto/prysm/v1alpha1"
@@ -68,7 +69,7 @@ func ProcessAttesterSlashing(
 	currentEpoch := slots.ToEpoch(beaconState.Slot())
 	var err error
 	var slashedAny bool
-	var val state.ReadOnlyValidator
+	var val interfaces.ReadOnlyValidator
 	for _, validatorIndex := range slashableIndices {
 		val, err = beaconState.ValidatorAtIndexReadOnly(primitives.ValidatorIndex(validatorIndex))
 		if err != nil {

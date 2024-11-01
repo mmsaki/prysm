@@ -876,7 +876,7 @@ func (s *Service) ValidatorActiveSetChanges(
 			Reason: Internal,
 		}
 	}
-	vs := requestedState.Validators()
+	vs := requestedState.ValidatorsReadOnly()
 	activatedIndices := validators.ActivatedValidatorIndices(coreTime.CurrentEpoch(requestedState), vs)
 	exitedIndices, err := validators.ExitedValidatorIndices(coreTime.CurrentEpoch(requestedState), vs, activeValidatorCount)
 	if err != nil {

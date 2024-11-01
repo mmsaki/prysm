@@ -26,6 +26,7 @@ import (
 	fieldparams "github.com/prysmaticlabs/prysm/v5/config/fieldparams"
 	"github.com/prysmaticlabs/prysm/v5/config/params"
 	consensus_types "github.com/prysmaticlabs/prysm/v5/consensus-types"
+	"github.com/prysmaticlabs/prysm/v5/consensus-types/interfaces"
 	"github.com/prysmaticlabs/prysm/v5/consensus-types/primitives"
 	validator2 "github.com/prysmaticlabs/prysm/v5/consensus-types/validator"
 	"github.com/prysmaticlabs/prysm/v5/encoding/bytesutil"
@@ -312,7 +313,7 @@ func (s *Server) SubmitSyncCommitteeSubscription(w http.ResponseWriter, r *http.
 		return
 	}
 	currEpoch := slots.ToEpoch(st.Slot())
-	validators := make([]state.ReadOnlyValidator, len(req.Data))
+	validators := make([]interfaces.ReadOnlyValidator, len(req.Data))
 	subscriptions := make([]*validator2.SyncCommitteeSubscription, len(req.Data))
 	for i, item := range req.Data {
 		consensusItem, err := item.ToConsensus()
@@ -423,7 +424,7 @@ func (s *Server) SubmitBeaconCommitteeSubscription(w http.ResponseWriter, r *htt
 	}
 
 	// Verify validators at the beginning to return early if request is invalid.
-	validators := make([]state.ReadOnlyValidator, len(req.Data))
+	validators := make([]interfaces.ReadOnlyValidator, len(req.Data))
 	subscriptions := make([]*validator2.BeaconCommitteeSubscription, len(req.Data))
 	for i, item := range req.Data {
 		consensusItem, err := item.ToConsensus()
@@ -1257,9 +1258,9 @@ func syncCommitteeDutiesAndVals(
 	st state.BeaconState,
 	requestedValIndices []primitives.ValidatorIndex,
 	committeePubkeys map[[fieldparams.BLSPubkeyLength]byte][]string,
-) ([]*structs.SyncCommitteeDuty, []state.ReadOnlyValidator, error) {
+) ([]*structs.SyncCommitteeDuty, []interfaces.ReadOnlyValidator, error) {
 	duties := make([]*structs.SyncCommitteeDuty, 0)
-	vals := make([]state.ReadOnlyValidator, 0)
+	vals := make([]interfaces.ReadOnlyValidator, 0)
 	for _, index := range requestedValIndices {
 		duty := &structs.SyncCommitteeDuty{
 			ValidatorIndex: strconv.FormatUint(uint64(index), 10),

@@ -21,7 +21,6 @@ import (
 	"github.com/prysmaticlabs/prysm/v5/config/params"
 	"github.com/prysmaticlabs/prysm/v5/config/proposer"
 	"github.com/prysmaticlabs/prysm/v5/consensus-types/primitives"
-	"github.com/prysmaticlabs/prysm/v5/consensus-types/validator"
 	"github.com/prysmaticlabs/prysm/v5/encoding/bytesutil"
 	eth "github.com/prysmaticlabs/prysm/v5/proto/prysm/v1alpha1"
 	"github.com/prysmaticlabs/prysm/v5/testing/assert"
@@ -1198,11 +1197,11 @@ func TestServer_DeleteGasLimit(t *testing.T) {
 		params.BeaconConfig().DefaultBuilderGasLimit = originBeaconChainGasLimit
 	}()
 
-	globalDefaultGasLimit := validator.Uint64(0xbbdd)
+	globalDefaultGasLimit := primitives.Uint64(0xbbdd)
 
 	type want struct {
 		pubkey   []byte
-		gaslimit validator.Uint64
+		gaslimit primitives.Uint64
 	}
 
 	tests := []struct {
@@ -1218,14 +1217,14 @@ func TestServer_DeleteGasLimit(t *testing.T) {
 			proposerSettings: &proposer.Settings{
 				ProposeConfig: map[[48]byte]*proposer.Option{
 					bytesutil.ToBytes48(pubkey1): {
-						BuilderConfig: &proposer.BuilderConfig{GasLimit: validator.Uint64(987654321)},
+						BuilderConfig: &proposer.BuilderConfig{GasLimit: primitives.Uint64(987654321)},
 					},
 					bytesutil.ToBytes48(pubkey2): {
-						BuilderConfig: &proposer.BuilderConfig{GasLimit: validator.Uint64(123456789)},
+						BuilderConfig: &proposer.BuilderConfig{GasLimit: primitives.Uint64(123456789)},
 					},
 				},
 				DefaultConfig: &proposer.Option{
-					BuilderConfig: &proposer.BuilderConfig{GasLimit: validator.Uint64(5555)},
+					BuilderConfig: &proposer.BuilderConfig{GasLimit: primitives.Uint64(5555)},
 				},
 			},
 			wantError: nil,
@@ -1233,11 +1232,11 @@ func TestServer_DeleteGasLimit(t *testing.T) {
 				{
 					pubkey: pubkey1,
 					// After deletion, use DefaultConfig.BuilderConfig.GasLimitMetaData.
-					gaslimit: validator.Uint64(5555),
+					gaslimit: primitives.Uint64(5555),
 				},
 				{
 					pubkey:   pubkey2,
-					gaslimit: validator.Uint64(123456789),
+					gaslimit: primitives.Uint64(123456789),
 				},
 			},
 		},
@@ -1247,10 +1246,10 @@ func TestServer_DeleteGasLimit(t *testing.T) {
 			proposerSettings: &proposer.Settings{
 				ProposeConfig: map[[48]byte]*proposer.Option{
 					bytesutil.ToBytes48(pubkey1): {
-						BuilderConfig: &proposer.BuilderConfig{GasLimit: validator.Uint64(987654321)},
+						BuilderConfig: &proposer.BuilderConfig{GasLimit: primitives.Uint64(987654321)},
 					},
 					bytesutil.ToBytes48(pubkey2): {
-						BuilderConfig: &proposer.BuilderConfig{GasLimit: validator.Uint64(123456789)},
+						BuilderConfig: &proposer.BuilderConfig{GasLimit: primitives.Uint64(123456789)},
 					},
 				},
 			},
@@ -1263,7 +1262,7 @@ func TestServer_DeleteGasLimit(t *testing.T) {
 				},
 				{
 					pubkey:   pubkey2,
-					gaslimit: validator.Uint64(123456789),
+					gaslimit: primitives.Uint64(123456789),
 				},
 			},
 		},
@@ -1273,7 +1272,7 @@ func TestServer_DeleteGasLimit(t *testing.T) {
 			proposerSettings: &proposer.Settings{
 				ProposeConfig: map[[48]byte]*proposer.Option{
 					bytesutil.ToBytes48(pubkey1): {
-						BuilderConfig: &proposer.BuilderConfig{GasLimit: validator.Uint64(987654321)},
+						BuilderConfig: &proposer.BuilderConfig{GasLimit: primitives.Uint64(987654321)},
 					},
 				},
 			},
@@ -1282,7 +1281,7 @@ func TestServer_DeleteGasLimit(t *testing.T) {
 				// pubkey1's gaslimit is unaffected
 				{
 					pubkey:   pubkey1,
-					gaslimit: validator.Uint64(987654321),
+					gaslimit: primitives.Uint64(987654321),
 				},
 			},
 		},

@@ -32,7 +32,7 @@ func IsCurrentPeriodSyncCommittee(st state.BeaconState, valIdx primitives.Valida
 	}
 	indices, err := syncCommitteeCache.CurrentPeriodIndexPosition(root, valIdx)
 	if errors.Is(err, cache.ErrNonExistingSyncCommitteeKey) {
-		val, err := st.ValidatorAtIndex(valIdx)
+		val, err := st.ValidatorAtIndexReadOnly(valIdx)
 		if err != nil {
 			return false, err
 		}
@@ -48,7 +48,8 @@ func IsCurrentPeriodSyncCommittee(st state.BeaconState, valIdx primitives.Valida
 			}
 		}()
 
-		return len(findSubCommitteeIndices(val.PublicKey, committee.Pubkeys)) > 0, nil
+		pk := val.PublicKey()
+		return len(findSubCommitteeIndices(pk[:], committee.Pubkeys)) > 0, nil
 	}
 	if err != nil {
 		return false, err

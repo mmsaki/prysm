@@ -73,12 +73,12 @@ func VerifyBlockSignature(beaconState state.ReadOnlyBeaconState,
 	if err != nil {
 		return err
 	}
-	proposer, err := beaconState.ValidatorAtIndex(proposerIndex)
+	proposer, err := beaconState.ValidatorAtIndexReadOnly(proposerIndex)
 	if err != nil {
 		return err
 	}
-	proposerPubKey := proposer.PublicKey
-	return signing.VerifyBlockSigningRoot(proposerPubKey, sig, domain, rootFunc)
+	proposerPubKey := proposer.PublicKey()
+	return signing.VerifyBlockSigningRoot(proposerPubKey[:], sig, domain, rootFunc)
 }
 
 // VerifyBlockHeaderSignature verifies the proposer signature of a beacon block header.
@@ -88,12 +88,12 @@ func VerifyBlockHeaderSignature(beaconState state.BeaconState, header *ethpb.Sig
 	if err != nil {
 		return err
 	}
-	proposer, err := beaconState.ValidatorAtIndex(header.Header.ProposerIndex)
+	proposer, err := beaconState.ValidatorAtIndexReadOnly(header.Header.ProposerIndex)
 	if err != nil {
 		return err
 	}
-	proposerPubKey := proposer.PublicKey
-	return signing.VerifyBlockHeaderSigningRoot(header.Header, proposerPubKey, header.Signature, domain)
+	proposerPubKey := proposer.PublicKey()
+	return signing.VerifyBlockHeaderSigningRoot(header.Header, proposerPubKey[:], header.Signature, domain)
 }
 
 // VerifyBlockSignatureUsingCurrentFork verifies the proposer signature of a beacon block. This differs
@@ -109,13 +109,13 @@ func VerifyBlockSignatureUsingCurrentFork(beaconState state.ReadOnlyBeaconState,
 	if err != nil {
 		return err
 	}
-	proposer, err := beaconState.ValidatorAtIndex(blk.Block().ProposerIndex())
+	proposer, err := beaconState.ValidatorAtIndexReadOnly(blk.Block().ProposerIndex())
 	if err != nil {
 		return err
 	}
-	proposerPubKey := proposer.PublicKey
+	proposerPubKey := proposer.PublicKey()
 	sig := blk.Signature()
-	return signing.VerifyBlockSigningRoot(proposerPubKey, sig[:], domain, func() ([32]byte, error) {
+	return signing.VerifyBlockSigningRoot(proposerPubKey[:], sig[:], domain, func() ([32]byte, error) {
 		return blkRoot, nil
 	})
 }
@@ -130,12 +130,12 @@ func BlockSignatureBatch(beaconState state.ReadOnlyBeaconState,
 	if err != nil {
 		return nil, err
 	}
-	proposer, err := beaconState.ValidatorAtIndex(proposerIndex)
+	proposer, err := beaconState.ValidatorAtIndexReadOnly(proposerIndex)
 	if err != nil {
 		return nil, err
 	}
-	proposerPubKey := proposer.PublicKey
-	return signing.BlockSignatureBatch(proposerPubKey, sig, domain, rootFunc)
+	proposerPubKey := proposer.PublicKey()
+	return signing.BlockSignatureBatch(proposerPubKey[:], sig, domain, rootFunc)
 }
 
 // RandaoSignatureBatch retrieves the relevant randao specific signature batch object

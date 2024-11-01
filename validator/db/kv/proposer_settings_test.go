@@ -9,7 +9,7 @@ import (
 	fieldparams "github.com/prysmaticlabs/prysm/v5/config/fieldparams"
 	"github.com/prysmaticlabs/prysm/v5/config/params"
 	"github.com/prysmaticlabs/prysm/v5/config/proposer"
-	"github.com/prysmaticlabs/prysm/v5/consensus-types/validator"
+	"github.com/prysmaticlabs/prysm/v5/consensus-types/primitives"
 	"github.com/prysmaticlabs/prysm/v5/encoding/bytesutil"
 	"github.com/prysmaticlabs/prysm/v5/testing/require"
 )
@@ -28,7 +28,7 @@ func TestStore_ProposerSettings_ReadAndWrite(t *testing.T) {
 					},
 					BuilderConfig: &proposer.BuilderConfig{
 						Enabled:  true,
-						GasLimit: validator.Uint64(40000000),
+						GasLimit: primitives.Uint64(40000000),
 					},
 				},
 			},
@@ -38,7 +38,7 @@ func TestStore_ProposerSettings_ReadAndWrite(t *testing.T) {
 				},
 				BuilderConfig: &proposer.BuilderConfig{
 					Enabled:  false,
-					GasLimit: validator.Uint64(params.BeaconConfig().DefaultBuilderGasLimit),
+					GasLimit: primitives.Uint64(params.BeaconConfig().DefaultBuilderGasLimit),
 				},
 			},
 		}
@@ -61,7 +61,7 @@ func TestStore_ProposerSettings_ReadAndWrite(t *testing.T) {
 				},
 				BuilderConfig: &proposer.BuilderConfig{
 					Enabled:  false,
-					GasLimit: validator.Uint64(params.BeaconConfig().DefaultBuilderGasLimit),
+					GasLimit: primitives.Uint64(params.BeaconConfig().DefaultBuilderGasLimit),
 				},
 			},
 		}
@@ -73,7 +73,7 @@ func TestStore_ProposerSettings_ReadAndWrite(t *testing.T) {
 			},
 			BuilderConfig: &proposer.BuilderConfig{
 				Enabled:  true,
-				GasLimit: validator.Uint64(params.BeaconConfig().DefaultBuilderGasLimit),
+				GasLimit: primitives.Uint64(params.BeaconConfig().DefaultBuilderGasLimit),
 			},
 		}
 		settings.DefaultConfig = updatedDefault
@@ -90,7 +90,7 @@ func TestStore_ProposerSettings_ReadAndWrite(t *testing.T) {
 			},
 			BuilderConfig: &proposer.BuilderConfig{
 				Enabled:  true,
-				GasLimit: validator.Uint64(40000000),
+				GasLimit: primitives.Uint64(40000000),
 			},
 		}
 

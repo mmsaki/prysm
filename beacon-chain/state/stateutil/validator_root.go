@@ -5,6 +5,8 @@ import (
 
 	"github.com/pkg/errors"
 	fieldparams "github.com/prysmaticlabs/prysm/v5/config/fieldparams"
+	"github.com/prysmaticlabs/prysm/v5/consensus-types/interfaces"
+	state_native "github.com/prysmaticlabs/prysm/v5/consensus-types/validator"
 	"github.com/prysmaticlabs/prysm/v5/encoding/bytesutil"
 	"github.com/prysmaticlabs/prysm/v5/encoding/ssz"
 	ethpb "github.com/prysmaticlabs/prysm/v5/proto/prysm/v1alpha1"
@@ -13,7 +15,11 @@ import (
 // ValidatorRootWithHasher describes a method from which the hash tree root
 // of a validator is returned.
 func ValidatorRootWithHasher(validator *ethpb.Validator) ([32]byte, error) {
-	fieldRoots, err := ValidatorFieldRoots(validator)
+	roValidator, err := state_native.NewValidator(validator)
+	if err != nil {
+		return [32]byte{}, err
+	}
+	fieldRoots, err := ValidatorFieldRoots(roValidator)
 	if err != nil {
 		return [32]byte{}, err
 	}
@@ -22,34 +28,34 @@ func ValidatorRootWithHasher(validator *ethpb.Validator) ([32]byte, error) {
 
 // ValidatorFieldRoots describes a method from which the hash tree root
 // of a validator is returned.
-func ValidatorFieldRoots(validator *ethpb.Validator) ([][32]byte, error) {
+func ValidatorFieldRoots(validator interfaces.ReadOnlyValidator) ([][32]byte, error) {
 	var fieldRoots [][32]byte
 	if validator != nil {
-		pubkey := bytesutil.ToBytes48(validator.PublicKey)
-		withdrawCreds := bytesutil.ToBytes32(validator.WithdrawalCredentials)
+		withdrawCreds := bytesutil.ToBytes32(validator.GetWithdrawalCredentials())
 		var effectiveBalanceBuf [32]byte
-		binary.LittleEndian.PutUint64(effectiveBalanceBuf[:8], validator.EffectiveBalance)
+		binary.LittleEndian.PutUint64(effectiveBalanceBuf[:8], validator.EffectiveBalance())
 		// Slashed.
 		var slashBuf [32]byte
-		if validator.Slashed {
+		if validator.Slashed() {
 			slashBuf[0] = uint8(1)
 		} else {
 			slashBuf[0] = uint8(0)
 		}
 		var activationEligibilityBuf [32]byte
-		binary.LittleEndian.PutUint64(activationEligibilityBuf[:8], uint64(validator.ActivationEligibilityEpoch))
+		binary.LittleEndian.PutUint64(activationEligibilityBuf[:8], uint64(validator.ActivationEligibilityEpoch()))
 
 		var activationBuf [32]byte
-		binary.LittleEndian.PutUint64(activationBuf[:8], uint64(validator.ActivationEpoch))
+		binary.LittleEndian.PutUint64(activationBuf[:8], uint64(validator.ActivationEpoch()))
 
 		var exitBuf [32]byte
-		binary.LittleEndian.PutUint64(exitBuf[:8], uint64(validator.ExitEpoch))
+		binary.LittleEndian.PutUint64(exitBuf[:8], uint64(validator.ExitEpoch()))
 
 		var withdrawalBuf [32]byte
-		binary.LittleEndian.PutUint64(withdrawalBuf[:8], uint64(validator.WithdrawableEpoch))
+		binary.LittleEndian.PutUint64(withdrawalBuf[:8], uint64(validator.WithdrawableEpoch()))
 
 		// Public key.
-		pubKeyRoot, err := merkleizePubkey(pubkey[:])
+		pk := validator.PublicKey()
+		pubKeyRoot, err := merkleizePubkey(pk[:])
 		if err != nil {
 			return [][32]byte{}, err
 		}

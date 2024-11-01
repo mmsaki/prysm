@@ -10,7 +10,7 @@ import (
 	"github.com/prysmaticlabs/prysm/v5/api/client/validator"
 	"github.com/prysmaticlabs/prysm/v5/cmd/validator/flags"
 	"github.com/prysmaticlabs/prysm/v5/config/params"
-	validatorType "github.com/prysmaticlabs/prysm/v5/consensus-types/validator"
+	validatorType "github.com/prysmaticlabs/prysm/v5/consensus-types/primitives"
 	"github.com/prysmaticlabs/prysm/v5/encoding/bytesutil"
 	"github.com/prysmaticlabs/prysm/v5/io/file"
 	"github.com/prysmaticlabs/prysm/v5/io/prompt"

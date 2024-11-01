@@ -2,13 +2,14 @@ package state_native
 
 import (
 	"github.com/pkg/errors"
-	"github.com/prysmaticlabs/prysm/v5/beacon-chain/state"
 	"github.com/prysmaticlabs/prysm/v5/beacon-chain/state/state-native/types"
 	"github.com/prysmaticlabs/prysm/v5/beacon-chain/state/stateutil"
 	"github.com/prysmaticlabs/prysm/v5/config/features"
 	"github.com/prysmaticlabs/prysm/v5/config/params"
 	consensus_types "github.com/prysmaticlabs/prysm/v5/consensus-types"
+	"github.com/prysmaticlabs/prysm/v5/consensus-types/interfaces"
 	"github.com/prysmaticlabs/prysm/v5/consensus-types/primitives"
+	"github.com/prysmaticlabs/prysm/v5/consensus-types/validator"
 	"github.com/prysmaticlabs/prysm/v5/encoding/bytesutil"
 	ethpb "github.com/prysmaticlabs/prysm/v5/proto/prysm/v1alpha1"
 	"github.com/prysmaticlabs/prysm/v5/runtime/version"
@@ -39,7 +40,7 @@ func (b *BeaconState) SetValidators(val []*ethpb.Validator) error {
 
 // ApplyToEveryValidator applies the provided callback function to each validator in the
 // validator registry.
-func (b *BeaconState) ApplyToEveryValidator(f func(idx int, val state.ReadOnlyValidator) (*ethpb.Validator, error)) error {
+func (b *BeaconState) ApplyToEveryValidator(f func(idx int, val interfaces.ReadOnlyValidator) (*ethpb.Validator, error)) error {
 	var changedVals []uint64
 	if features.Get().EnableExperimentalState {
 		l := b.validatorsMultiValue.Len(b)
@@ -48,7 +49,7 @@ func (b *BeaconState) ApplyToEveryValidator(f func(idx int, val state.ReadOnlyVa
 			if err != nil {
 				return err
 			}
-			ro, err := NewValidator(v)
+			ro, err := validator.NewValidator(v)
 			if err != nil {
 				return err
 			}
@@ -76,7 +77,7 @@ func (b *BeaconState) ApplyToEveryValidator(f func(idx int, val state.ReadOnlyVa
 		b.lock.Unlock()
 
 		for i, val := range v {
-			ro, err := NewValidator(val)
+			ro, err := validator.NewValidator(val)
 			if err != nil {
 				return err
 			}

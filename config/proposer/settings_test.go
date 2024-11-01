@@ -7,7 +7,7 @@ import (
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	fieldparams "github.com/prysmaticlabs/prysm/v5/config/fieldparams"
 	"github.com/prysmaticlabs/prysm/v5/config/params"
-	"github.com/prysmaticlabs/prysm/v5/consensus-types/validator"
+	"github.com/prysmaticlabs/prysm/v5/consensus-types/primitives"
 	"github.com/prysmaticlabs/prysm/v5/encoding/bytesutil"
 	"github.com/prysmaticlabs/prysm/v5/testing/require"
 )
@@ -24,7 +24,7 @@ func Test_Proposer_Setting_Cloning(t *testing.T) {
 				},
 				BuilderConfig: &BuilderConfig{
 					Enabled:  true,
-					GasLimit: validator.Uint64(40000000),
+					GasLimit: primitives.Uint64(40000000),
 					Relays:   []string{"https://example-relay.com"},
 				},
 			},
@@ -35,7 +35,7 @@ func Test_Proposer_Setting_Cloning(t *testing.T) {
 			},
 			BuilderConfig: &BuilderConfig{
 				Enabled:  false,
-				GasLimit: validator.Uint64(params.BeaconConfig().DefaultBuilderGasLimit),
+				GasLimit: primitives.Uint64(params.BeaconConfig().DefaultBuilderGasLimit),
 				Relays:   []string{"https://example-relay.com"},
 			},
 		},
@@ -110,7 +110,7 @@ func TestProposerSettings_ShouldBeSaved(t *testing.T) {
 						},
 						BuilderConfig: &BuilderConfig{
 							Enabled:  true,
-							GasLimit: validator.Uint64(40000000),
+							GasLimit: primitives.Uint64(40000000),
 							Relays:   []string{"https://example-relay.com"},
 						},
 					},
@@ -129,7 +129,7 @@ func TestProposerSettings_ShouldBeSaved(t *testing.T) {
 					},
 					BuilderConfig: &BuilderConfig{
 						Enabled:  true,
-						GasLimit: validator.Uint64(40000000),
+						GasLimit: primitives.Uint64(40000000),
 						Relays:   []string{"https://example-relay.com"},
 					},
 				},
@@ -146,7 +146,7 @@ func TestProposerSettings_ShouldBeSaved(t *testing.T) {
 						},
 						BuilderConfig: &BuilderConfig{
 							Enabled:  true,
-							GasLimit: validator.Uint64(40000000),
+							GasLimit: primitives.Uint64(40000000),
 							Relays:   []string{"https://example-relay.com"},
 						},
 					},
@@ -157,7 +157,7 @@ func TestProposerSettings_ShouldBeSaved(t *testing.T) {
 					},
 					BuilderConfig: &BuilderConfig{
 						Enabled:  true,
-						GasLimit: validator.Uint64(40000000),
+						GasLimit: primitives.Uint64(40000000),
 						Relays:   []string{"https://example-relay.com"},
 					},
 				},
@@ -180,7 +180,7 @@ func TestProposerSettings_ShouldBeSaved(t *testing.T) {
 				DefaultConfig: &Option{
 					BuilderConfig: &BuilderConfig{
 						Enabled:  true,
-						GasLimit: validator.Uint64(40000000),
+						GasLimit: primitives.Uint64(40000000),
 						Relays:   []string{"https://example-relay.com"},
 					},
 				},

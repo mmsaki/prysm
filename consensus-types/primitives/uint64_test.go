@@ -1,4 +1,4 @@
-package validator
+package primitives
 
 import (
 	"testing"

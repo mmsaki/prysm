@@ -8,10 +8,8 @@ import (
 	"encoding/json"
 
 	"github.com/prysmaticlabs/go-bitfield"
-	fieldparams "github.com/prysmaticlabs/prysm/v5/config/fieldparams"
 	"github.com/prysmaticlabs/prysm/v5/consensus-types/interfaces"
 	"github.com/prysmaticlabs/prysm/v5/consensus-types/primitives"
-	"github.com/prysmaticlabs/prysm/v5/crypto/bls"
 	enginev1 "github.com/prysmaticlabs/prysm/v5/proto/engine/v1"
 	ethpb "github.com/prysmaticlabs/prysm/v5/proto/prysm/v1alpha1"
 )
@@ -50,7 +48,7 @@ type ReadOnlyBeaconState interface {
 	ReadOnlyRandaoMixes
 	ReadOnlyEth1Data
 	ReadOnlyExits
-	ReadOnlyValidators
+	interfaces.ReadOnlyValidators
 	ReadOnlyBalances
 	ReadOnlyCheckpoint
 	ReadOnlyAttestations
@@ -105,34 +103,6 @@ type WriteOnlyBeaconState interface {
 	AppendHistoricalRoots(root [32]byte) error
 	AppendHistoricalSummaries(*ethpb.HistoricalSummary) error
 	SetLatestExecutionPayloadHeader(payload interfaces.ExecutionData) error
-}
-
-// ReadOnlyValidator defines a struct which only has read access to validator methods.
-type ReadOnlyValidator interface {
-	EffectiveBalance() uint64
-	ActivationEligibilityEpoch() primitives.Epoch
-	ActivationEpoch() primitives.Epoch
-	WithdrawableEpoch() primitives.Epoch
-	ExitEpoch() primitives.Epoch
-	PublicKey() [fieldparams.BLSPubkeyLength]byte
-	GetWithdrawalCredentials() []byte
-	Copy() *ethpb.Validator
-	Slashed() bool
-	IsNil() bool
-}
-
-// ReadOnlyValidators defines a struct which only has read access to validators methods.
-type ReadOnlyValidators interface {
-	Validators() []*ethpb.Validator
-	ValidatorsReadOnly() []ReadOnlyValidator
-	ValidatorAtIndex(idx primitives.ValidatorIndex) (*ethpb.Validator, error)
-	ValidatorAtIndexReadOnly(idx primitives.ValidatorIndex) (ReadOnlyValidator, error)
-	ValidatorIndexByPubkey(key [fieldparams.BLSPubkeyLength]byte) (primitives.ValidatorIndex, bool)
-	PublicKeys() ([][fieldparams.BLSPubkeyLength]byte, error)
-	PubkeyAtIndex(idx primitives.ValidatorIndex) [fieldparams.BLSPubkeyLength]byte
-	AggregateKeyFromIndices(idxs []uint64) (bls.PublicKey, error)
-	NumValidators() int
-	ReadFromEveryValidator(f func(idx int, val ReadOnlyValidator) error) error
 }
 
 // ReadOnlyBalances defines a struct which only has read access to balances methods.
@@ -257,7 +227,7 @@ type WriteOnlyEth1Data interface {
 // WriteOnlyValidators defines a struct which only has write access to validators methods.
 type WriteOnlyValidators interface {
 	SetValidators(val []*ethpb.Validator) error
-	ApplyToEveryValidator(f func(idx int, val ReadOnlyValidator) (*ethpb.Validator, error)) error
+	ApplyToEveryValidator(f func(idx int, val interfaces.ReadOnlyValidator) (*ethpb.Validator, error)) error
 	UpdateValidatorAtIndex(idx primitives.ValidatorIndex, val *ethpb.Validator) error
 	AppendValidator(val *ethpb.Validator) error
 }

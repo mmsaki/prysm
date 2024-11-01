@@ -13,6 +13,7 @@ import (
 	fieldparams "github.com/prysmaticlabs/prysm/v5/config/fieldparams"
 	"github.com/prysmaticlabs/prysm/v5/config/params"
 	"github.com/prysmaticlabs/prysm/v5/consensus-types/primitives"
+	"github.com/prysmaticlabs/prysm/v5/consensus-types/validator"
 	"github.com/prysmaticlabs/prysm/v5/crypto/hash"
 	"github.com/prysmaticlabs/prysm/v5/encoding/bytesutil"
 	ethpb "github.com/prysmaticlabs/prysm/v5/proto/prysm/v1alpha1"
@@ -798,7 +799,7 @@ func TestIsEligibleForActivationQueue(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			helpers.ClearCache()
 
-			v, err := state_native.NewValidator(tt.validator)
+			v, err := validator.NewValidator(tt.validator)
 			assert.NoError(t, err)
 			assert.Equal(t, tt.want, helpers.IsEligibleForActivationQueue(v, tt.currentEpoch), "IsEligibleForActivationQueue()")
 		})
@@ -1029,7 +1030,7 @@ func TestIsFullyWithdrawableValidator(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			v, err := state_native.NewValidator(tt.validator)
+			v, err := validator.NewValidator(tt.validator)
 			require.NoError(t, err)
 			assert.Equal(t, tt.want, helpers.IsFullyWithdrawableValidator(v, tt.balance, tt.epoch, tt.fork))
 		})
@@ -1101,7 +1102,7 @@ func TestIsPartiallyWithdrawableValidator(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			v, err := state_native.NewValidator(tt.validator)
+			v, err := validator.NewValidator(tt.validator)
 			require.NoError(t, err)
 			assert.Equal(t, tt.want, helpers.IsPartiallyWithdrawableValidator(v, tt.balance, tt.epoch, tt.fork))
 		})
@@ -1160,7 +1161,7 @@ func TestValidatorMaxEffectiveBalance(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			v, err := state_native.NewValidator(tt.validator)
+			v, err := validator.NewValidator(tt.validator)
 			require.NoError(t, err)
 			assert.Equal(t, tt.want, helpers.ValidatorMaxEffectiveBalance(v))
 		})

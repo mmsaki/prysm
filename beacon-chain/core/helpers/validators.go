@@ -47,12 +47,12 @@ func IsActiveValidator(validator *ethpb.Validator, epoch primitives.Epoch) bool 
 }
 
 // IsActiveValidatorUsingTrie checks if a read only validator is active.
-func IsActiveValidatorUsingTrie(validator state.ReadOnlyValidator, epoch primitives.Epoch) bool {
+func IsActiveValidatorUsingTrie(validator interfaces.ReadOnlyValidator, epoch primitives.Epoch) bool {
 	return checkValidatorActiveStatus(validator.ActivationEpoch(), validator.ExitEpoch(), epoch)
 }
 
 // IsActiveNonSlashedValidatorUsingTrie checks if a read only validator is active and not slashed
-func IsActiveNonSlashedValidatorUsingTrie(validator state.ReadOnlyValidator, epoch primitives.Epoch) bool {
+func IsActiveNonSlashedValidatorUsingTrie(validator interfaces.ReadOnlyValidator, epoch primitives.Epoch) bool {
 	active := checkValidatorActiveStatus(validator.ActivationEpoch(), validator.ExitEpoch(), epoch)
 	return active && !validator.Slashed()
 }
@@ -76,7 +76,7 @@ func IsSlashableValidator(activationEpoch, withdrawableEpoch primitives.Epoch, s
 }
 
 // IsSlashableValidatorUsingTrie checks if a read only validator is slashable.
-func IsSlashableValidatorUsingTrie(val state.ReadOnlyValidator, epoch primitives.Epoch) bool {
+func IsSlashableValidatorUsingTrie(val interfaces.ReadOnlyValidator, epoch primitives.Epoch) bool {
 	return checkValidatorSlashable(val.ActivationEpoch(), val.WithdrawableEpoch(), val.Slashed(), epoch)
 }
 
@@ -134,7 +134,7 @@ func ActiveValidatorIndices(ctx context.Context, s state.ReadOnlyBeaconState, ep
 	}()
 
 	var indices []primitives.ValidatorIndex
-	if err := s.ReadFromEveryValidator(func(idx int, val state.ReadOnlyValidator) error {
+	if err := s.ReadFromEveryValidator(func(idx int, val interfaces.ReadOnlyValidator) error {
 		if IsActiveValidatorUsingTrie(val, epoch) {
 			indices = append(indices, primitives.ValidatorIndex(idx))
 		}
@@ -187,7 +187,7 @@ func ActiveValidatorCount(ctx context.Context, s state.ReadOnlyBeaconState, epoc
 	}()
 
 	count := uint64(0)
-	if err := s.ReadFromEveryValidator(func(idx int, val state.ReadOnlyValidator) error {
+	if err := s.ReadFromEveryValidator(func(idx int, val interfaces.ReadOnlyValidator) error {
 		if IsActiveValidatorUsingTrie(val, epoch) {
 			count++
 		}
@@ -410,7 +410,7 @@ func ComputeProposerIndex(bState state.ReadOnlyBeaconState, activeIndices []prim
 //	        validator.activation_eligibility_epoch == FAR_FUTURE_EPOCH
 //	        and validator.effective_balance >= MIN_ACTIVATION_BALANCE  # [Modified in Electra:EIP7251]
 //	    )
-func IsEligibleForActivationQueue(validator state.ReadOnlyValidator, currentEpoch primitives.Epoch) bool {
+func IsEligibleForActivationQueue(validator interfaces.ReadOnlyValidator, currentEpoch primitives.Epoch) bool {
 	if currentEpoch >= params.BeaconConfig().ElectraForkEpoch {
 		return isEligibleForActivationQueueElectra(validator.ActivationEligibilityEpoch(), validator.EffectiveBalance())
 	}
@@ -471,7 +471,7 @@ func IsEligibleForActivation(state state.ReadOnlyCheckpoint, validator *ethpb.Va
 }
 
 // IsEligibleForActivationUsingROVal checks if the validator is eligible for activation using the provided read only validator.
-func IsEligibleForActivationUsingROVal(state state.ReadOnlyCheckpoint, validator state.ReadOnlyValidator) bool {
+func IsEligibleForActivationUsingROVal(state state.ReadOnlyCheckpoint, validator interfaces.ReadOnlyValidator) bool {
 	return isEligibleForActivation(validator.ActivationEligibilityEpoch(), validator.ActivationEpoch(), state.FinalizedCheckpointEpoch())
 }
 
@@ -584,7 +584,7 @@ func IsSameWithdrawalCredentials(a, b *ethpb.Validator) bool {
 //	        and validator.withdrawable_epoch <= epoch
 //	        and balance > 0
 //	    )
-func IsFullyWithdrawableValidator(val state.ReadOnlyValidator, balance uint64, epoch primitives.Epoch, fork int) bool {
+func IsFullyWithdrawableValidator(val interfaces.ReadOnlyValidator, balance uint64, epoch primitives.Epoch, fork int) bool {
 	if val == nil || balance <= 0 {
 		return false
 	}
@@ -600,7 +600,7 @@ func IsFullyWithdrawableValidator(val state.ReadOnlyValidator, balance uint64, e
 // IsPartiallyWithdrawableValidator returns whether the validator is able to perform a
 // partial withdrawal. This function assumes that the caller has a lock on the state.
 // This method conditionally calls the fork appropriate implementation based on the epoch argument.
-func IsPartiallyWithdrawableValidator(val state.ReadOnlyValidator, balance uint64, epoch primitives.Epoch, fork int) bool {
+func IsPartiallyWithdrawableValidator(val interfaces.ReadOnlyValidator, balance uint64, epoch primitives.Epoch, fork int) bool {
 	if val == nil {
 		return false
 	}
@@ -630,7 +630,7 @@ func IsPartiallyWithdrawableValidator(val state.ReadOnlyValidator, balance uint6
 //	    and has_max_effective_balance
 //	    and has_excess_balance
 //	)
-func isPartiallyWithdrawableValidatorElectra(val state.ReadOnlyValidator, balance uint64, epoch primitives.Epoch) bool {
+func isPartiallyWithdrawableValidatorElectra(val interfaces.ReadOnlyValidator, balance uint64, epoch primitives.Epoch) bool {
 	maxEB := ValidatorMaxEffectiveBalance(val)
 	hasMaxBalance := val.EffectiveBalance() == maxEB
 	hasExcessBalance := balance > maxEB
@@ -652,7 +652,7 @@ func isPartiallyWithdrawableValidatorElectra(val state.ReadOnlyValidator, balanc
 //	    has_max_effective_balance = validator.effective_balance == MAX_EFFECTIVE_BALANCE
 //	    has_excess_balance = balance > MAX_EFFECTIVE_BALANCE
 //	    return has_eth1_withdrawal_credential(validator) and has_max_effective_balance and has_excess_balance
-func isPartiallyWithdrawableValidatorCapella(val state.ReadOnlyValidator, balance uint64, epoch primitives.Epoch) bool {
+func isPartiallyWithdrawableValidatorCapella(val interfaces.ReadOnlyValidator, balance uint64, epoch primitives.Epoch) bool {
 	hasMaxBalance := val.EffectiveBalance() == params.BeaconConfig().MaxEffectiveBalance
 	hasExcessBalance := balance > params.BeaconConfig().MaxEffectiveBalance
 	return HasETH1WithdrawalCredential(val) && hasExcessBalance && hasMaxBalance
@@ -670,7 +670,7 @@ func isPartiallyWithdrawableValidatorCapella(val state.ReadOnlyValidator, balanc
 //	        return MAX_EFFECTIVE_BALANCE_ELECTRA
 //	    else:
 //	        return MIN_ACTIVATION_BALANCE
-func ValidatorMaxEffectiveBalance(val state.ReadOnlyValidator) uint64 {
+func ValidatorMaxEffectiveBalance(val interfaces.ReadOnlyValidator) uint64 {
 	if HasCompoundingWithdrawalCredential(val) {
 		return params.BeaconConfig().MaxEffectiveBalanceElectra
 	}

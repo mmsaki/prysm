@@ -7,7 +7,9 @@ import (
 	fieldparams "github.com/prysmaticlabs/prysm/v5/config/fieldparams"
 	"github.com/prysmaticlabs/prysm/v5/config/params"
 	consensus_types "github.com/prysmaticlabs/prysm/v5/consensus-types"
+	"github.com/prysmaticlabs/prysm/v5/consensus-types/interfaces"
 	"github.com/prysmaticlabs/prysm/v5/consensus-types/primitives"
+	"github.com/prysmaticlabs/prysm/v5/consensus-types/validator"
 	"github.com/prysmaticlabs/prysm/v5/crypto/bls"
 	"github.com/prysmaticlabs/prysm/v5/encoding/bytesutil"
 	ethpb "github.com/prysmaticlabs/prysm/v5/proto/prysm/v1alpha1"
@@ -23,7 +25,7 @@ func (b *BeaconState) Validators() []*ethpb.Validator {
 }
 
 // ValidatorsReadOnly participating in consensus on the beacon chain.
-func (b *BeaconState) ValidatorsReadOnly() []state.ReadOnlyValidator {
+func (b *BeaconState) ValidatorsReadOnly() []interfaces.ReadOnlyValidator {
 	b.lock.RLock()
 	defer b.lock.RUnlock()
 
@@ -55,7 +57,7 @@ func (b *BeaconState) validatorsVal() []*ethpb.Validator {
 	return res
 }
 
-func (b *BeaconState) validatorsReadOnlyVal() []state.ReadOnlyValidator {
+func (b *BeaconState) validatorsReadOnlyVal() []interfaces.ReadOnlyValidator {
 	var v []*ethpb.Validator
 	if features.Get().EnableExperimentalState {
 		if b.validatorsMultiValue == nil {
@@ -69,14 +71,14 @@ func (b *BeaconState) validatorsReadOnlyVal() []state.ReadOnlyValidator {
 		v = b.validators
 	}
 
-	res := make([]state.ReadOnlyValidator, len(v))
+	res := make([]interfaces.ReadOnlyValidator, len(v))
 	var err error
 	for i := 0; i < len(res); i++ {
 		val := v[i]
 		if val == nil {
 			continue
 		}
-		res[i], err = NewValidator(val)
+		res[i], err = validator.NewValidator(val)
 		if err != nil {
 			continue
 		}
@@ -146,14 +148,14 @@ func (b *BeaconState) validatorAtIndex(idx primitives.ValidatorIndex) (*ethpb.Va
 
 // ValidatorAtIndexReadOnly is the validator at the provided index. This method
 // doesn't clone the validator.
-func (b *BeaconState) ValidatorAtIndexReadOnly(idx primitives.ValidatorIndex) (state.ReadOnlyValidator, error) {
+func (b *BeaconState) ValidatorAtIndexReadOnly(idx primitives.ValidatorIndex) (interfaces.ReadOnlyValidator, error) {
 	b.lock.RLock()
 	defer b.lock.RUnlock()
 
 	return b.validatorAtIndexReadOnly(idx)
 }
 
-func (b *BeaconState) validatorAtIndexReadOnly(idx primitives.ValidatorIndex) (state.ReadOnlyValidator, error) {
+func (b *BeaconState) validatorAtIndexReadOnly(idx primitives.ValidatorIndex) (interfaces.ReadOnlyValidator, error) {
 	if features.Get().EnableExperimentalState {
 		if b.validatorsMultiValue == nil {
 			return nil, state.ErrNilValidatorsInState
@@ -162,7 +164,7 @@ func (b *BeaconState) validatorAtIndexReadOnly(idx primitives.ValidatorIndex) (s
 		if err != nil {
 			return nil, err
 		}
-		return NewValidator(v)
+		return validator.NewValidator(v)
 	}
 
 	if b.validators == nil {
@@ -172,7 +174,7 @@ func (b *BeaconState) validatorAtIndexReadOnly(idx primitives.ValidatorIndex) (s
 		return nil, errors.Wrapf(consensus_types.ErrOutOfBounds, "validator index %d does not exist", idx)
 	}
 	val := b.validators[idx]
-	return NewValidator(val)
+	return validator.NewValidator(val)
 }
 
 // ValidatorIndexByPubkey returns a given validator by its 48-byte public key.
@@ -246,7 +248,7 @@ func (b *BeaconState) AggregateKeyFromIndices(idxs []uint64) (bls.PublicKey, err
 		}
 
 		if v == nil {
-			return nil, ErrNilWrappedValidator
+			return nil, validator.ErrNilWrappedValidator
 		}
 		pubKeys[i] = v.PublicKey
 	}
@@ -285,7 +287,7 @@ func (b *BeaconState) NumValidators() int {
 // ReadFromEveryValidator reads values from every validator and applies it to the provided function.
 //
 // WARNING: This method is potentially unsafe, as it exposes the actual validator registry.
-func (b *BeaconState) ReadFromEveryValidator(f func(idx int, val state.ReadOnlyValidator) error) error {
+func (b *BeaconState) ReadFromEveryValidator(f func(idx int, val interfaces.ReadOnlyValidator) error) error {
 	b.lock.RLock()
 	defer b.lock.RUnlock()
 
@@ -300,7 +302,7 @@ func (b *BeaconState) ReadFromEveryValidator(f func(idx int, val state.ReadOnlyV
 	validators := b.validators
 
 	for i, v := range validators {
-		v, err := NewValidator(v)
+		v, err := validator.NewValidator(v)
 		if err != nil {
 			return err
 		}
@@ -312,7 +314,7 @@ func (b *BeaconState) ReadFromEveryValidator(f func(idx int, val state.ReadOnlyV
 }
 
 // WARNING: This function works only for the multi-value slice feature.
-func (b *BeaconState) readFromEveryValidatorMVSlice(f func(idx int, val state.ReadOnlyValidator) error) error {
+func (b *BeaconState) readFromEveryValidatorMVSlice(f func(idx int, val interfaces.ReadOnlyValidator) error) error {
 	if b.validatorsMultiValue == nil {
 		return state.ErrNilValidatorsInState
 	}
@@ -322,7 +324,7 @@ func (b *BeaconState) readFromEveryValidatorMVSlice(f func(idx int, val state.Re
 		if err != nil {
 			return err
 		}
-		rov, err := NewValidator(v)
+		rov, err := validator.NewValidator(v)
 		if err != nil {
 			return err
 		}

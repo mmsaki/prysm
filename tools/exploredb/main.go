@@ -347,7 +347,7 @@ func printStates(stateC <-chan *modifiedState, doneC chan<- bool) {
 		size, count = sizeAndCountGeneric(st.Eth1DataVotes(), nil)
 		log.Infof("eth1_data_votes               : sizeSSZ = %s, count = %d", humanize.Bytes(size), count)
 		log.Infof("eth1_deposit_index            : %d", st.Eth1DepositIndex())
-		size, count = sizeAndCountGeneric(st.Validators(), nil)
+		size, count = sizeAndCountGeneric(st.ValidatorsReadOnly(), nil)
 		log.Infof("validators                    : sizeSSZ = %s, count = %d", humanize.Bytes(size), count)
 		size, count = sizeAndCountOfUin64List(st.Balances())
 		log.Infof("balances                      : size = %s, count = %d", humanize.Bytes(size), count)
@@ -434,8 +434,8 @@ func checkValidatorMigration(dbNameWithPath, destDbNameWithPath string) {
 			continue
 		}
 
-		if len(sourceState.Validators()) != len(destinationState.Validators()) {
-			log.Fatalf("validator mismatch : source = %d, dest = %d", len(sourceState.Validators()), len(destinationState.Validators()))
+		if len(sourceState.ValidatorsReadOnly()) != len(destinationState.ValidatorsReadOnly()) {
+			log.Fatalf("validator mismatch : source = %d, dest = %d", len(sourceState.ValidatorsReadOnly()), len(destinationState.ValidatorsReadOnly()))
 		}
 		sourceStateHash, err := sourceState.HashTreeRoot(ctx)
 		if err != nil {

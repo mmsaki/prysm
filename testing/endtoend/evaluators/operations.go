@@ -13,9 +13,9 @@ import (
 	"github.com/prysmaticlabs/prysm/v5/api/server/structs"
 	corehelpers "github.com/prysmaticlabs/prysm/v5/beacon-chain/core/helpers"
 	"github.com/prysmaticlabs/prysm/v5/beacon-chain/core/signing"
-	"github.com/prysmaticlabs/prysm/v5/beacon-chain/state"
 	"github.com/prysmaticlabs/prysm/v5/config/params"
 	"github.com/prysmaticlabs/prysm/v5/consensus-types/blocks"
+	"github.com/prysmaticlabs/prysm/v5/consensus-types/interfaces"
 	"github.com/prysmaticlabs/prysm/v5/consensus-types/primitives"
 	"github.com/prysmaticlabs/prysm/v5/encoding/bytesutil"
 	"github.com/prysmaticlabs/prysm/v5/encoding/ssz/detect"
@@ -364,7 +364,7 @@ func proposeVoluntaryExit(ec *e2etypes.EvaluationContext, conns ...*grpc.ClientC
 		return errors.Wrap(err, "could not get state")
 	}
 	var execIndices []int
-	err = st.ReadFromEveryValidator(func(idx int, val state.ReadOnlyValidator) error {
+	err = st.ReadFromEveryValidator(func(idx int, val interfaces.ReadOnlyValidator) error {
 		if val.GetWithdrawalCredentials()[0] == params.BeaconConfig().ETH1AddressWithdrawalPrefixByte {
 			execIndices = append(execIndices, idx)
 		}
@@ -595,15 +595,16 @@ func submitWithdrawal(ec *e2etypes.EvaluationContext, conns ...*grpc.ClientConn)
 		if len(changes) >= wantedChanges {
 			break
 		}
-		val, err := st.ValidatorAtIndex(idx)
+		val, err := st.ValidatorAtIndexReadOnly(idx)
 		if err != nil {
 			return err
 		}
-		if val.WithdrawalCredentials[0] == params.BeaconConfig().ETH1AddressWithdrawalPrefixByte {
+		if val.GetWithdrawalCredentials()[0] == params.BeaconConfig().ETH1AddressWithdrawalPrefixByte {
 			continue
 		}
-		if !bytes.Equal(val.PublicKey, privKeys[idx].PublicKey().Marshal()) {
-			return errors.Errorf("pubkey is not equal, wanted %#x but received %#x", val.PublicKey, privKeys[idx].PublicKey().Marshal())
+		pk := val.PublicKey()
+		if !bytes.Equal(pk[:], privKeys[idx].PublicKey().Marshal()) {
+			return errors.Errorf("pubkey is not equal, wanted %#x but received %#x", pk[:], privKeys[idx].PublicKey().Marshal())
 		}
 		message := &ethpb.BLSToExecutionChange{
 			ValidatorIndex:     idx,

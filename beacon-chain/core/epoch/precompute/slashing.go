@@ -5,6 +5,7 @@ import (
 	"github.com/prysmaticlabs/prysm/v5/beacon-chain/core/time"
 	"github.com/prysmaticlabs/prysm/v5/beacon-chain/state"
 	"github.com/prysmaticlabs/prysm/v5/config/params"
+	"github.com/prysmaticlabs/prysm/v5/consensus-types/interfaces"
 	"github.com/prysmaticlabs/prysm/v5/math"
 )
 
@@ -26,7 +27,7 @@ func ProcessSlashingsPrecompute(s state.BeaconState, pBal *Balance) error {
 
 	var hasSlashing bool
 	// Iterate through validator list in state, stop until a validator satisfies slashing condition of current epoch.
-	err := s.ReadFromEveryValidator(func(idx int, val state.ReadOnlyValidator) error {
+	err := s.ReadFromEveryValidator(func(idx int, val interfaces.ReadOnlyValidator) error {
 		correctEpoch := epochToWithdraw == val.WithdrawableEpoch()
 		if val.Slashed() && correctEpoch {
 			hasSlashing = true
@@ -43,7 +44,7 @@ func ProcessSlashingsPrecompute(s state.BeaconState, pBal *Balance) error {
 
 	increment := params.BeaconConfig().EffectiveBalanceIncrement
 	bals := s.Balances()
-	validatorFunc := func(idx int, val state.ReadOnlyValidator) error {
+	validatorFunc := func(idx int, val interfaces.ReadOnlyValidator) error {
 		correctEpoch := epochToWithdraw == val.WithdrawableEpoch()
 		if val.Slashed() && correctEpoch {
 			penaltyNumerator := val.EffectiveBalance() / increment * minSlashing

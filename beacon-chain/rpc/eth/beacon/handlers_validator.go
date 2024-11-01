@@ -14,8 +14,8 @@ import (
 	"github.com/prysmaticlabs/prysm/v5/beacon-chain/rpc/eth/helpers"
 	"github.com/prysmaticlabs/prysm/v5/beacon-chain/rpc/eth/shared"
 	"github.com/prysmaticlabs/prysm/v5/beacon-chain/state"
-	statenative "github.com/prysmaticlabs/prysm/v5/beacon-chain/state/state-native"
 	fieldparams "github.com/prysmaticlabs/prysm/v5/config/fieldparams"
+	"github.com/prysmaticlabs/prysm/v5/consensus-types/interfaces"
 	"github.com/prysmaticlabs/prysm/v5/consensus-types/primitives"
 	"github.com/prysmaticlabs/prysm/v5/consensus-types/validator"
 	"github.com/prysmaticlabs/prysm/v5/encoding/bytesutil"
@@ -366,25 +366,19 @@ func decodeIds(w http.ResponseWriter, st state.BeaconState, rawIds []string, ign
 }
 
 // valsFromIds returns read-only validators based on the supplied validator indices.
-func valsFromIds(w http.ResponseWriter, st state.BeaconState, ids []primitives.ValidatorIndex) ([]state.ReadOnlyValidator, bool) {
-	var vals []state.ReadOnlyValidator
+func valsFromIds(w http.ResponseWriter, st state.BeaconState, ids []primitives.ValidatorIndex) ([]interfaces.ReadOnlyValidator, bool) {
+	var vals []interfaces.ReadOnlyValidator
 	if len(ids) == 0 {
 		vals = st.ValidatorsReadOnly()
 	} else {
-		vals = make([]state.ReadOnlyValidator, 0, len(ids))
+		vals = make([]interfaces.ReadOnlyValidator, 0, len(ids))
 		for _, id := range ids {
-			val, err := st.ValidatorAtIndex(id)
+			val, err := st.ValidatorAtIndexReadOnly(id)
 			if err != nil {
 				httputil.HandleError(w, fmt.Sprintf("Could not get validator at index %d: %s", id, err.Error()), http.StatusInternalServerError)
 				return nil, false
 			}
-
-			readOnlyVal, err := statenative.NewValidator(val)
-			if err != nil {
-				httputil.HandleError(w, "Could not convert validator: "+err.Error(), http.StatusInternalServerError)
-				return nil, false
-			}
-			vals = append(vals, readOnlyVal)
+			vals = append(vals, val)
 		}
 	}
 
@@ -392,7 +386,7 @@ func valsFromIds(w http.ResponseWriter, st state.BeaconState, ids []primitives.V
 }
 
 func valContainerFromReadOnlyVal(
-	val state.ReadOnlyValidator,
+	val interfaces.ReadOnlyValidator,
 	id primitives.ValidatorIndex,
 	bal uint64,
 	valStatus validator.Status,

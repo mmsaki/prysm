@@ -1,9 +1,9 @@
-package state_native
+package validator
 
 import (
 	"github.com/pkg/errors"
-	"github.com/prysmaticlabs/prysm/v5/beacon-chain/state"
 	fieldparams "github.com/prysmaticlabs/prysm/v5/config/fieldparams"
+	"github.com/prysmaticlabs/prysm/v5/consensus-types/interfaces"
 	"github.com/prysmaticlabs/prysm/v5/consensus-types/primitives"
 	ethpb "github.com/prysmaticlabs/prysm/v5/proto/prysm/v1alpha1"
 )
@@ -19,10 +19,10 @@ type readOnlyValidator struct {
 	validator *ethpb.Validator
 }
 
-var _ = state.ReadOnlyValidator(readOnlyValidator{})
+var _ = interfaces.ReadOnlyValidator(readOnlyValidator{})
 
 // NewValidator initializes the read only wrapper for validator.
-func NewValidator(v *ethpb.Validator) (state.ReadOnlyValidator, error) {
+func NewValidator(v *ethpb.Validator) (interfaces.ReadOnlyValidator, error) {
 	if v == nil {
 		return nil, ErrNilWrappedValidator
 	}
@@ -102,4 +102,10 @@ func (v readOnlyValidator) Copy() *ethpb.Validator {
 		ExitEpoch:                  v.ExitEpoch(),
 		WithdrawableEpoch:          v.WithdrawableEpoch(),
 	}
+}
+
+// Proto returns the underlying protobuf object WITHOUT MAKING A COPY.
+// It is therefore unsafe to modify the returned object.
+func (v readOnlyValidator) Proto() *ethpb.Validator {
+	return v.validator
 }

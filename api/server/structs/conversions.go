@@ -9,6 +9,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/prysmaticlabs/prysm/v5/api/server"
 	fieldparams "github.com/prysmaticlabs/prysm/v5/config/fieldparams"
+	"github.com/prysmaticlabs/prysm/v5/consensus-types/interfaces"
 	"github.com/prysmaticlabs/prysm/v5/consensus-types/primitives"
 	"github.com/prysmaticlabs/prysm/v5/consensus-types/validator"
 	"github.com/prysmaticlabs/prysm/v5/container/slice"
@@ -31,6 +32,20 @@ func ValidatorFromConsensus(v *eth.Validator) *Validator {
 		ActivationEpoch:            fmt.Sprintf("%d", v.ActivationEpoch),
 		ExitEpoch:                  fmt.Sprintf("%d", v.ExitEpoch),
 		WithdrawableEpoch:          fmt.Sprintf("%d", v.WithdrawableEpoch),
+	}
+}
+
+func ValidatorFromConsensusReadOnly(v interfaces.ReadOnlyValidator) *Validator {
+	pk := v.PublicKey()
+	return &Validator{
+		Pubkey:                     hexutil.Encode(pk[:]),
+		WithdrawalCredentials:      hexutil.Encode(v.GetWithdrawalCredentials()),
+		EffectiveBalance:           fmt.Sprintf("%d", v.EffectiveBalance()),
+		Slashed:                    v.Slashed(),
+		ActivationEligibilityEpoch: fmt.Sprintf("%d", v.ActivationEligibilityEpoch()),
+		ActivationEpoch:            fmt.Sprintf("%d", v.ActivationEpoch()),
+		ExitEpoch:                  fmt.Sprintf("%d", v.ExitEpoch()),
+		WithdrawableEpoch:          fmt.Sprintf("%d", v.WithdrawableEpoch()),
 	}
 }
 

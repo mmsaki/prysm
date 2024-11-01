@@ -301,7 +301,7 @@ func (s *Service) headGenesisValidatorsRoot() [32]byte {
 // This returns the validator referenced by the provided index in
 // the head state.
 // This is a lock free version.
-func (s *Service) headValidatorAtIndex(index primitives.ValidatorIndex) (state.ReadOnlyValidator, error) {
+func (s *Service) headValidatorAtIndex(index primitives.ValidatorIndex) (interfaces.ReadOnlyValidator, error) {
 	return s.head.state.ValidatorAtIndexReadOnly(index)
 }
 

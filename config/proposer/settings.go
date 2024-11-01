@@ -8,7 +8,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/prysmaticlabs/prysm/v5/config"
 	fieldparams "github.com/prysmaticlabs/prysm/v5/config/fieldparams"
-	"github.com/prysmaticlabs/prysm/v5/consensus-types/validator"
+	"github.com/prysmaticlabs/prysm/v5/consensus-types/primitives"
 	"github.com/prysmaticlabs/prysm/v5/encoding/bytesutil"
 	validatorpb "github.com/prysmaticlabs/prysm/v5/proto/prysm/v1alpha1/validator-client"
 )
@@ -79,9 +79,9 @@ func verifyOption(key string, option *validatorpb.ProposerOptionPayload) error {
 // BuilderConfig is the struct representation of the JSON config file set in the validator through the CLI.
 // GasLimit is a number set to help the network decide on the maximum gas in each block.
 type BuilderConfig struct {
-	Enabled  bool             `json:"enabled" yaml:"enabled"`
-	GasLimit validator.Uint64 `json:"gas_limit,omitempty" yaml:"gas_limit,omitempty"`
-	Relays   []string         `json:"relays,omitempty" yaml:"relays,omitempty"`
+	Enabled  bool              `json:"enabled" yaml:"enabled"`
+	GasLimit primitives.Uint64 `json:"gas_limit,omitempty" yaml:"gas_limit,omitempty"`
+	Relays   []string          `json:"relays,omitempty" yaml:"relays,omitempty"`
 }
 
 // BuilderConfigFromConsensus converts protobuf to a builder config used in in-memory storage

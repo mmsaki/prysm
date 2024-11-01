@@ -321,7 +321,7 @@ func (s *PremineGenesisConfig) populate(g state.BeaconState) error {
 }
 
 func (s *PremineGenesisConfig) setGenesisValidatorsRoot(g state.BeaconState) error {
-	vroot, err := stateutil.ValidatorRegistryRoot(g.Validators())
+	vroot, err := stateutil.ValidatorRegistryRoot(g.ValidatorsReadOnly())
 	if err != nil {
 		return err
 	}
@@ -363,7 +363,7 @@ func (s *PremineGenesisConfig) setInactivityScores(g state.BeaconState) error {
 	if err != nil {
 		return err
 	}
-	scoresMissing := len(g.Validators()) - len(scores)
+	scoresMissing := len(g.ValidatorsReadOnly()) - len(scores)
 	if scoresMissing > 0 {
 		for i := 0; i < scoresMissing; i++ {
 			scores = append(scores, 0)
@@ -381,7 +381,7 @@ func (s *PremineGenesisConfig) setCurrentEpochParticipation(g state.BeaconState)
 	if err != nil {
 		return err
 	}
-	missing := len(g.Validators()) - len(p)
+	missing := len(g.ValidatorsReadOnly()) - len(p)
 	if missing > 0 {
 		for i := 0; i < missing; i++ {
 			p = append(p, 0)
@@ -399,7 +399,7 @@ func (s *PremineGenesisConfig) setPrevEpochParticipation(g state.BeaconState) er
 	if err != nil {
 		return err
 	}
-	missing := len(g.Validators()) - len(p)
+	missing := len(g.ValidatorsReadOnly()) - len(p)
 	if missing > 0 {
 		for i := 0; i < missing; i++ {
 			p = append(p, 0)

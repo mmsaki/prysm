@@ -17,6 +17,7 @@ import (
 	"github.com/prysmaticlabs/prysm/v5/beacon-chain/state/stateutil"
 	fieldparams "github.com/prysmaticlabs/prysm/v5/config/fieldparams"
 	"github.com/prysmaticlabs/prysm/v5/config/params"
+	"github.com/prysmaticlabs/prysm/v5/consensus-types/interfaces"
 	"github.com/prysmaticlabs/prysm/v5/consensus-types/primitives"
 	"github.com/prysmaticlabs/prysm/v5/math"
 	ethpb "github.com/prysmaticlabs/prysm/v5/proto/prysm/v1alpha1"
@@ -59,7 +60,7 @@ func ProcessRegistryUpdates(ctx context.Context, st state.BeaconState) (state.Be
 	eligibleForActivation := make([]primitives.ValidatorIndex, 0)
 	eligibleForEjection := make([]primitives.ValidatorIndex, 0)
 
-	if err := st.ReadFromEveryValidator(func(idx int, val state.ReadOnlyValidator) error {
+	if err := st.ReadFromEveryValidator(func(idx int, val interfaces.ReadOnlyValidator) error {
 		// Collect validators eligible to enter the activation queue.
 		if helpers.IsEligibleForActivationQueue(val, currentEpoch) {
 			eligibleForActivationQ = append(eligibleForActivationQ, primitives.ValidatorIndex(idx))
@@ -192,7 +193,7 @@ func ProcessSlashings(st state.BeaconState, slashingMultiplier uint64) (state.Be
 
 	bals := st.Balances()
 	changed := false
-	err = st.ReadFromEveryValidator(func(idx int, val state.ReadOnlyValidator) error {
+	err = st.ReadFromEveryValidator(func(idx int, val interfaces.ReadOnlyValidator) error {
 		correctEpoch := (currentEpoch + exitLength/2) == val.WithdrawableEpoch()
 		if val.Slashed() && correctEpoch {
 			var penalty uint64
@@ -268,7 +269,7 @@ func ProcessEffectiveBalanceUpdates(st state.BeaconState) (state.BeaconState, er
 	bals := st.Balances()
 
 	// Update effective balances with hysteresis.
-	validatorFunc := func(idx int, val state.ReadOnlyValidator) (newVal *ethpb.Validator, err error) {
+	validatorFunc := func(idx int, val interfaces.ReadOnlyValidator) (newVal *ethpb.Validator, err error) {
 		if val == nil {
 			return nil, fmt.Errorf("validator %d is nil in state", idx)
 		}
