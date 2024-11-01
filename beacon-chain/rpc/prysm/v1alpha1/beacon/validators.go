@@ -254,13 +254,13 @@ func (bs *Server) ListValidators(
 	validatorList := make([]*ethpb.Validators_ValidatorContainer, 0)
 
 	for _, index := range req.Indices {
-		val, err := reqState.ValidatorAtIndexReadOnly(index)
+		val, err := reqState.ValidatorAtIndex(index)
 		if err != nil {
 			return nil, status.Errorf(codes.Internal, "Could not get validator: %v", err)
 		}
 		validatorList = append(validatorList, &ethpb.Validators_ValidatorContainer{
 			Index:     index,
-			Validator: val.Proto(),
+			Validator: val,
 		})
 	}
 
@@ -274,13 +274,13 @@ func (bs *Server) ListValidators(
 		if !ok {
 			continue
 		}
-		val, err := reqState.ValidatorAtIndexReadOnly(index)
+		val, err := reqState.ValidatorAtIndex(index)
 		if err != nil {
 			return nil, status.Errorf(codes.Internal, "Could not get validator: %v", err)
 		}
 		validatorList = append(validatorList, &ethpb.Validators_ValidatorContainer{
 			Index:     index,
-			Validator: val.Proto(),
+			Validator: val,
 		})
 	}
 	// Depending on the indices and public keys given, results might not be sorted.
@@ -290,13 +290,13 @@ func (bs *Server) ListValidators(
 
 	if len(req.PublicKeys) == 0 && len(req.Indices) == 0 {
 		for i := primitives.ValidatorIndex(0); uint64(i) < uint64(reqState.NumValidators()); i++ {
-			val, err := reqState.ValidatorAtIndexReadOnly(i)
+			val, err := reqState.ValidatorAtIndex(i)
 			if err != nil {
 				return nil, status.Errorf(codes.Internal, "Could not get validator: %v", err)
 			}
 			validatorList = append(validatorList, &ethpb.Validators_ValidatorContainer{
 				Index:     i,
-				Validator: val.Proto(),
+				Validator: val,
 			})
 		}
 	}
@@ -372,21 +372,21 @@ func (bs *Server) GetValidator(
 				headState.NumValidators(),
 			)
 		}
-		v, err := headState.ValidatorAtIndexReadOnly(index)
+		v, err := headState.ValidatorAtIndex(index)
 		if err != nil {
 			return nil, status.Errorf(codes.Internal, "Could not get validator from state: %v", err)
 		}
-		return v.Proto(), nil
+		return v, nil
 	}
 	pk48 := bytesutil.ToBytes48(pubKey)
 	for i := primitives.ValidatorIndex(0); uint64(i) < uint64(headState.NumValidators()); i++ {
 		keyFromState := headState.PubkeyAtIndex(i)
 		if keyFromState == pk48 {
-			v, err := headState.ValidatorAtIndexReadOnly(i)
+			v, err := headState.ValidatorAtIndex(i)
 			if err != nil {
 				return nil, status.Errorf(codes.Internal, "Could not get validator from state: %v", err)
 			}
-			return v.Proto(), nil
+			return v, nil
 		}
 	}
 	return nil, status.Error(codes.NotFound, "No validator matched filter criteria")

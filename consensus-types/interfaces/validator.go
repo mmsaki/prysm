@@ -16,7 +16,6 @@ type ReadOnlyValidator interface {
 	PublicKey() [fieldparams.BLSPubkeyLength]byte
 	GetWithdrawalCredentials() []byte
 	Copy() *ethpb.Validator
-	Proto() *ethpb.Validator
 	Slashed() bool
 	IsNil() bool
 }

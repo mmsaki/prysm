@@ -103,9 +103,3 @@ func (v readOnlyValidator) Copy() *ethpb.Validator {
 		WithdrawableEpoch:          v.WithdrawableEpoch(),
 	}
 }
-
-// Proto returns the underlying protobuf object WITHOUT MAKING A COPY.
-// It is therefore unsafe to modify the returned object.
-func (v readOnlyValidator) Proto() *ethpb.Validator {
-	return v.validator
-}
