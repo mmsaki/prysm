@@ -169,6 +169,9 @@ func (c *componentHandler) setup() {
 		c.eth1Proxy = proxies
 	}
 
+	// timeout while we wait for the eth1 client to sync
+	time.Sleep(10 * time.Second)
+
 	// Beacon nodes.
 	beaconNodes := components.NewBeaconNodes(config)
 	g.Go(func() error {
