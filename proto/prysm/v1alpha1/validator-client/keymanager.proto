@@ -98,7 +98,7 @@ message ProposerOptionPayload {
 // BuilderConfig is a property of ProposerOptionPayload
 message BuilderConfig {
   bool enabled = 1;
-  uint64 gas_limit = 2 [(ethereum.eth.ext.cast_type) = "github.com/prysmaticlabs/prysm/v5/consensus-types/validator.Uint64"];
+  uint64 gas_limit = 2 [(ethereum.eth.ext.cast_type) = "github.com/prysmaticlabs/prysm/v5/consensus-types/primitives.Uint64"];
   repeated string relays = 3;
 }
 
