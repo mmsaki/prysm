@@ -8,8 +8,10 @@ import (
 	"encoding/json"
 
 	"github.com/prysmaticlabs/go-bitfield"
+	fieldparams "github.com/prysmaticlabs/prysm/v5/config/fieldparams"
 	"github.com/prysmaticlabs/prysm/v5/consensus-types/interfaces"
 	"github.com/prysmaticlabs/prysm/v5/consensus-types/primitives"
+	"github.com/prysmaticlabs/prysm/v5/crypto/bls"
 	enginev1 "github.com/prysmaticlabs/prysm/v5/proto/engine/v1"
 	ethpb "github.com/prysmaticlabs/prysm/v5/proto/prysm/v1alpha1"
 )
@@ -48,7 +50,7 @@ type ReadOnlyBeaconState interface {
 	ReadOnlyRandaoMixes
 	ReadOnlyEth1Data
 	ReadOnlyExits
-	interfaces.ReadOnlyValidators
+	ReadOnlyValidators
 	ReadOnlyBalances
 	ReadOnlyCheckpoint
 	ReadOnlyAttestations
@@ -103,6 +105,20 @@ type WriteOnlyBeaconState interface {
 	AppendHistoricalRoots(root [32]byte) error
 	AppendHistoricalSummaries(*ethpb.HistoricalSummary) error
 	SetLatestExecutionPayloadHeader(payload interfaces.ExecutionData) error
+}
+
+// ReadOnlyValidators defines a struct which only has read access to validators methods.
+type ReadOnlyValidators interface {
+	Validators() []*ethpb.Validator
+	ValidatorsReadOnly() []interfaces.ReadOnlyValidator
+	ValidatorAtIndex(idx primitives.ValidatorIndex) (*ethpb.Validator, error)
+	ValidatorAtIndexReadOnly(idx primitives.ValidatorIndex) (interfaces.ReadOnlyValidator, error)
+	ValidatorIndexByPubkey(key [fieldparams.BLSPubkeyLength]byte) (primitives.ValidatorIndex, bool)
+	PublicKeys() ([][fieldparams.BLSPubkeyLength]byte, error)
+	PubkeyAtIndex(idx primitives.ValidatorIndex) [fieldparams.BLSPubkeyLength]byte
+	AggregateKeyFromIndices(idxs []uint64) (bls.PublicKey, error)
+	NumValidators() int
+	ReadFromEveryValidator(f func(idx int, val interfaces.ReadOnlyValidator) error) error
 }
 
 // ReadOnlyBalances defines a struct which only has read access to balances methods.

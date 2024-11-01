@@ -26,7 +26,7 @@ var balanceCache = cache.NewEffectiveBalanceCache()
 //	 Math safe up to ~10B ETH, after which this overflows uint64.
 //	 """
 //	 return Gwei(max(EFFECTIVE_BALANCE_INCREMENT, sum([state.validators[index].effective_balance for index in indices])))
-func TotalBalance(state interfaces.ReadOnlyValidators, indices []primitives.ValidatorIndex) uint64 {
+func TotalBalance(state state.ReadOnlyValidators, indices []primitives.ValidatorIndex) uint64 {
 	total := uint64(0)
 
 	for _, idx := range indices {

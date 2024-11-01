@@ -1,7 +1,7 @@
 package epoch
 
 import (
-	"github.com/prysmaticlabs/prysm/v5/consensus-types/interfaces"
+	"github.com/prysmaticlabs/prysm/v5/beacon-chain/state"
 	"github.com/prysmaticlabs/prysm/v5/consensus-types/primitives"
 )
 
@@ -9,7 +9,7 @@ import (
 // by activation epoch and by index number.
 type sortableIndices struct {
 	indices []primitives.ValidatorIndex
-	state   interfaces.ReadOnlyValidators
+	state   state.ReadOnlyValidators
 }
 
 // Len is the number of elements in the collection.
