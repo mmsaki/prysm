@@ -688,7 +688,7 @@ func (u *updateElectra) FinalityBranchElectra() (interfaces.LightClientFinalityB
 }
 
 func (u *updateElectra) SetFinalityBranch(branch [][]byte) error {
-	b, err := createBranch[interfaces.LightClientFinalityBranch]("finality", branch, fieldparams.FinalityBranchDepth)
+	b, err := createBranch[interfaces.LightClientFinalityBranchElectra]("finality", branch, fieldparams.FinalityBranchDepthElectra)
 	if err != nil {
 		return err
 	}
