@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/ethereum/go-ethereum/common/math"
 	"github.com/pkg/errors"
 	"github.com/prysmaticlabs/prysm/v5/beacon-chain/core/helpers"
 	"github.com/prysmaticlabs/prysm/v5/beacon-chain/state"
@@ -265,7 +266,12 @@ func ProcessConsolidationRequests(ctx context.Context, st state.BeaconState, req
 			continue
 		}
 
-		if curEpoch < srcV.ActivationEpoch+params.BeaconConfig().ShardCommitteePeriod {
+		e, ok := math.SafeAdd(uint64(srcV.ActivationEpoch), uint64(params.BeaconConfig().ShardCommitteePeriod))
+		if !ok {
+			log.Error("Overflow when adding activation epoch and shard committee period")
+			continue
+		}
+		if uint64(curEpoch) < e {
 			continue
 		}
 		bal, err := st.PendingBalanceToWithdraw(srcIdx)
