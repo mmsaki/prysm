@@ -457,7 +457,7 @@ func createDefaultLightClientUpdate(currentSlot primitives.Slot, attestedState s
 	}
 
 	var nextSyncCommitteeBranch [][]byte
-	if currentEpoch >= params.BeaconConfig().ElectraForkEpoch {
+	if attestedState.Version() >= version.Electra {
 		nextSyncCommitteeBranch = make([][]byte, fieldparams.SyncCommitteeBranchDepthElectra)
 	} else {
 		nextSyncCommitteeBranch = make([][]byte, fieldparams.SyncCommitteeBranchDepth)
