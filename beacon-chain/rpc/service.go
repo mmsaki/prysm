@@ -26,6 +26,7 @@ import (
 	"github.com/prysmaticlabs/prysm/v5/beacon-chain/db"
 	"github.com/prysmaticlabs/prysm/v5/beacon-chain/db/filesystem"
 	"github.com/prysmaticlabs/prysm/v5/beacon-chain/execution"
+	light_client "github.com/prysmaticlabs/prysm/v5/beacon-chain/light-client"
 	"github.com/prysmaticlabs/prysm/v5/beacon-chain/operations/attestations"
 	"github.com/prysmaticlabs/prysm/v5/beacon-chain/operations/blstoexec"
 	"github.com/prysmaticlabs/prysm/v5/beacon-chain/operations/slashings"
@@ -140,6 +141,7 @@ type Config struct {
 	BlobStorage               *filesystem.BlobStorage
 	TrackedValidatorsCache    *cache.TrackedValidatorsCache
 	PayloadIDCache            *cache.PayloadIDCache
+	LCStore                   *light_client.Store
 }
 
 // NewService instantiates a new RPC service instance that will
