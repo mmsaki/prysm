@@ -250,8 +250,8 @@ func (r LightClientBootstrapReq) UnmarshalSSZ(buf []byte) error {
 
 // LightClientUpdatesByRangeReq specifies the block by roots request type.
 type LightClientUpdatesByRangeReq struct {
-	startPeriod uint64
-	count       uint64
+	StartPeriod uint64
+	Count       uint64
 }
 
 // MarshalSSZTo marshals the light client updates by range request with the provided byte slice.
@@ -266,8 +266,8 @@ func (r *LightClientUpdatesByRangeReq) MarshalSSZTo(dst []byte) ([]byte, error) 
 // MarshalSSZ Marshals the light client updates by range request type into the serialized object.
 func (r *LightClientUpdatesByRangeReq) MarshalSSZ() ([]byte, error) {
 	buf := make([]byte, 0, r.SizeSSZ())
-	binary.LittleEndian.AppendUint64(buf, r.startPeriod)
-	binary.LittleEndian.AppendUint64(buf, r.count)
+	binary.LittleEndian.AppendUint64(buf, r.StartPeriod)
+	binary.LittleEndian.AppendUint64(buf, r.Count)
 	return buf, nil
 }
 
@@ -283,7 +283,7 @@ func (r *LightClientUpdatesByRangeReq) UnmarshalSSZ(buf []byte) error {
 	if bufLen != lightClientUpdatesByRangeReqLength {
 		return errors.Errorf("expected buffer with length of %d but received length %d", lightClientUpdatesByRangeReqLength, bufLen)
 	}
-	r.startPeriod = binary.LittleEndian.Uint64(buf[0:8])
-	r.count = binary.LittleEndian.Uint64(buf[8:16])
+	r.StartPeriod = binary.LittleEndian.Uint64(buf[0:8])
+	r.Count = binary.LittleEndian.Uint64(buf[8:16])
 	return nil
 }

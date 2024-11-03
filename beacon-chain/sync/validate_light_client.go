@@ -40,22 +40,24 @@ func (s *Service) validateLightClientFinalityUpdate(ctx context.Context, pid pee
 		return pubsub.ValidationReject, errWrongMessage
 	}
 
-	s.lcFinalityUpdateLock.Lock()
-	defer s.lcFinalityUpdateLock.Unlock()
-
 	maxActiveParticipants := update.SyncAggregate().SyncCommitteeBits.Len()
 	numActiveParticipants := update.SyncAggregate().SyncCommitteeBits.Count()
 	hasSupermajority := numActiveParticipants*3 >= maxActiveParticipants*2
 
-	last := s.lastLCFinalityUpdate
+	last := s.lcStore.LastLCFinalityUpdate
 	if last != nil {
 		// [IGNORE] The finalized_header.beacon.slot is greater than that of all previously forwarded finality_updates,
 		// or it matches the highest previously forwarded slot and also has a sync_aggregate indicating supermajority (> 2/3)
 		// sync committee participation while the previously forwarded finality_update for that slot did not indicate supermajority
-		if update.FinalizedHeader().Beacon().Slot < last.slot {
+		slot := last.FinalizedHeader().Beacon().Slot
+		lastMaxActiveParticipants := last.SyncAggregate().SyncCommitteeBits.Len()
+		lastNumActiveParticipants := last.SyncAggregate().SyncCommitteeBits.Count()
+		lastHasSupermajority := lastNumActiveParticipants*3 >= lastMaxActiveParticipants*2
+
+		if update.FinalizedHeader().Beacon().Slot < slot {
 			return pubsub.ValidationIgnore, nil
 		}
-		if update.FinalizedHeader().Beacon().Slot == last.slot && (last.hasSupermajority || !hasSupermajority) {
+		if update.FinalizedHeader().Beacon().Slot == slot && (lastHasSupermajority || !hasSupermajority) {
 			return pubsub.ValidationIgnore, nil
 		}
 	}
@@ -68,11 +70,6 @@ func (s *Service) validateLightClientFinalityUpdate(ctx context.Context, pid pee
 		Add(-params.BeaconConfig().MaximumGossipClockDisparityDuration())
 	if s.cfg.clock.Now().Before(earliestValidTime) {
 		return pubsub.ValidationIgnore, nil
-	}
-
-	s.lastLCFinalityUpdate = &lcFinalityUpdateInfo{
-		slot:             update.FinalizedHeader().Beacon().Slot,
-		hasSupermajority: hasSupermajority,
 	}
 
 	return pubsub.ValidationAccept, nil
@@ -105,13 +102,10 @@ func (s *Service) validateLightClientOptimisticUpdate(ctx context.Context, pid p
 		return pubsub.ValidationReject, errWrongMessage
 	}
 
-	s.lcOptimisticUpdateLock.Lock()
-	defer s.lcOptimisticUpdateLock.Unlock()
-
-	last := s.lastLCOptimisticUpdate
+	last := s.lcStore.LastLCOptimisticUpdate
 	if last != nil {
 		// [IGNORE] The attested_header.beacon.slot is greater than that of all previously forwarded optimistic_updates
-		if update.AttestedHeader().Beacon().Slot <= last.slot {
+		if update.AttestedHeader().Beacon().Slot <= last.AttestedHeader().Beacon().Slot {
 			return pubsub.ValidationIgnore, nil
 		}
 	}
@@ -124,10 +118,6 @@ func (s *Service) validateLightClientOptimisticUpdate(ctx context.Context, pid p
 		Add(-params.BeaconConfig().MaximumGossipClockDisparityDuration())
 	if s.cfg.clock.Now().Before(earliestValidTime) {
 		return pubsub.ValidationIgnore, nil
-	}
-
-	s.lastLCOptimisticUpdate = &lcOptimisticUpdateInfo{
-		slot: update.AttestedHeader().Beacon().Slot,
 	}
 
 	return pubsub.ValidationAccept, nil

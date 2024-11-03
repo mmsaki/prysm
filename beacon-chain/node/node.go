@@ -34,6 +34,7 @@ import (
 	"github.com/prysmaticlabs/prysm/v5/beacon-chain/execution"
 	"github.com/prysmaticlabs/prysm/v5/beacon-chain/forkchoice"
 	doublylinkedtree "github.com/prysmaticlabs/prysm/v5/beacon-chain/forkchoice/doubly-linked-tree"
+	light_client "github.com/prysmaticlabs/prysm/v5/beacon-chain/light-client"
 	"github.com/prysmaticlabs/prysm/v5/beacon-chain/monitor"
 	"github.com/prysmaticlabs/prysm/v5/beacon-chain/node/registration"
 	"github.com/prysmaticlabs/prysm/v5/beacon-chain/operations/attestations"
@@ -121,6 +122,7 @@ type BeaconNode struct {
 	BlobStorageOptions      []filesystem.BlobStorageOption
 	verifyInitWaiter        *verification.InitializerWaiter
 	syncChecker             *initialsync.SyncChecker
+	lcStore                 *light_client.Store
 }
 
 // New creates a new node instance, sets up configuration options, and registers
@@ -157,6 +159,7 @@ func New(cliCtx *cli.Context, cancel context.CancelFunc, opts ...Option) (*Beaco
 		serviceFlagOpts:         &serviceFlagOpts{},
 		initialSyncComplete:     make(chan struct{}),
 		syncChecker:             &initialsync.SyncChecker{},
+		lcStore:                 &light_client.Store{},
 	}
 
 	for _, opt := range opts {
@@ -763,6 +766,7 @@ func (b *BeaconNode) registerBlockchainService(fc forkchoice.ForkChoicer, gs *st
 		blockchain.WithTrackedValidatorsCache(b.trackedValidatorsCache),
 		blockchain.WithPayloadIDCache(b.payloadIDCache),
 		blockchain.WithSyncChecker(b.syncChecker),
+		blockchain.WithLightClientStore(b.lcStore),
 	)
 
 	blockchainService, err := blockchain.NewService(b.ctx, opts...)
@@ -846,6 +850,7 @@ func (b *BeaconNode) registerSyncService(initialSyncComplete chan struct{}, bFil
 		regularsync.WithBlobStorage(b.BlobStorage),
 		regularsync.WithVerifierWaiter(b.verifyInitWaiter),
 		regularsync.WithAvailableBlocker(bFillStore),
+		regularsync.WithLightClientStore(b.lcStore),
 	)
 	return b.services.RegisterService(rs)
 }
