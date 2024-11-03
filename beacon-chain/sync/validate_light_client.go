@@ -26,7 +26,7 @@ func (s *Service) validateLightClientFinalityUpdate(ctx context.Context, pid pee
 		return pubsub.ValidationIgnore, nil
 	}
 
-	ctx, span := trace.StartSpan(ctx, "sync.validateLightClientFinalityUpdate")
+	_, span := trace.StartSpan(ctx, "sync.validateLightClientFinalityUpdate")
 	defer span.End()
 
 	m, err := s.decodePubsubMessage(msg)
@@ -88,7 +88,7 @@ func (s *Service) validateLightClientOptimisticUpdate(ctx context.Context, pid p
 		return pubsub.ValidationIgnore, nil
 	}
 
-	ctx, span := trace.StartSpan(ctx, "sync.validateLightClientOptimisticUpdate")
+	_, span := trace.StartSpan(ctx, "sync.validateLightClientOptimisticUpdate")
 	defer span.End()
 
 	m, err := s.decodePubsubMessage(msg)

@@ -112,7 +112,7 @@ func (s *Service) lightClientUpdatesByRangeRPCHandler(ctx context.Context, msg i
 func (s *Service) lightClientFinalityUpdateRPCHandler(ctx context.Context, _ interface{}, stream libp2pcore.Stream) error {
 	ctx, span := trace.StartSpan(ctx, "sync.lightClientFinalityUpdateRPCHandler")
 	defer span.End()
-	ctx, cancel := context.WithTimeout(ctx, ttfbTimeout)
+	_, cancel := context.WithTimeout(ctx, ttfbTimeout)
 	defer cancel()
 
 	// TODO: What should we log?
@@ -144,7 +144,7 @@ func (s *Service) lightClientFinalityUpdateRPCHandler(ctx context.Context, _ int
 func (s *Service) lightClientOptimisticUpdateRPCHandler(ctx context.Context, _ interface{}, stream libp2pcore.Stream) error {
 	ctx, span := trace.StartSpan(ctx, "sync.lightClientOptimisticUpdateRPCHandler")
 	defer span.End()
-	ctx, cancel := context.WithTimeout(ctx, ttfbTimeout)
+	_, cancel := context.WithTimeout(ctx, ttfbTimeout)
 	defer cancel()
 
 	// TODO: What should we log?
