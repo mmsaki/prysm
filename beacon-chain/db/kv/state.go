@@ -139,6 +139,7 @@ func (s *Store) SaveStates(ctx context.Context, states []state.ReadOnlyBeaconSta
 		}
 		multipleEncs[i] = stateBytes
 	}
+	log.Infof("Total serialization: %s", time.Since(startTime).String())
 
 	if err := s.db.Update(func(tx *bolt.Tx) error {
 		bucket := tx.Bucket(stateBucket)
