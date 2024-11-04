@@ -44,7 +44,7 @@ func (s *State) MigrateToCold(ctx context.Context, fRoot [32]byte) error {
 			return ctx.Err()
 		}
 
-		if slot%s.slotsPerArchivedPoint == 0 && slot != 0 {
+		if slot%128 == 0 && slot != 0 {
 			cached, exists, err := s.epochBoundaryStateCache.getBySlot(slot)
 			if err != nil {
 				return fmt.Errorf("could not get epoch boundary state for slot %d", slot)

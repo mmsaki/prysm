@@ -1,12 +1,15 @@
 package state_native
 
 import (
+	"time"
+
 	"github.com/pkg/errors"
 	customtypes "github.com/prysmaticlabs/prysm/v5/beacon-chain/state/state-native/custom-types"
 	"github.com/prysmaticlabs/prysm/v5/config/features"
 	consensus_types "github.com/prysmaticlabs/prysm/v5/consensus-types"
 	ethpb "github.com/prysmaticlabs/prysm/v5/proto/prysm/v1alpha1"
 	"github.com/prysmaticlabs/prysm/v5/runtime/version"
+	log "github.com/sirupsen/logrus"
 )
 
 // ToProtoUnsafe returns the pointer value of the underlying
@@ -15,16 +18,19 @@ func (b *BeaconState) ToProtoUnsafe() interface{} {
 	if b == nil {
 		return nil
 	}
-
+	startTime := time.Now()
 	gvrCopy := b.genesisValidatorsRoot
 	br := b.blockRootsVal().Slice()
 	sr := b.stateRootsVal().Slice()
 	rm := b.randaoMixesVal().Slice()
+	log.Infof("Generated slices for state in %s", time.Since(startTime).String())
 	var vals []*ethpb.Validator
 	var bals []uint64
 	if features.Get().EnableExperimentalState {
 		vals = b.validatorsVal()
+		log.Infof("Generated validators for state in %s", time.Since(startTime).String())
 		bals = b.balancesVal()
+		log.Infof("Generated balances for state in %s", time.Since(startTime).String())
 	} else {
 		vals = b.validators
 		bals = b.balances
@@ -142,6 +148,9 @@ func (b *BeaconState) ToProtoUnsafe() interface{} {
 			HistoricalSummaries:          b.historicalSummaries,
 		}
 	case version.Deneb:
+		defer func() {
+			log.Infof("Generated roots and inactivitu scores for state in %s", time.Since(startTime).String())
+		}()
 		return &ethpb.BeaconStateDeneb{
 			GenesisTime:                  b.genesisTime,
 			GenesisValidatorsRoot:        gvrCopy[:],
