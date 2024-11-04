@@ -265,7 +265,7 @@ func SyncCommitteePeriodStartEpoch(e primitives.Epoch) (primitives.Epoch, error)
 // given slot start time
 func SecondsSinceSlotStart(s primitives.Slot, genesisTime, timeStamp uint64) (uint64, error) {
 	if timeStamp < genesisTime+uint64(s)*params.BeaconConfig().SecondsPerSlot {
-		return 0, fmt.Errorf("could not compute seconds since slot start: invalid timestamp.slot%d got %d, want %d", s, timeStamp, genesisTime+uint64(s)*params.BeaconConfig().SecondsPerSlot)
+		return 0, fmt.Errorf("could not compute seconds since slot %d start: invalid timestamp, got %d < want %d", s, timeStamp, genesisTime+uint64(s)*params.BeaconConfig().SecondsPerSlot)
 	}
 	return timeStamp - genesisTime - uint64(s)*params.BeaconConfig().SecondsPerSlot, nil
 }

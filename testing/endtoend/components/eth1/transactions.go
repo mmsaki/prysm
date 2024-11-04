@@ -12,11 +12,13 @@ import (
 
 	"github.com/MariusVanDerWijden/FuzzyVM/filler"
 	txfuzz "github.com/MariusVanDerWijden/tx-fuzz"
+	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/keystore"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto/kzg4844"
 	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/ethereum/go-ethereum/ethclient/gethclient"
 	"github.com/ethereum/go-ethereum/rpc"
 	"github.com/holiman/uint256"
 	"github.com/pkg/errors"
@@ -266,15 +268,27 @@ func RandomBlobTx(rpc *rpc.Client, f *filler.Filler, sender common.Address, nonc
 		return New4844Tx(nonce, &to, gas, chainID, tip, feecap, value, code, big.NewInt(1000000), data, make(types.AccessList, 0)), nil
 	case 1:
 		// 4844 transaction with AL nonce, to, value, gas, gasPrice, code
-		tx := types.NewTx(&types.AccessListTx{
-			Nonce: nonce,
-			To:    &to,
-			Value: value,
-			Gas:   gas,
-			//GasPrice: gasPrice,
-			Data: code,
+		tx := types.NewTx(&types.LegacyTx{
+			Nonce:    nonce,
+			To:       &to,
+			Value:    value,
+			Gas:      gas,
+			GasPrice: gasPrice,
+			Data:     code,
 		})
-		al, err := txfuzz.CreateAccessList(rpc, tx, sender)
+
+		// TODO: replace call with al, err := txfuzz.CreateAccessList(rpc, tx, sender) when txfuzz is fixed in new release
+		msg := ethereum.CallMsg{
+			From:       sender,
+			To:         tx.To(),
+			Gas:        tx.Gas(),
+			GasPrice:   tx.GasPrice(),
+			Value:      tx.Value(),
+			Data:       tx.Data(),
+			AccessList: nil,
+		}
+		geth := gethclient.New(rpc)
+		al, _, _, err := geth.CreateAccessList(context.Background(), msg)
 		if err != nil {
 			return nil, errors.Wrap(err, "CreateAccessList")
 		}
