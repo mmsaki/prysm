@@ -205,6 +205,28 @@ func lightClientHeaderToJSON(header interfaces.LightClientHeader) (json.RawMessa
 			Execution:       execution,
 			ExecutionBranch: branchToJSON(executionBranch[:]),
 		}
+	case version.Electra:
+		exInterface, err := header.Execution()
+		if err != nil {
+			return nil, err
+		}
+		ex, ok := exInterface.Proto().(*enginev1.ExecutionPayloadHeaderDeneb)
+		if !ok {
+			return nil, fmt.Errorf("execution data is not %T", &enginev1.ExecutionPayloadHeaderDeneb{})
+		}
+		execution, err := ExecutionPayloadHeaderDenebFromConsensus(ex)
+		if err != nil {
+			return nil, err
+		}
+		executionBranch, err := header.ExecutionBranch()
+		if err != nil {
+			return nil, err
+		}
+		result = &LightClientHeaderDeneb{
+			Beacon:          BeaconBlockHeaderFromConsensus(header.Beacon()),
+			Execution:       execution,
+			ExecutionBranch: branchToJSON(executionBranch[:]),
+		}
 	default:
 		return nil, fmt.Errorf("unsupported header version %s", version.String(v))
 	}

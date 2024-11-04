@@ -169,7 +169,6 @@ func (s *Server) GetLightClientFinalityUpdate(w http.ResponseWriter, req *http.R
 	defer span.End()
 
 	update := s.LCStore.LastLCFinalityUpdate
-
 	if update == nil {
 		httputil.HandleError(w, "No light client finality update available", http.StatusNotFound)
 		return
@@ -204,7 +203,6 @@ func (s *Server) GetLightClientOptimisticUpdate(w http.ResponseWriter, req *http
 	defer span.End()
 
 	update := s.LCStore.LastLCOptimisticUpdate
-
 	if update == nil {
 		httputil.HandleError(w, "No light client optimistic update available", http.StatusNotFound)
 		return
