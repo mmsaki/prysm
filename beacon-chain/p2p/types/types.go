@@ -16,8 +16,8 @@ import (
 )
 
 const (
-	maxErrorLength                     = 256
-	lightClientUpdatesByRangeReqLength = 16
+	maxErrorLength        = 256
+	maxLightClientUpdates = 16
 )
 
 // SSZBytes is a bytes slice that satisfies the fast-ssz interface.
@@ -273,15 +273,15 @@ func (r *LightClientUpdatesByRangeReq) MarshalSSZ() ([]byte, error) {
 
 // SizeSSZ returns the size of the serialized representation.
 func (r *LightClientUpdatesByRangeReq) SizeSSZ() int {
-	return lightClientUpdatesByRangeReqLength
+	return maxLightClientUpdates
 }
 
 // UnmarshalSSZ unmarshals the provided bytes buffer into the
 // block by roots request object.
 func (r *LightClientUpdatesByRangeReq) UnmarshalSSZ(buf []byte) error {
 	bufLen := len(buf)
-	if bufLen != lightClientUpdatesByRangeReqLength {
-		return errors.Errorf("expected buffer with length of %d but received length %d", lightClientUpdatesByRangeReqLength, bufLen)
+	if bufLen != maxLightClientUpdates {
+		return errors.Errorf("expected buffer with length of %d but received length %d", maxLightClientUpdates, bufLen)
 	}
 	r.StartPeriod = binary.LittleEndian.Uint64(buf[0:8])
 	r.Count = binary.LittleEndian.Uint64(buf[8:16])

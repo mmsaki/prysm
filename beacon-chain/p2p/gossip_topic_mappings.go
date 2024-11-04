@@ -63,6 +63,9 @@ func GossipTopicMappings(topic string, epoch primitives.Epoch) proto.Message {
 		}
 		return gossipMessage(topic)
 	case LightClientFinalityUpdateTopicFormat:
+		if epoch >= params.BeaconConfig().ElectraForkEpoch {
+			return &ethpb.LightClientFinalityUpdateElectra{}
+		}
 		if epoch >= params.BeaconConfig().DenebForkEpoch {
 			return &ethpb.LightClientFinalityUpdateDeneb{}
 		}

@@ -54,7 +54,7 @@ func (s *Service) lightClientBootstrapRPCHandler(ctx context.Context, msg interf
 	return nil
 }
 
-// lightClientBootstrapRPCHandler handles the /eth2/beacon_chain/req/light_client_updates_by_range/1/ RPC request.
+// lightClientUpdatesByRangeRPCHandler handles the /eth2/beacon_chain/req/light_client_updates_by_range/1/ RPC request.
 func (s *Service) lightClientUpdatesByRangeRPCHandler(ctx context.Context, msg interface{}, stream libp2pcore.Stream) error {
 	ctx, span := trace.StartSpan(ctx, "sync.lightClientUpdatesByRangeRPCHandler")
 	defer span.End()
@@ -108,7 +108,7 @@ func (s *Service) lightClientUpdatesByRangeRPCHandler(ctx context.Context, msg i
 	return nil
 }
 
-// lightClientBootstrapRPCHandler handles the /eth2/beacon_chain/req/light_client_finality_update/1/ RPC request.
+// lightClientFinalityUpdateRPCHandler handles the /eth2/beacon_chain/req/light_client_finality_update/1/ RPC request.
 func (s *Service) lightClientFinalityUpdateRPCHandler(ctx context.Context, _ interface{}, stream libp2pcore.Stream) error {
 	ctx, span := trace.StartSpan(ctx, "sync.lightClientFinalityUpdateRPCHandler")
 	defer span.End()

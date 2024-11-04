@@ -10,8 +10,6 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-// TODO: event feed
-
 func (s *Service) lightClientFinalityUpdateSubscriber(_ context.Context, msg proto.Message) error {
 	update, ok := msg.(interfaces.LightClientFinalityUpdate)
 	if !ok {
