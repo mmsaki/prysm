@@ -126,55 +126,40 @@ func GethPragueTime(genesisTime uint64, cfg *clparams.BeaconChainConfig) *uint64
 // like in an e2e test. The parameters are minimal but the full value is returned unmarshaled so that it can be
 // customized as desired.
 func GethTestnetGenesis(genesisTime uint64, cfg *clparams.BeaconChainConfig) *core.Genesis {
-	//ttd, ok := big.NewInt(0).SetString(clparams.BeaconConfig().TerminalTotalDifficulty, 10)
-	//if !ok {
-	//	panic(fmt.Sprintf("unable to parse TerminalTotalDifficulty as an integer = %s", clparams.BeaconConfig().TerminalTotalDifficulty))
-	//}
-
 	//shanghaiTime := GethShanghaiTime(genesisTime, cfg)
+	// TODO: make these times dynamic...
 	cancunTime := GethCancunTime(genesisTime, cfg)
 	shanghaiTime := genesisTime
-	//cancunTime := uint64(0)
 	pragueTime := GethPragueTime(genesisTime, cfg)
 	cc := &params.ChainConfig{
-		ChainID:             big.NewInt(defaultTestChainId),
-		HomesteadBlock:      bigz,
-		DAOForkBlock:        bigz,
-		EIP150Block:         bigz,
-		EIP155Block:         bigz,
-		EIP158Block:         bigz,
-		ByzantiumBlock:      bigz,
-		ConstantinopleBlock: bigz,
-		PetersburgBlock:     bigz,
-		IstanbulBlock:       bigz,
-		MuirGlacierBlock:    bigz,
-		BerlinBlock:         bigz,
-		LondonBlock:         bigz,
-		ArrowGlacierBlock:   bigz,
-		GrayGlacierBlock:    bigz,
-		MergeNetsplitBlock:  bigz,
-		//TerminalTotalDifficulty:       ttd,
+		ChainID:                       big.NewInt(defaultTestChainId),
+		HomesteadBlock:                bigz,
+		DAOForkBlock:                  bigz,
+		EIP150Block:                   bigz,
+		EIP155Block:                   bigz,
+		EIP158Block:                   bigz,
+		ByzantiumBlock:                bigz,
+		ConstantinopleBlock:           bigz,
+		PetersburgBlock:               bigz,
+		IstanbulBlock:                 bigz,
+		MuirGlacierBlock:              bigz,
+		BerlinBlock:                   bigz,
+		LondonBlock:                   bigz,
+		ArrowGlacierBlock:             bigz,
+		GrayGlacierBlock:              bigz,
+		MergeNetsplitBlock:            bigz,
 		TerminalTotalDifficulty:       bigz,
 		TerminalTotalDifficultyPassed: true,
-		//Clique: &params.CliqueConfig{
-		//	Period: cfg.SecondsPerETH1Block,
-		//	Epoch:  20000,
-		//},
-		ShanghaiTime: &shanghaiTime,
-		CancunTime:   cancunTime,
-		PragueTime:   pragueTime,
+		ShanghaiTime:                  &shanghaiTime,
+		CancunTime:                    cancunTime,
+		PragueTime:                    pragueTime,
 	}
 	da := defaultDepositContractAllocation(cfg.DepositContractAddress)
 	ma := minerAllocation()
-	//extra, err := hexutil.Decode(DefaultCliqueSigner)
-	//if err != nil {
-	//	panic(fmt.Sprintf("unable to decode DefaultCliqueSigner, with error %v", err.Error()))
-	//}
 	return &core.Genesis{
-		Config:    cc,
-		Nonce:     0, // overridden for authorized signer votes in clique, so we should leave it empty?
-		Timestamp: genesisTime,
-		//ExtraData:  extra,
+		Config:     cc,
+		Nonce:      0, // overridden for authorized signer votes in clique, so we should leave it empty?
+		Timestamp:  genesisTime,
 		GasLimit:   cfg.DefaultBuilderGasLimit,
 		Difficulty: common.HexToHash(defaultDifficulty).Big(),
 		Mixhash:    common.HexToHash(defaultMixhash),
