@@ -672,3 +672,135 @@ func IsBetterUpdate(newUpdate, oldUpdate interfaces.LightClientUpdate) (bool, er
 
 	return newUpdate.SignatureSlot() < oldUpdate.SignatureSlot(), nil
 }
+
+func CreateLightClientBootstrap(
+	ctx context.Context,
+	currentSlot primitives.Slot,
+	state state.BeaconState,
+	block interfaces.ReadOnlySignedBeaconBlock,
+) (interfaces.LightClientBootstrap, error) {
+	// assert compute_epoch_at_slot(state.slot) >= ALTAIR_FORK_EPOCH
+	if slots.ToEpoch(state.Slot()) < params.BeaconConfig().AltairForkEpoch {
+		return nil, fmt.Errorf("light client bootstrap is not supported before Altair, invalid slot %d", state.Slot())
+	}
+
+	// assert state.slot == state.latest_block_header.slot
+	latestBlockHeader := state.LatestBlockHeader()
+	if state.Slot() != latestBlockHeader.Slot {
+		return nil, fmt.Errorf("state slot %d not equal to latest block header slot %d", state.Slot(), latestBlockHeader.Slot)
+	}
+
+	// header.state_root = hash_tree_root(state)
+	stateRoot, err := state.HashTreeRoot(ctx)
+	if err != nil {
+		return nil, errors.Wrap(err, "could not get state root")
+	}
+	latestBlockHeader.StateRoot = stateRoot[:]
+
+	// assert hash_tree_root(header) == hash_tree_root(block.message)
+	latestBlockHeaderRoot, err := latestBlockHeader.HashTreeRoot()
+	if err != nil {
+		return nil, errors.Wrap(err, "could not get latest block header root")
+	}
+	beaconBlockRoot, err := block.Block().HashTreeRoot()
+	if err != nil {
+		return nil, errors.Wrap(err, "could not get block root")
+	}
+	if latestBlockHeaderRoot != beaconBlockRoot {
+		return nil, fmt.Errorf("latest block header root %#x not equal to block root %#x", latestBlockHeaderRoot, beaconBlockRoot)
+	}
+
+	bootstrap, err := CreateDefaultLightClientBootstrap(currentSlot)
+	if err != nil {
+		return nil, errors.Wrap(err, "could not create default light client bootstrap")
+	}
+
+	lightClientHeader, err := BlockToLightClientHeader(ctx, currentSlot, block)
+	if err != nil {
+		return nil, errors.Wrap(err, "could not convert block to light client header")
+	}
+
+	err = bootstrap.SetHeader(lightClientHeader)
+	if err != nil {
+		return nil, errors.Wrap(err, "could not set header")
+	}
+
+	currentSyncCommittee, err := state.CurrentSyncCommittee()
+	if err != nil {
+		return nil, errors.Wrap(err, "could not get current sync committee")
+	}
+
+	err = bootstrap.SetCurrentSyncCommittee(currentSyncCommittee)
+	if err != nil {
+		return nil, errors.Wrap(err, "could not set current sync committee")
+	}
+
+	currentSyncCommitteeProof, err := state.CurrentSyncCommitteeProof(ctx)
+	if err != nil {
+		return nil, errors.Wrap(err, "could not get current sync committee proof")
+	}
+
+	err = bootstrap.SetCurrentSyncCommitteeBranch(currentSyncCommitteeProof)
+	if err != nil {
+		return nil, errors.Wrap(err, "could not set current sync committee proof")
+	}
+
+	return bootstrap, nil
+}
+
+func CreateDefaultLightClientBootstrap(currentSlot primitives.Slot) (interfaces.LightClientBootstrap, error) {
+	currentEpoch := slots.ToEpoch(currentSlot)
+	syncCommitteeSize := params.BeaconConfig().SyncCommitteeSize
+	pubKeys := make([][]byte, syncCommitteeSize)
+	for i := uint64(0); i < syncCommitteeSize; i++ {
+		pubKeys[i] = make([]byte, fieldparams.BLSPubkeyLength)
+	}
+	currentSyncCommittee := &pb.SyncCommittee{
+		Pubkeys:         pubKeys,
+		AggregatePubkey: make([]byte, fieldparams.BLSPubkeyLength),
+	}
+
+	var currentSyncCommitteeBranch [][]byte
+	if currentEpoch < params.BeaconConfig().ElectraForkEpoch {
+		currentSyncCommitteeBranch = make([][]byte, fieldparams.SyncCommitteeBranchDepth)
+		for i := 0; i < len(currentSyncCommitteeBranch); i++ {
+			currentSyncCommitteeBranch[i] = make([]byte, fieldparams.RootLength)
+		}
+	} else {
+		currentSyncCommitteeBranch = make([][]byte, fieldparams.SyncCommitteeBranchDepthElectra)
+		for i := 0; i < len(currentSyncCommitteeBranch); i++ {
+			currentSyncCommitteeBranch[i] = make([]byte, fieldparams.RootLength)
+		}
+	}
+
+	var m proto.Message
+	if currentEpoch < params.BeaconConfig().CapellaForkEpoch {
+		m = &pb.LightClientBootstrapAltair{
+			Header:                     &pb.LightClientHeaderAltair{},
+			CurrentSyncCommittee:       currentSyncCommittee,
+			CurrentSyncCommitteeBranch: currentSyncCommitteeBranch,
+		}
+	} else if currentEpoch < params.BeaconConfig().DenebForkEpoch {
+		m = &pb.LightClientBootstrapCapella{
+			Header:                     &pb.LightClientHeaderCapella{},
+			CurrentSyncCommittee:       currentSyncCommittee,
+			CurrentSyncCommitteeBranch: currentSyncCommitteeBranch,
+		}
+	} else if currentEpoch < params.BeaconConfig().ElectraForkEpoch {
+		m = &pb.LightClientBootstrapDeneb{
+			Header:                     &pb.LightClientHeaderDeneb{},
+			CurrentSyncCommittee:       currentSyncCommittee,
+			CurrentSyncCommitteeBranch: currentSyncCommitteeBranch,
+		}
+	} else {
+
+		m = &pb.LightClientBootstrapElectra{
+			Header:                     &pb.LightClientHeaderDeneb{},
+			CurrentSyncCommittee:       currentSyncCommittee,
+			CurrentSyncCommitteeBranch: currentSyncCommitteeBranch,
+		}
+
+	}
+
+	return light_client.NewWrappedBootstrap(m)
+}

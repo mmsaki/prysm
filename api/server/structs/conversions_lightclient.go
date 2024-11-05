@@ -177,3 +177,31 @@ func lightClientHeaderToJSON(header interfaces.LightClientHeader) (json.RawMessa
 
 	return json.Marshal(result)
 }
+
+func LightClientBootstrapFromConsensus(bootstrap interfaces.LightClientBootstrap) (*LightClientBootstrap, error) {
+	header, err := lightClientHeaderToJSON(bootstrap.Header())
+	if err != nil {
+		return nil, errors.Wrap(err, "could not marshal light client header")
+	}
+
+	var scBranch [][32]byte
+	if bootstrap.Version() >= version.Electra {
+		b, err := bootstrap.CurrentSyncCommitteeBranchElectra()
+		if err != nil {
+			return nil, err
+		}
+		scBranch = b[:]
+	} else {
+		b, err := bootstrap.CurrentSyncCommitteeBranch()
+		if err != nil {
+			return nil, err
+		}
+		scBranch = b[:]
+	}
+
+	return &LightClientBootstrap{
+		Header:                     header,
+		CurrentSyncCommittee:       SyncCommitteeFromConsensus(bootstrap.CurrentSyncCommittee()),
+		CurrentSyncCommitteeBranch: branchToJSON(scBranch),
+	}, nil
+}

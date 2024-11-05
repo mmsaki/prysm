@@ -81,12 +81,40 @@ func (h *bootstrapAltair) Header() interfaces.LightClientHeader {
 	return h.header
 }
 
+func (h *bootstrapAltair) SetHeader(header interfaces.LightClientHeader) error {
+	p, ok := (header.Proto()).(*pb.LightClientHeaderAltair)
+	if !ok {
+		return fmt.Errorf("header type %T is not %T", p, &pb.LightClientHeaderAltair{})
+	}
+	h.p.Header = p
+	h.header = header
+	return nil
+}
+
 func (h *bootstrapAltair) CurrentSyncCommittee() *pb.SyncCommittee {
 	return h.p.CurrentSyncCommittee
 }
 
+func (h *bootstrapAltair) SetCurrentSyncCommittee(sc *pb.SyncCommittee) error {
+	h.p.CurrentSyncCommittee = sc
+	return nil
+}
+
 func (h *bootstrapAltair) CurrentSyncCommitteeBranch() (interfaces.LightClientSyncCommitteeBranch, error) {
 	return h.currentSyncCommitteeBranch, nil
+}
+
+func (h *bootstrapAltair) SetCurrentSyncCommitteeBranch(branch [][]byte) error {
+	if len(branch) != fieldparams.SyncCommitteeBranchDepth {
+		return fmt.Errorf("branch length %d is not %d", len(branch), fieldparams.SyncCommitteeBranchDepth)
+	}
+	newBranch := [fieldparams.SyncCommitteeBranchDepth][32]byte{}
+	for i, root := range branch {
+		copy(newBranch[i][:], root)
+	}
+	h.currentSyncCommitteeBranch = newBranch
+	h.p.CurrentSyncCommitteeBranch = branch
+	return nil
 }
 
 func (h *bootstrapAltair) CurrentSyncCommitteeBranchElectra() (interfaces.LightClientSyncCommitteeBranchElectra, error) {
@@ -145,12 +173,40 @@ func (h *bootstrapCapella) Header() interfaces.LightClientHeader {
 	return h.header
 }
 
+func (h *bootstrapCapella) SetHeader(header interfaces.LightClientHeader) error {
+	p, ok := (header.Proto()).(*pb.LightClientHeaderCapella)
+	if !ok {
+		return fmt.Errorf("header type %T is not %T", p, &pb.LightClientHeaderCapella{})
+	}
+	h.p.Header = p
+	h.header = header
+	return nil
+}
+
 func (h *bootstrapCapella) CurrentSyncCommittee() *pb.SyncCommittee {
 	return h.p.CurrentSyncCommittee
 }
 
+func (h *bootstrapCapella) SetCurrentSyncCommittee(sc *pb.SyncCommittee) error {
+	h.p.CurrentSyncCommittee = sc
+	return nil
+}
+
 func (h *bootstrapCapella) CurrentSyncCommitteeBranch() (interfaces.LightClientSyncCommitteeBranch, error) {
 	return h.currentSyncCommitteeBranch, nil
+}
+
+func (h *bootstrapCapella) SetCurrentSyncCommitteeBranch(branch [][]byte) error {
+	if len(branch) != fieldparams.SyncCommitteeBranchDepth {
+		return fmt.Errorf("branch length %d is not %d", len(branch), fieldparams.SyncCommitteeBranchDepth)
+	}
+	newBranch := [fieldparams.SyncCommitteeBranchDepth][32]byte{}
+	for i, root := range branch {
+		copy(newBranch[i][:], root)
+	}
+	h.currentSyncCommitteeBranch = newBranch
+	h.p.CurrentSyncCommitteeBranch = branch
+	return nil
 }
 
 func (h *bootstrapCapella) CurrentSyncCommitteeBranchElectra() (interfaces.LightClientSyncCommitteeBranchElectra, error) {
@@ -209,12 +265,40 @@ func (h *bootstrapDeneb) Header() interfaces.LightClientHeader {
 	return h.header
 }
 
+func (h *bootstrapDeneb) SetHeader(header interfaces.LightClientHeader) error {
+	p, ok := (header.Proto()).(*pb.LightClientHeaderDeneb)
+	if !ok {
+		return fmt.Errorf("header type %T is not %T", p, &pb.LightClientHeaderDeneb{})
+	}
+	h.p.Header = p
+	h.header = header
+	return nil
+}
+
 func (h *bootstrapDeneb) CurrentSyncCommittee() *pb.SyncCommittee {
 	return h.p.CurrentSyncCommittee
 }
 
+func (h *bootstrapDeneb) SetCurrentSyncCommittee(sc *pb.SyncCommittee) error {
+	h.p.CurrentSyncCommittee = sc
+	return nil
+}
+
 func (h *bootstrapDeneb) CurrentSyncCommitteeBranch() (interfaces.LightClientSyncCommitteeBranch, error) {
 	return h.currentSyncCommitteeBranch, nil
+}
+
+func (h *bootstrapDeneb) SetCurrentSyncCommitteeBranch(branch [][]byte) error {
+	if len(branch) != fieldparams.SyncCommitteeBranchDepth {
+		return fmt.Errorf("branch length %d is not %d", len(branch), fieldparams.SyncCommitteeBranchDepth)
+	}
+	newBranch := [fieldparams.SyncCommitteeBranchDepth][32]byte{}
+	for i, root := range branch {
+		copy(newBranch[i][:], root)
+	}
+	h.currentSyncCommitteeBranch = newBranch
+	h.p.CurrentSyncCommitteeBranch = branch
+	return nil
 }
 
 func (h *bootstrapDeneb) CurrentSyncCommitteeBranchElectra() (interfaces.LightClientSyncCommitteeBranchElectra, error) {
@@ -273,12 +357,40 @@ func (h *bootstrapElectra) Header() interfaces.LightClientHeader {
 	return h.header
 }
 
+func (h *bootstrapElectra) SetHeader(header interfaces.LightClientHeader) error {
+	p, ok := (header.Proto()).(*pb.LightClientHeaderDeneb)
+	if !ok {
+		return fmt.Errorf("header type %T is not %T", p, &pb.LightClientHeaderDeneb{})
+	}
+	h.p.Header = p
+	h.header = header
+	return nil
+}
+
 func (h *bootstrapElectra) CurrentSyncCommittee() *pb.SyncCommittee {
 	return h.p.CurrentSyncCommittee
 }
 
+func (h *bootstrapElectra) SetCurrentSyncCommittee(sc *pb.SyncCommittee) error {
+	h.p.CurrentSyncCommittee = sc
+	return nil
+}
+
 func (h *bootstrapElectra) CurrentSyncCommitteeBranch() (interfaces.LightClientSyncCommitteeBranch, error) {
 	return [5][32]byte{}, consensustypes.ErrNotSupported("CurrentSyncCommitteeBranch", version.Electra)
+}
+
+func (h *bootstrapElectra) SetCurrentSyncCommitteeBranch(branch [][]byte) error {
+	if len(branch) != fieldparams.SyncCommitteeBranchDepthElectra {
+		return fmt.Errorf("branch length %d is not %d", len(branch), fieldparams.SyncCommitteeBranchDepthElectra)
+	}
+	newBranch := [fieldparams.SyncCommitteeBranchDepthElectra][32]byte{}
+	for i, root := range branch {
+		copy(newBranch[i][:], root)
+	}
+	h.currentSyncCommitteeBranch = newBranch
+	h.p.CurrentSyncCommitteeBranch = branch
+	return nil
 }
 
 func (h *bootstrapElectra) CurrentSyncCommitteeBranchElectra() (interfaces.LightClientSyncCommitteeBranchElectra, error) {
