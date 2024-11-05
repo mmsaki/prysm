@@ -53,16 +53,25 @@ func e2eMinimal(t *testing.T, cfg *params.BeaconChainConfig, cfgo ...types.E2ECo
 		ev.DepositedValidatorsAreActive,
 		ev.ValidatorsVoteWithTheMajority,
 		ev.ColdStateCheckpoint,
-		//ev.AltairForkTransition, TODO: Re-enable if able to start from older fork.
-		//ev.BellatrixForkTransition,
-		//ev.CapellaForkTransition,
-		ev.DenebForkTransition,
 		ev.FinishedSyncing,
 		ev.AllNodesHaveSameHead,
 		ev.ValidatorSyncParticipation,
 		ev.FeeRecipientIsPresent,
 		//ev.TransactionsPresent, TODO: Re-enable Transaction evaluator once it tx pool issues are fixed.
 	}
+	if cfg.AltairForkEpoch != 0 && cfg.AltairForkEpoch != params.BeaconConfig().FarFutureEpoch {
+		evals = append(evals, ev.AltairForkTransition)
+	}
+	if cfg.BellatrixForkEpoch != 0 && cfg.BellatrixForkEpoch != params.BeaconConfig().FarFutureEpoch {
+		evals = append(evals, ev.BellatrixForkTransition)
+	}
+	if cfg.CapellaForkEpoch != 0 && cfg.CapellaForkEpoch != params.BeaconConfig().FarFutureEpoch {
+		evals = append(evals, ev.CapellaForkTransition)
+	}
+	if cfg.DenebForkEpoch != 0 && cfg.DenebForkEpoch != params.BeaconConfig().FarFutureEpoch {
+		evals = append(evals, ev.DenebForkTransition)
+	}
+
 	testConfig := &types.E2EConfig{
 		BeaconFlags: []string{
 			fmt.Sprintf("--slots-per-archive-point=%d", params.BeaconConfig().SlotsPerEpoch*16),
@@ -128,14 +137,22 @@ func e2eMainnet(t *testing.T, usePrysmSh, useMultiClient bool, cfg *params.Beaco
 		ev.ValidatorsHaveWithdrawn,
 		ev.DepositedValidatorsAreActive,
 		ev.ColdStateCheckpoint,
-		//ev.AltairForkTransition, TODO: Re-enable if able to start from older fork.
-		//ev.BellatrixForkTransition,
-		//ev.CapellaForkTransition,
-		ev.DenebForkTransition,
 		ev.FinishedSyncing,
 		ev.AllNodesHaveSameHead,
 		ev.FeeRecipientIsPresent,
 		//ev.TransactionsPresent, TODO: Re-enable Transaction evaluator once it tx pool issues are fixed.
+	}
+	if cfg.AltairForkEpoch != 0 && cfg.AltairForkEpoch != params.BeaconConfig().FarFutureEpoch {
+		evals = append(evals, ev.AltairForkTransition)
+	}
+	if cfg.BellatrixForkEpoch != 0 && cfg.BellatrixForkEpoch != params.BeaconConfig().FarFutureEpoch {
+		evals = append(evals, ev.BellatrixForkTransition)
+	}
+	if cfg.CapellaForkEpoch != 0 && cfg.CapellaForkEpoch != params.BeaconConfig().FarFutureEpoch {
+		evals = append(evals, ev.CapellaForkTransition)
+	}
+	if cfg.DenebForkEpoch != 0 && cfg.DenebForkEpoch != params.BeaconConfig().FarFutureEpoch {
+		evals = append(evals, ev.DenebForkTransition)
 	}
 	testConfig := &types.E2EConfig{
 		BeaconFlags: []string{

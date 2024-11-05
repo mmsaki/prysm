@@ -126,11 +126,18 @@ func GethPragueTime(genesisTime uint64, cfg *clparams.BeaconChainConfig) *uint64
 // like in an e2e test. The parameters are minimal but the full value is returned unmarshaled so that it can be
 // customized as desired.
 func GethTestnetGenesis(genesisTime uint64, cfg *clparams.BeaconChainConfig) *core.Genesis {
-	//shanghaiTime := GethShanghaiTime(genesisTime, cfg)
-	// TODO: make these times dynamic...
+	shanghaiTime := GethShanghaiTime(genesisTime, cfg)
+	if cfg.CapellaForkEpoch == 0 {
+		shanghaiTime = &genesisTime
+	}
 	cancunTime := GethCancunTime(genesisTime, cfg)
-	shanghaiTime := genesisTime
+	if cfg.DenebForkEpoch == 0 {
+		cancunTime = &genesisTime
+	}
 	pragueTime := GethPragueTime(genesisTime, cfg)
+	if cfg.ElectraForkEpoch == 0 {
+		pragueTime = &genesisTime
+	}
 	cc := &params.ChainConfig{
 		ChainID:                       big.NewInt(defaultTestChainId),
 		HomesteadBlock:                bigz,
@@ -150,7 +157,7 @@ func GethTestnetGenesis(genesisTime uint64, cfg *clparams.BeaconChainConfig) *co
 		MergeNetsplitBlock:            bigz,
 		TerminalTotalDifficulty:       bigz,
 		TerminalTotalDifficultyPassed: true,
-		ShanghaiTime:                  &shanghaiTime,
+		ShanghaiTime:                  shanghaiTime,
 		CancunTime:                    cancunTime,
 		PragueTime:                    pragueTime,
 	}
