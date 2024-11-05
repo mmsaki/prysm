@@ -139,6 +139,9 @@ func (c *componentHandler) setup() {
 		appendDebugEndpoints(config)
 	}
 
+	// timeout while we wait for the eth1 client to sync
+	time.Sleep(10 * time.Second)
+
 	var builders *components.BuilderSet
 	var proxies *eth1.ProxySet
 	if config.UseBuilder {
@@ -168,9 +171,6 @@ func (c *componentHandler) setup() {
 		})
 		c.eth1Proxy = proxies
 	}
-
-	// timeout while we wait for the eth1 client to sync
-	time.Sleep(10 * time.Second)
 
 	// Beacon nodes.
 	beaconNodes := components.NewBeaconNodes(config)
