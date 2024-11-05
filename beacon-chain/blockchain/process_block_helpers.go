@@ -188,6 +188,25 @@ func (s *Service) saveLightClientUpdate(cfg *postBlockProcessConfig) {
 
 }
 
+// saveLightClientBootstrap saves a light client bootstrap for this block
+// when feature flag is enabled.
+func (s *Service) saveLightClientBootstrap(cfg *postBlockProcessConfig) {
+	if !features.Get().EnableLightClient {
+		return
+	}
+
+	blockRoot := cfg.roblock.Root()
+	bootstrap, err := lightclient.CreateLightClientBootstrap(cfg.ctx, s.CurrentSlot(), cfg.postState, cfg.roblock)
+	if err != nil {
+		log.WithError(err).Error("Could not create light client bootstrap")
+		return
+	}
+	err = s.cfg.BeaconDB.SaveLightClientBootstrap(cfg.ctx, blockRoot[:], bootstrap)
+	if err != nil {
+		log.WithError(err).Error("Could not save light client bootstrap")
+	}
+}
+
 func (s *Service) tryPublishLightClientFinalityUpdate(
 	ctx context.Context,
 	signed interfaces.ReadOnlySignedBeaconBlock,
