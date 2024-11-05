@@ -25,7 +25,6 @@ import (
 	"github.com/prysmaticlabs/prysm/v5/monitoring/tracing/trace"
 	"github.com/prysmaticlabs/prysm/v5/network/httputil"
 	ethpb "github.com/prysmaticlabs/prysm/v5/proto/eth/v1"
-	ethpbv2 "github.com/prysmaticlabs/prysm/v5/proto/eth/v2"
 	eth "github.com/prysmaticlabs/prysm/v5/proto/prysm/v1alpha1"
 	"github.com/prysmaticlabs/prysm/v5/runtime/version"
 	"github.com/prysmaticlabs/prysm/v5/time/slots"
@@ -411,9 +410,9 @@ func topicForEvent(event *feed.Event) string {
 		return HeadTopic
 	case *ethpb.EventFinalizedCheckpoint:
 		return FinalizedCheckpointTopic
-	case *ethpbv2.LightClientFinalityUpdateWithVersion:
+	case interfaces.LightClientFinalityUpdate:
 		return LightClientFinalityUpdateTopic
-	case *ethpbv2.LightClientOptimisticUpdateWithVersion:
+	case interfaces.LightClientOptimisticUpdate:
 		return LightClientOptimisticUpdateTopic
 	case *ethpb.EventChainReorg:
 		return ChainReorgTopic
