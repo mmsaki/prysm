@@ -59,6 +59,8 @@ type ReadOnlyDatabase interface {
 	// light client operations
 	LightClientUpdates(ctx context.Context, startPeriod, endPeriod uint64) (map[uint64]interfaces.LightClientUpdate, error)
 	LightClientUpdate(ctx context.Context, period uint64) (interfaces.LightClientUpdate, error)
+	SaveLightClientBootstrap(ctx context.Context, blockRoot []byte, bootstrap interfaces.LightClientBootstrap) error
+	LightClientBootstrap(ctx context.Context, blockRoot []byte) (interfaces.LightClientBootstrap, error)
 
 	// origin checkpoint sync support
 	OriginCheckpointBlockRoot(ctx context.Context) ([32]byte, error)

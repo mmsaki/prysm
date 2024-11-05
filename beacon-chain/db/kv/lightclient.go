@@ -31,6 +31,91 @@ func (s *Store) SaveLightClientUpdate(ctx context.Context, period uint64, update
 	})
 }
 
+func (s *Store) SaveLightClientBootstrap(ctx context.Context, blockRoot []byte, bootstrap interfaces.LightClientBootstrap) error {
+	_, span := trace.StartSpan(ctx, "BeaconDB.SaveLightClientBootstrap")
+	defer span.End()
+
+	return s.db.Update(func(tx *bolt.Tx) error {
+		bkt := tx.Bucket(lightclientBootstrapBucket)
+		enc, err := encodeLightClientBootstrap(bootstrap)
+		if err != nil {
+			return err
+		}
+		return bkt.Put(blockRoot, enc)
+	})
+}
+
+func (s *Store) LightClientBootstrap(ctx context.Context, blockRoot []byte) (interfaces.LightClientBootstrap, error) {
+	_, span := trace.StartSpan(ctx, "BeaconDB.LightClientBootstrap")
+	defer span.End()
+
+	var bootstrap interfaces.LightClientBootstrap
+	err := s.db.View(func(tx *bolt.Tx) error {
+		bkt := tx.Bucket(lightclientBootstrapBucket)
+		enc := bkt.Get(blockRoot)
+		if enc == nil {
+			return nil
+		}
+		var err error
+		bootstrap, err = decodeLightClientBootstrap(enc)
+		return err
+	})
+	return bootstrap, err
+}
+
+func encodeLightClientBootstrap(bootstrap interfaces.LightClientBootstrap) ([]byte, error) {
+	key, err := keyForLightClientUpdate(bootstrap.Version())
+	if err != nil {
+		return nil, err
+	}
+	enc, err := bootstrap.MarshalSSZ()
+	if err != nil {
+		return nil, errors.Wrap(err, "could not marshal light client bootstrap")
+	}
+	fullEnc := make([]byte, len(key)+len(enc))
+	copy(fullEnc, key)
+	copy(fullEnc[len(key):], enc)
+	return snappy.Encode(nil, fullEnc), nil
+}
+
+func decodeLightClientBootstrap(enc []byte) (interfaces.LightClientBootstrap, error) {
+	var err error
+	enc, err = snappy.Decode(nil, enc)
+	if err != nil {
+		return nil, errors.Wrap(err, "could not snappy decode light client bootstrap")
+	}
+	var m proto.Message
+	switch {
+	case hasAltairKey(enc):
+		bootstrap := &ethpb.LightClientBootstrapAltair{}
+		if err := bootstrap.UnmarshalSSZ(enc[len(altairKey):]); err != nil {
+			return nil, errors.Wrap(err, "could not unmarshal Altair light client bootstrap")
+		}
+		m = bootstrap
+	case hasCapellaKey(enc):
+		bootstrap := &ethpb.LightClientBootstrapCapella{}
+		if err := bootstrap.UnmarshalSSZ(enc[len(capellaKey):]); err != nil {
+			return nil, errors.Wrap(err, "could not unmarshal Capella light client bootstrap")
+		}
+		m = bootstrap
+	case hasDenebKey(enc):
+		bootstrap := &ethpb.LightClientBootstrapDeneb{}
+		if err := bootstrap.UnmarshalSSZ(enc[len(denebKey):]); err != nil {
+			return nil, errors.Wrap(err, "could not unmarshal Deneb light client bootstrap")
+		}
+		m = bootstrap
+	case hasElectraKey(enc):
+		bootstrap := &ethpb.LightClientBootstrapElectra{}
+		if err := bootstrap.UnmarshalSSZ(enc[len(electraKey):]); err != nil {
+			return nil, errors.Wrap(err, "could not unmarshal Electra light client bootstrap")
+		}
+		m = bootstrap
+	default:
+		return nil, errors.New("decoding of saved light client bootstrap is unsupported")
+	}
+	return light_client.NewWrappedBootstrap(m)
+}
+
 func (s *Store) LightClientUpdates(ctx context.Context, startPeriod, endPeriod uint64) (map[uint64]interfaces.LightClientUpdate, error) {
 	_, span := trace.StartSpan(ctx, "BeaconDB.LightClientUpdates")
 	defer span.End()
@@ -87,7 +172,7 @@ func (s *Store) LightClientUpdate(ctx context.Context, period uint64) (interface
 }
 
 func encodeLightClientUpdate(update interfaces.LightClientUpdate) ([]byte, error) {
-	key, err := keyForLightClientUpdate(update)
+	key, err := keyForLightClientUpdate(update.Version())
 	if err != nil {
 		return nil, err
 	}
@@ -139,8 +224,8 @@ func decodeLightClientUpdate(enc []byte) (interfaces.LightClientUpdate, error) {
 	return light_client.NewWrappedUpdate(m)
 }
 
-func keyForLightClientUpdate(update interfaces.LightClientUpdate) ([]byte, error) {
-	switch v := update.Version(); v {
+func keyForLightClientUpdate(v int) ([]byte, error) {
+	switch v {
 	case version.Electra:
 		return electraKey, nil
 	case version.Deneb:
