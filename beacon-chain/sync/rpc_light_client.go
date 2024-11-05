@@ -24,6 +24,8 @@ func (s *Service) lightClientBootstrapRPCHandler(ctx context.Context, msg interf
 	// TODO: What should we log?
 	log := log.WithField("handler", p2p.LightClientBootstrapName[1:]) // slice the leading slash off the name var
 
+	log.Info("LC: lightClientBootstrapRPCHandler invoked")
+
 	SetRPCStreamDeadlines(stream)
 	if err := s.rateLimiter.validateRequest(stream, 1); err != nil {
 		return err
@@ -50,6 +52,8 @@ func (s *Service) lightClientBootstrapRPCHandler(ctx context.Context, msg interf
 		return err
 	}
 
+	log.Info("LC: lightClientBootstrapRPCHandler completed")
+
 	closeStream(stream, log)
 	return nil
 }
@@ -63,6 +67,8 @@ func (s *Service) lightClientUpdatesByRangeRPCHandler(ctx context.Context, msg i
 
 	// TODO: What should we log?
 	log := log.WithField("handler", p2p.LightClientUpdatesByRangeName[1:]) // slice the leading slash off the name var
+
+	log.Info("LC: lightClientUpdatesByRangeRPCHandler invoked")
 
 	SetRPCStreamDeadlines(stream)
 	if err := s.rateLimiter.validateRequest(stream, 1); err != nil {
@@ -104,6 +110,8 @@ func (s *Service) lightClientUpdatesByRangeRPCHandler(ctx context.Context, msg i
 		s.rateLimiter.add(stream, 1)
 	}
 
+	log.Info("LC: lightClientUpdatesByRangeRPCHandler completed")
+
 	closeStream(stream, log)
 	return nil
 }
@@ -117,6 +125,8 @@ func (s *Service) lightClientFinalityUpdateRPCHandler(ctx context.Context, _ int
 
 	// TODO: What should we log?
 	log := log.WithField("handler", p2p.LightClientFinalityUpdateName[1:]) // slice the leading slash off the name var
+
+	log.Info("LC: lightClientFinalityUpdateRPCHandler invoked")
 
 	SetRPCStreamDeadlines(stream)
 	if err := s.rateLimiter.validateRequest(stream, 1); err != nil {
@@ -136,6 +146,8 @@ func (s *Service) lightClientFinalityUpdateRPCHandler(ctx context.Context, _ int
 		return err
 	}
 
+	log.Info("LC: lightClientFinalityUpdateRPCHandler completed")
+
 	closeStream(stream, log)
 	return nil
 }
@@ -149,6 +161,8 @@ func (s *Service) lightClientOptimisticUpdateRPCHandler(ctx context.Context, _ i
 
 	// TODO: What should we log?
 	log := log.WithField("handler", p2p.LightClientOptimisticUpdateName[1:]) // slice the leading slash off the name var
+
+	log.Info("LC: lightClientOptimisticUpdateRPCHandler invoked")
 
 	SetRPCStreamDeadlines(stream)
 	if err := s.rateLimiter.validateRequest(stream, 1); err != nil {
@@ -167,6 +181,8 @@ func (s *Service) lightClientOptimisticUpdateRPCHandler(ctx context.Context, _ i
 		tracing.AnnotateError(span, err)
 		return err
 	}
+
+	log.Info("LC: lightClientOptimisticUpdateRPCHandler completed")
 
 	closeStream(stream, log)
 	return nil

@@ -182,6 +182,7 @@ func (s *Service) processLightClientFinalityUpdate(
 		}
 	}
 
+	log.Info("LC: storing new finality update post-block")
 	s.lcStore.LastLCFinalityUpdate = update
 
 	s.cfg.StateNotifier.StateFeed().Send(&feed.Event{
@@ -224,6 +225,7 @@ func (s *Service) processLightClientOptimisticUpdate(ctx context.Context, signed
 		}
 	}
 
+	log.Info("LC: storing new optimistic update post-block")
 	s.lcStore.LastLCOptimisticUpdate = update
 
 	s.cfg.StateNotifier.StateFeed().Send(&feed.Event{

@@ -29,6 +29,8 @@ func (s *Service) validateLightClientFinalityUpdate(ctx context.Context, pid pee
 	_, span := trace.StartSpan(ctx, "sync.validateLightClientFinalityUpdate")
 	defer span.End()
 
+	log.Info("LC: p2p validateLightClientFinalityUpdate invoked")
+
 	m, err := s.decodePubsubMessage(msg)
 	if err != nil {
 		tracing.AnnotateError(span, err)
@@ -90,6 +92,8 @@ func (s *Service) validateLightClientOptimisticUpdate(ctx context.Context, pid p
 
 	_, span := trace.StartSpan(ctx, "sync.validateLightClientOptimisticUpdate")
 	defer span.End()
+
+	log.Info("LC: p2p validateLightClientOptimisticUpdate invoked")
 
 	m, err := s.decodePubsubMessage(msg)
 	if err != nil {

@@ -16,6 +16,7 @@ func (s *Service) lightClientFinalityUpdateSubscriber(_ context.Context, msg pro
 		return fmt.Errorf("message type %T is not a light client finality update", msg)
 	}
 
+	log.Info("LC: storing new finality update in p2p subscriber")
 	s.lcStore.LastLCFinalityUpdate = update
 
 	s.cfg.stateNotifier.StateFeed().Send(&feed.Event{
@@ -32,6 +33,7 @@ func (s *Service) lightClientOptimisticUpdateSubscriber(_ context.Context, msg p
 		return fmt.Errorf("message type %T is not a light client optimistic update", msg)
 	}
 
+	log.Info("LC: storing new optimistic update in p2p subscriber")
 	s.lcStore.LastLCOptimisticUpdate = update
 
 	s.cfg.stateNotifier.StateFeed().Send(&feed.Event{
