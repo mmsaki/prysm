@@ -125,6 +125,13 @@ func (s *Service) ReceiveExecutionPayloadEnvelope(ctx context.Context, signed in
 	}
 	timeWithoutDaWait := time.Since(receivedTime) - daWaitedTime
 	executionEngineProcessingTime.Observe(float64(timeWithoutDaWait.Milliseconds()))
+
+	log.WithFields(logrus.Fields{
+		"blockRoot": fmt.Sprintf("%#x", root),
+		"stateRoot": fmt.Sprintf("%#x", envelope.StateRoot()),
+		"builder":   envelope.BuilderIndex(),
+	}).Info("Successfully processed execution payload envelope")
+
 	return nil
 }
 

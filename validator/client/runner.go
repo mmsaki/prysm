@@ -239,16 +239,16 @@ func performRoles(slotCtx context.Context, allRoles map[[48]byte][]iface.Validat
 					v.ProposeBlock(slotCtx, slot, pubKey)
 				case iface.RoleAggregator:
 					v.SubmitAggregateAndProof(slotCtx, slot, pubKey)
-				case iface.RoleSyncCommittee:
-					v.SubmitSyncCommitteeMessage(slotCtx, slot, pubKey)
-				case iface.RoleSyncCommitteeAggregator:
-					v.SubmitSignedContributionAndProof(slotCtx, slot, pubKey)
+				//case iface.RoleSyncCommittee:
+				//	v.SubmitSyncCommitteeMessage(slotCtx, slot, pubKey)
+				//case iface.RoleSyncCommitteeAggregator:
+				//	v.SubmitSignedContributionAndProof(slotCtx, slot, pubKey)
 				case iface.RolePayloadTimelinessCommittee:
 					v.SubmitPayloadAttestationMessage(slotCtx, slot, pubKey)
 				case iface.RoleUnknown:
 					log.WithField("pubkey", fmt.Sprintf("%#x", bytesutil.Trunc(pubKey[:]))).Trace("No active roles, doing nothing")
 				default:
-					log.Warnf("Unhandled role %v", role)
+					// log.Warnf("Unhandled role %v", role)
 				}
 			}(role, pubKey)
 		}

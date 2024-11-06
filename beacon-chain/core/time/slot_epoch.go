@@ -108,3 +108,9 @@ func CanUpgradeToElectra(slot primitives.Slot) bool {
 func CanProcessEpoch(state state.ReadOnlyBeaconState) bool {
 	return (state.Slot()+1)%params.BeaconConfig().SlotsPerEpoch == 0
 }
+
+func CanUpgradeToEpbs(slot primitives.Slot) bool {
+	epochStart := slots.IsEpochStart(slot)
+	epbsEpoch := slots.ToEpoch(slot) == params.BeaconConfig().EPBSForkEpoch
+	return epochStart && epbsEpoch
+}

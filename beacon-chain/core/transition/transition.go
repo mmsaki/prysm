@@ -19,6 +19,7 @@ import (
 	"github.com/prysmaticlabs/prysm/v5/beacon-chain/core/execution"
 	"github.com/prysmaticlabs/prysm/v5/beacon-chain/core/time"
 	"github.com/prysmaticlabs/prysm/v5/beacon-chain/state"
+	state_native "github.com/prysmaticlabs/prysm/v5/beacon-chain/state/state-native"
 	"github.com/prysmaticlabs/prysm/v5/config/features"
 	"github.com/prysmaticlabs/prysm/v5/config/params"
 	"github.com/prysmaticlabs/prysm/v5/consensus-types/blocks"
@@ -26,6 +27,8 @@ import (
 	"github.com/prysmaticlabs/prysm/v5/consensus-types/primitives"
 	"github.com/prysmaticlabs/prysm/v5/monitoring/tracing"
 	prysmTrace "github.com/prysmaticlabs/prysm/v5/monitoring/tracing/trace"
+	v1 "github.com/prysmaticlabs/prysm/v5/proto/engine/v1"
+	ethpb "github.com/prysmaticlabs/prysm/v5/proto/prysm/v1alpha1"
 	"github.com/prysmaticlabs/prysm/v5/runtime/version"
 	"go.opentelemetry.io/otel/trace"
 )
@@ -369,6 +372,15 @@ func UpgradeState(ctx context.Context, state state.BeaconState) (state.BeaconSta
 		upgraded = true
 	}
 
+	if time.CanUpgradeToEpbs(state.Slot()) {
+		state, err = UpgradeToEpbs(state)
+		if err != nil {
+			tracing.AnnotateError(span, err)
+			return nil, err
+		}
+		upgraded = true
+	}
+
 	if upgraded {
 		log.Debugf("upgraded state to %s", version.String(state.Version()))
 	}
@@ -486,4 +498,109 @@ func ProcessEpochPrecompute(ctx context.Context, state state.BeaconState) (state
 		return nil, errors.Wrap(err, "could not process final updates")
 	}
 	return state, nil
+}
+
+func UpgradeToEpbs(beaconState state.BeaconState) (state.BeaconState, error) {
+	currentSyncCommittee, err := beaconState.CurrentSyncCommittee()
+	if err != nil {
+		return nil, err
+	}
+	nextSyncCommittee, err := beaconState.NextSyncCommittee()
+	if err != nil {
+		return nil, err
+	}
+	prevEpochParticipation, err := beaconState.PreviousEpochParticipation()
+	if err != nil {
+		return nil, err
+	}
+	currentEpochParticipation, err := beaconState.CurrentEpochParticipation()
+	if err != nil {
+		return nil, err
+	}
+	inactivityScores, err := beaconState.InactivityScores()
+	if err != nil {
+		return nil, err
+	}
+	wi, err := beaconState.NextWithdrawalIndex()
+	if err != nil {
+		return nil, err
+	}
+	vi, err := beaconState.NextWithdrawalValidatorIndex()
+	if err != nil {
+		return nil, err
+	}
+	summaries, err := beaconState.HistoricalSummaries()
+	if err != nil {
+		return nil, err
+	}
+	historicalRoots, err := beaconState.HistoricalRoots()
+	if err != nil {
+		return nil, err
+	}
+
+	latestHeader, err := beaconState.LatestExecutionPayloadHeader()
+	if err != nil {
+		return nil, err
+	}
+
+	s := &ethpb.BeaconStateEPBS{
+		GenesisTime:           beaconState.GenesisTime(),
+		GenesisValidatorsRoot: beaconState.GenesisValidatorsRoot(),
+		Slot:                  beaconState.Slot(),
+		Fork: &ethpb.Fork{
+			PreviousVersion: beaconState.Fork().CurrentVersion,
+			CurrentVersion:  params.BeaconConfig().EPBSForkVersion,
+			Epoch:           time.CurrentEpoch(beaconState),
+		},
+		LatestBlockHeader:            beaconState.LatestBlockHeader(),
+		BlockRoots:                   beaconState.BlockRoots(),
+		StateRoots:                   beaconState.StateRoots(),
+		HistoricalRoots:              historicalRoots,
+		Eth1Data:                     beaconState.Eth1Data(),
+		Eth1DataVotes:                beaconState.Eth1DataVotes(),
+		Eth1DepositIndex:             beaconState.Eth1DepositIndex(),
+		Validators:                   beaconState.Validators(),
+		Balances:                     beaconState.Balances(),
+		RandaoMixes:                  beaconState.RandaoMixes(),
+		Slashings:                    beaconState.Slashings(),
+		PreviousEpochParticipation:   prevEpochParticipation,
+		CurrentEpochParticipation:    currentEpochParticipation,
+		JustificationBits:            beaconState.JustificationBits(),
+		PreviousJustifiedCheckpoint:  beaconState.PreviousJustifiedCheckpoint(),
+		CurrentJustifiedCheckpoint:   beaconState.CurrentJustifiedCheckpoint(),
+		FinalizedCheckpoint:          beaconState.FinalizedCheckpoint(),
+		InactivityScores:             inactivityScores,
+		CurrentSyncCommittee:         currentSyncCommittee,
+		NextSyncCommittee:            nextSyncCommittee,
+		NextWithdrawalIndex:          wi,
+		NextWithdrawalValidatorIndex: vi,
+		HistoricalSummaries:          summaries,
+
+		// TODO: fix this
+		DepositRequestsStartIndex:     0,
+		DepositBalanceToConsume:       0,
+		ExitBalanceToConsume:          0,
+		EarliestExitEpoch:             0,
+		ConsolidationBalanceToConsume: 0,
+		EarliestConsolidationEpoch:    0,
+		PendingDeposits:               make([]*ethpb.PendingDeposit, 0),
+		PendingPartialWithdrawals:     make([]*ethpb.PendingPartialWithdrawal, 0),
+		PendingConsolidations:         make([]*ethpb.PendingConsolidation, 0),
+		LatestExecutionPayloadHeader: &v1.ExecutionPayloadHeaderEPBS{
+			ParentBlockHash:        make([]byte, 32),
+			ParentBlockRoot:        make([]byte, 32),
+			BlockHash:              make([]byte, 32),
+			BlobKzgCommitmentsRoot: make([]byte, 32),
+		},
+		LatestBlockHash:     latestHeader.BlockHash(),
+		LatestFullSlot:      beaconState.Slot(),
+		LastWithdrawalsRoot: make([]byte, 32),
+	}
+
+	post, err := state_native.InitializeFromProtoUnsafeEpbs(s)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to initialize post electra beaconState")
+	}
+
+	return post, nil
 }

@@ -54,6 +54,7 @@ type Server struct {
 	TimeFetcher                  blockchain.TimeFetcher
 	BlockFetcher                 execution.POWBlockFetcher
 	DepositFetcher               cache.DepositFetcher
+	PayloadAttestationCache      cache.PayloadAttestationCache
 	ChainStartFetcher            execution.ChainStartFetcher
 	Eth1InfoFetcher              execution.ChainInfoFetcher
 	OptimisticModeFetcher        blockchain.OptimisticModeFetcher
@@ -82,6 +83,8 @@ type Server struct {
 	ClockWaiter                  startup.ClockWaiter
 	CoreService                  *core.Service
 	signedExecutionPayloadHeader *enginev1.SignedExecutionPayloadHeader
+	payloadEnvelope              *enginev1.ExecutionPayloadEnvelope
+	blobsBundle                  *enginev1.BlobsBundle
 }
 
 // WaitForActivation checks if a validator public key exists in the active validator registry of the current
