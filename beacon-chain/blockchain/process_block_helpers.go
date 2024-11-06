@@ -183,6 +183,9 @@ func (s *Service) saveLightClientUpdate(cfg *postBlockProcessConfig) error {
 			if err = s.cfg.BeaconDB.SaveLightClientUpdate(cfg.ctx, period, update); err != nil {
 				return errors.Wrap(err, "could not save light client update")
 			}
+			log.Info("LC: saved light client update")
+		} else {
+			log.Info("LC: skipped saving light client update")
 		}
 	}
 
@@ -199,6 +202,7 @@ func (s *Service) saveLightClientBootstrap(cfg *postBlockProcessConfig) error {
 	if err = s.cfg.BeaconDB.SaveLightClientBootstrap(cfg.ctx, blockRoot[:], bootstrap); err != nil {
 		return errors.Wrap(err, "could not save light client bootstrap")
 	}
+	log.Info("LC: saved light client bootstrap")
 	return nil
 }
 
