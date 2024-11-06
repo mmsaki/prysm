@@ -97,6 +97,7 @@ type NoHeadAccessDatabase interface {
 	SaveFeeRecipientsByValidatorIDs(ctx context.Context, ids []primitives.ValidatorIndex, addrs []common.Address) error
 	SaveRegistrationsByValidatorIDs(ctx context.Context, ids []primitives.ValidatorIndex, regs []*ethpb.ValidatorRegistrationV1) error
 	// light client operations
+	SaveLightClientBootstrap(ctx context.Context, blockRoot []byte, bootstrap interfaces.LightClientBootstrap) error
 	SaveLightClientUpdate(ctx context.Context, period uint64, update interfaces.LightClientUpdate) error
 
 	CleanUpDirtyStates(ctx context.Context, slotsPerArchivedPoint primitives.Slot) error

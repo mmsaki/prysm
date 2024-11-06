@@ -1,118 +1,60 @@
 package lightclient
 
 import (
-	"reflect"
+	"context"
 
+	"github.com/prysmaticlabs/prysm/v5/consensus-types/primitives"
+
+	"github.com/prysmaticlabs/prysm/v5/api/server/structs"
+	lightclient "github.com/prysmaticlabs/prysm/v5/beacon-chain/core/light-client"
+	"github.com/prysmaticlabs/prysm/v5/beacon-chain/state"
 	"github.com/prysmaticlabs/prysm/v5/consensus-types/interfaces"
-	"github.com/prysmaticlabs/prysm/v5/runtime/version"
-	"github.com/prysmaticlabs/prysm/v5/time/slots"
 )
 
-func HasRelevantSyncCommittee(update interfaces.LightClientUpdate) (bool, error) {
-	if update.Version() >= version.Electra {
-		branch, err := update.NextSyncCommitteeBranchElectra()
-		if err != nil {
-			return false, err
-		}
-		return !reflect.DeepEqual(branch, interfaces.LightClientSyncCommitteeBranchElectra{}), nil
-	}
-	branch, err := update.NextSyncCommitteeBranch()
+func createLightClientBootstrap(
+	ctx context.Context,
+	currentSlot primitives.Slot,
+	state state.BeaconState,
+	block interfaces.ReadOnlySignedBeaconBlock,
+) (*structs.LightClientBootstrap, error) {
+
+	bootstrap, err := lightclient.CreateLightClientBootstrap(ctx, currentSlot, state, block)
 	if err != nil {
-		return false, err
+		return nil, err
 	}
-	return !reflect.DeepEqual(branch, interfaces.LightClientSyncCommitteeBranch{}), nil
+
+	return structs.LightClientBootstrapFromConsensus(bootstrap)
 }
 
-func HasFinality(update interfaces.LightClientUpdate) (bool, error) {
-	if update.Version() >= version.Electra {
-		b, err := update.FinalityBranchElectra()
-		if err != nil {
-			return false, err
-		}
-		return !reflect.DeepEqual(b, interfaces.LightClientFinalityBranchElectra{}), nil
+func newLightClientFinalityUpdateFromBeaconState(
+	ctx context.Context,
+	currentSlot primitives.Slot,
+	state state.BeaconState,
+	block interfaces.ReadOnlySignedBeaconBlock,
+	attestedState state.BeaconState,
+	attestedBlock interfaces.ReadOnlySignedBeaconBlock,
+	finalizedBlock interfaces.ReadOnlySignedBeaconBlock,
+) (*structs.LightClientFinalityUpdate, error) {
+	result, err := lightclient.NewLightClientFinalityUpdateFromBeaconState(ctx, currentSlot, state, block, attestedState, attestedBlock, finalizedBlock)
+	if err != nil {
+		return nil, err
 	}
 
-	b, err := update.FinalityBranch()
-	if err != nil {
-		return false, err
-	}
-	return !reflect.DeepEqual(b, interfaces.LightClientFinalityBranch{}), nil
+	return structs.LightClientFinalityUpdateFromConsensus(result)
 }
 
-func IsBetterUpdate(newUpdate, oldUpdate interfaces.LightClientUpdate) (bool, error) {
-	maxActiveParticipants := newUpdate.SyncAggregate().SyncCommitteeBits.Len()
-	newNumActiveParticipants := newUpdate.SyncAggregate().SyncCommitteeBits.Count()
-	oldNumActiveParticipants := oldUpdate.SyncAggregate().SyncCommitteeBits.Count()
-	newHasSupermajority := newNumActiveParticipants*3 >= maxActiveParticipants*2
-	oldHasSupermajority := oldNumActiveParticipants*3 >= maxActiveParticipants*2
-
-	if newHasSupermajority != oldHasSupermajority {
-		return newHasSupermajority, nil
-	}
-	if !newHasSupermajority && newNumActiveParticipants != oldNumActiveParticipants {
-		return newNumActiveParticipants > oldNumActiveParticipants, nil
-	}
-
-	newUpdateAttestedHeaderBeacon := newUpdate.AttestedHeader().Beacon()
-	oldUpdateAttestedHeaderBeacon := oldUpdate.AttestedHeader().Beacon()
-
-	// Compare presence of relevant sync committee
-	newHasRelevantSyncCommittee, err := HasRelevantSyncCommittee(newUpdate)
+func newLightClientOptimisticUpdateFromBeaconState(
+	ctx context.Context,
+	currentSlot primitives.Slot,
+	state state.BeaconState,
+	block interfaces.ReadOnlySignedBeaconBlock,
+	attestedState state.BeaconState,
+	attestedBlock interfaces.ReadOnlySignedBeaconBlock,
+) (*structs.LightClientOptimisticUpdate, error) {
+	result, err := lightclient.NewLightClientOptimisticUpdateFromBeaconState(ctx, currentSlot, state, block, attestedState, attestedBlock)
 	if err != nil {
-		return false, err
-	}
-	newHasRelevantSyncCommittee = newHasRelevantSyncCommittee &&
-		(slots.SyncCommitteePeriod(slots.ToEpoch(newUpdateAttestedHeaderBeacon.Slot)) == slots.SyncCommitteePeriod(slots.ToEpoch(newUpdate.SignatureSlot())))
-	oldHasRelevantSyncCommittee, err := HasRelevantSyncCommittee(oldUpdate)
-	if err != nil {
-		return false, err
-	}
-	oldHasRelevantSyncCommittee = oldHasRelevantSyncCommittee &&
-		(slots.SyncCommitteePeriod(slots.ToEpoch(oldUpdateAttestedHeaderBeacon.Slot)) == slots.SyncCommitteePeriod(slots.ToEpoch(oldUpdate.SignatureSlot())))
-
-	if newHasRelevantSyncCommittee != oldHasRelevantSyncCommittee {
-		return newHasRelevantSyncCommittee, nil
+		return nil, err
 	}
 
-	// Compare indication of any finality
-	newHasFinality, err := HasFinality(newUpdate)
-	if err != nil {
-		return false, err
-	}
-	oldHasFinality, err := HasFinality(oldUpdate)
-	if err != nil {
-		return false, err
-	}
-	if newHasFinality != oldHasFinality {
-		return newHasFinality, nil
-	}
-
-	newUpdateFinalizedHeaderBeacon := newUpdate.FinalizedHeader().Beacon()
-	oldUpdateFinalizedHeaderBeacon := oldUpdate.FinalizedHeader().Beacon()
-
-	// Compare sync committee finality
-	if newHasFinality {
-		newHasSyncCommitteeFinality :=
-			slots.SyncCommitteePeriod(slots.ToEpoch(newUpdateFinalizedHeaderBeacon.Slot)) ==
-				slots.SyncCommitteePeriod(slots.ToEpoch(newUpdateAttestedHeaderBeacon.Slot))
-		oldHasSyncCommitteeFinality :=
-			slots.SyncCommitteePeriod(slots.ToEpoch(oldUpdateFinalizedHeaderBeacon.Slot)) ==
-				slots.SyncCommitteePeriod(slots.ToEpoch(oldUpdateAttestedHeaderBeacon.Slot))
-
-		if newHasSyncCommitteeFinality != oldHasSyncCommitteeFinality {
-			return newHasSyncCommitteeFinality, nil
-		}
-	}
-
-	// Tiebreaker 1: Sync committee participation beyond supermajority
-	if newNumActiveParticipants != oldNumActiveParticipants {
-		return newNumActiveParticipants > oldNumActiveParticipants, nil
-	}
-
-	// Tiebreaker 2: Prefer older data (fewer changes to best)
-	if newUpdateAttestedHeaderBeacon.Slot != oldUpdateAttestedHeaderBeacon.Slot {
-		return newUpdateAttestedHeaderBeacon.Slot < oldUpdateAttestedHeaderBeacon.Slot, nil
-	}
-
-	return newUpdate.SignatureSlot() < oldUpdate.SignatureSlot(), nil
+	return structs.LightClientOptimisticUpdateFromConsensus(result)
 }

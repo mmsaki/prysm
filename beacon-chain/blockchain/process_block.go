@@ -70,6 +70,7 @@ func (s *Service) postBlockProcess(cfg *postBlockProcessConfig) error {
 		defer s.handleSecondFCUCall(cfg, fcuArgs)
 	}
 	if features.Get().EnableLightClient && slots.ToEpoch(s.CurrentSlot()) >= params.BeaconConfig().AltairForkEpoch {
+		defer s.saveLightClientUpdates(cfg)
 		defer s.processLightClientUpdates(cfg)
 	}
 	defer s.sendStateFeedOnBlock(cfg)
