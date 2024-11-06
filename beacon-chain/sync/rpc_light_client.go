@@ -4,14 +4,13 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/ethereum/go-ethereum/common/math"
 	libp2pcore "github.com/libp2p/go-libp2p/core"
-	"github.com/pkg/errors"
 	"github.com/prysmaticlabs/prysm/v5/beacon-chain/p2p"
 	"github.com/prysmaticlabs/prysm/v5/beacon-chain/p2p/types"
 	"github.com/prysmaticlabs/prysm/v5/config/params"
 	"github.com/prysmaticlabs/prysm/v5/monitoring/tracing"
 	"github.com/prysmaticlabs/prysm/v5/monitoring/tracing/trace"
+	eth "github.com/prysmaticlabs/prysm/v5/proto/prysm/v1alpha1"
 )
 
 // lightClientBootstrapRPCHandler handles the /eth2/beacon_chain/req/light_client_bootstrap/1/ RPC request.
@@ -28,12 +27,14 @@ func (s *Service) lightClientBootstrapRPCHandler(ctx context.Context, msg interf
 
 	SetRPCStreamDeadlines(stream)
 	if err := s.rateLimiter.validateRequest(stream, 1); err != nil {
+		log.WithError(err).Error("s.rateLimiter.validateRequest")
 		return err
 	}
 	s.rateLimiter.add(stream, 1)
 
 	rawMsg, ok := msg.(*types.LightClientBootstrapReq)
 	if !ok {
+		log.Error("Message is not *types.LightClientBootstrapReq")
 		return fmt.Errorf("message is not type %T", &types.LightClientBootstrapReq{})
 	}
 	blkRoot := *rawMsg
@@ -42,6 +43,13 @@ func (s *Service) lightClientBootstrapRPCHandler(ctx context.Context, msg interf
 	if err != nil {
 		s.writeErrorResponseToStream(responseCodeServerError, types.ErrGeneric.Error(), stream)
 		tracing.AnnotateError(span, err)
+		log.WithError(err).Error("s.cfg.beaconDB.LightClientBootstrap")
+		return err
+	}
+	if bootstrap == nil {
+		s.writeErrorResponseToStream(responseCodeResourceUnavailable, types.ErrResourceUnavailable.Error(), stream)
+		tracing.AnnotateError(span, err)
+		log.WithError(err).Error(fmt.Sprintf("nil bootstrap for root %#x", blkRoot))
 		return err
 	}
 
@@ -49,6 +57,7 @@ func (s *Service) lightClientBootstrapRPCHandler(ctx context.Context, msg interf
 	if err = WriteLightClientBootstrapChunk(stream, s.cfg.clock, s.cfg.p2p.Encoding(), bootstrap); err != nil {
 		s.writeErrorResponseToStream(responseCodeServerError, types.ErrGeneric.Error(), stream)
 		tracing.AnnotateError(span, err)
+		log.WithError(err).Error("WriteLightClientBootstrapChunk")
 		return err
 	}
 
@@ -72,32 +81,39 @@ func (s *Service) lightClientUpdatesByRangeRPCHandler(ctx context.Context, msg i
 
 	SetRPCStreamDeadlines(stream)
 	if err := s.rateLimiter.validateRequest(stream, 1); err != nil {
+		log.WithError(err).Error("s.rateLimiter.validateRequest")
 		return err
 	}
 	s.rateLimiter.add(stream, 1)
 
-	rawMsg, ok := msg.(*types.LightClientUpdatesByRangeReq)
+	r, ok := msg.(*eth.LightClientUpdatesByRangeReq)
 	if !ok {
-		return fmt.Errorf("message is not type %T", &types.LightClientUpdatesByRangeReq{})
+		log.Error("Message is not *eth.LightClientUpdatesByRangeReq")
+		return fmt.Errorf("message is not type %T", &eth.LightClientUpdatesByRangeReq{})
 	}
-	r := *rawMsg
 
 	if r.Count > params.BeaconConfig().MaxRequestLightClientUpdates {
 		r.Count = params.BeaconConfig().MaxRequestLightClientUpdates
 	}
-	endPeriod, ok := math.SafeAdd(r.StartPeriod, r.Count-1)
+
+	// TODO: check for overflow
+	/*endPeriod,ok := math.SafeAdd(r.StartPeriod, r.Count-1)
 	if !ok {
 		err := errors.Wrap(types.ErrInvalidRequest, "end period overflows")
 		s.writeErrorResponseToStream(responseCodeInvalidRequest, err.Error(), stream)
 		s.cfg.p2p.Peers().Scorers().BadResponsesScorer().Increment(stream.Conn().RemotePeer())
 		tracing.AnnotateError(span, err)
+		log.WithError(err).Error("end period overflows")
 		return err
-	}
+	}*/
 
-	updates, err := s.cfg.beaconDB.LightClientUpdates(ctx, r.StartPeriod, endPeriod)
+	log.Infof("LC: requesting updates by range (StartPeriod: %d, EndPeriod: %d)", r.StartPeriod, r.StartPeriod+r.Count-1)
+
+	updates, err := s.cfg.beaconDB.LightClientUpdates(ctx, r.StartPeriod, r.StartPeriod+r.Count-1)
 	if err != nil {
 		s.writeErrorResponseToStream(responseCodeServerError, types.ErrGeneric.Error(), stream)
 		tracing.AnnotateError(span, err)
+		log.WithError(err).Error("s.cfg.beaconDB.LightClientUpdates")
 		return err
 	}
 	for _, u := range updates {
@@ -105,6 +121,7 @@ func (s *Service) lightClientUpdatesByRangeRPCHandler(ctx context.Context, msg i
 		if err = WriteLightClientUpdateChunk(stream, s.cfg.clock, s.cfg.p2p.Encoding(), u); err != nil {
 			s.writeErrorResponseToStream(responseCodeServerError, types.ErrGeneric.Error(), stream)
 			tracing.AnnotateError(span, err)
+			log.WithError(err).Error("WriteLightClientUpdateChunk")
 			return err
 		}
 		s.rateLimiter.add(stream, 1)

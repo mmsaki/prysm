@@ -133,6 +133,8 @@ func (s *Service) saveLightClientUpdates(cfg *postBlockProcessConfig) {
 // saveLightClientUpdate saves the light client update for a block
 // if it's better than the already saved one.
 func (s *Service) saveLightClientUpdate(cfg *postBlockProcessConfig) error {
+	log.Info("LC: saving light client update")
+
 	attestedRoot := cfg.roblock.Block().ParentRoot()
 	attestedBlock, err := s.getBlock(cfg.ctx, attestedRoot)
 	if err != nil {
@@ -163,6 +165,9 @@ func (s *Service) saveLightClientUpdate(cfg *postBlockProcessConfig) error {
 		attestedBlock,
 		finalizedBlock,
 	)
+	if err != nil {
+		return errors.Wrap(err, "could not create light client update")
+	}
 
 	period := uint64(attestedState.Slot()) / (uint64(params.BeaconConfig().SlotsPerEpoch) * uint64(params.BeaconConfig().EpochsPerSyncCommitteePeriod))
 
@@ -194,6 +199,7 @@ func (s *Service) saveLightClientUpdate(cfg *postBlockProcessConfig) error {
 
 // saveLightClientBootstrap saves a light client bootstrap for a block.
 func (s *Service) saveLightClientBootstrap(cfg *postBlockProcessConfig) error {
+	log.Info("LC: saving light client bootstrap")
 	blockRoot := cfg.roblock.Root()
 	bootstrap, err := lightclient.CreateLightClientBootstrap(cfg.ctx, s.CurrentSlot(), cfg.postState, cfg.roblock)
 	if err != nil {
@@ -202,7 +208,7 @@ func (s *Service) saveLightClientBootstrap(cfg *postBlockProcessConfig) error {
 	if err = s.cfg.BeaconDB.SaveLightClientBootstrap(cfg.ctx, blockRoot[:], bootstrap); err != nil {
 		return errors.Wrap(err, "could not save light client bootstrap")
 	}
-	log.Info("LC: saved light client bootstrap")
+	log.Infof("LC: saved light client bootstrap for root %#x", blockRoot)
 	return nil
 }
 

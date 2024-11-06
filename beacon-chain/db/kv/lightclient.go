@@ -36,7 +36,7 @@ func (s *Store) SaveLightClientBootstrap(ctx context.Context, blockRoot []byte, 
 	defer span.End()
 
 	return s.db.Update(func(tx *bolt.Tx) error {
-		bkt := tx.Bucket(lightclientBootstrapBucket)
+		bkt := tx.Bucket(lightClientBootstrapBucket)
 		enc, err := encodeLightClientBootstrap(bootstrap)
 		if err != nil {
 			return err
@@ -51,7 +51,7 @@ func (s *Store) LightClientBootstrap(ctx context.Context, blockRoot [32]byte) (i
 
 	var bootstrap interfaces.LightClientBootstrap
 	err := s.db.View(func(tx *bolt.Tx) error {
-		bkt := tx.Bucket(lightclientBootstrapBucket)
+		bkt := tx.Bucket(lightClientBootstrapBucket)
 		enc := bkt.Get(blockRoot[:])
 		if enc == nil {
 			return nil

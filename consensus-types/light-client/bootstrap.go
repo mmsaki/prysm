@@ -41,10 +41,16 @@ func NewWrappedBootstrapAltair(p *pb.LightClientBootstrapAltair) (interfaces.Lig
 	if p == nil {
 		return nil, consensustypes.ErrNilObjectWrapped
 	}
-	header, err := NewWrappedHeader(p.Header)
-	if err != nil {
-		return nil, err
+
+	var header interfaces.LightClientHeader
+	var err error
+	if p.Header != nil {
+		header, err = NewWrappedHeader(p.Header)
+		if err != nil {
+			return nil, err
+		}
 	}
+
 	branch, err := createBranch[interfaces.LightClientSyncCommitteeBranch](
 		"sync committee",
 		p.CurrentSyncCommitteeBranch,
@@ -133,10 +139,16 @@ func NewWrappedBootstrapCapella(p *pb.LightClientBootstrapCapella) (interfaces.L
 	if p == nil {
 		return nil, consensustypes.ErrNilObjectWrapped
 	}
-	header, err := NewWrappedHeader(p.Header)
-	if err != nil {
-		return nil, err
+
+	var header interfaces.LightClientHeader
+	var err error
+	if p.Header != nil {
+		header, err = NewWrappedHeader(p.Header)
+		if err != nil {
+			return nil, err
+		}
 	}
+
 	branch, err := createBranch[interfaces.LightClientSyncCommitteeBranch](
 		"sync committee",
 		p.CurrentSyncCommitteeBranch,
@@ -225,10 +237,16 @@ func NewWrappedBootstrapDeneb(p *pb.LightClientBootstrapDeneb) (interfaces.Light
 	if p == nil {
 		return nil, consensustypes.ErrNilObjectWrapped
 	}
-	header, err := NewWrappedHeader(p.Header)
-	if err != nil {
-		return nil, err
+
+	var header interfaces.LightClientHeader
+	var err error
+	if p.Header != nil {
+		header, err = NewWrappedHeader(p.Header)
+		if err != nil {
+			return nil, err
+		}
 	}
+
 	branch, err := createBranch[interfaces.LightClientSyncCommitteeBranch](
 		"sync committee",
 		p.CurrentSyncCommitteeBranch,
@@ -317,10 +335,16 @@ func NewWrappedBootstrapElectra(p *pb.LightClientBootstrapElectra) (interfaces.L
 	if p == nil {
 		return nil, consensustypes.ErrNilObjectWrapped
 	}
-	header, err := NewWrappedHeader(p.Header)
-	if err != nil {
-		return nil, err
+
+	var header interfaces.LightClientHeader
+	var err error
+	if p.Header != nil {
+		header, err = NewWrappedHeader(p.Header)
+		if err != nil {
+			return nil, err
+		}
 	}
+
 	branch, err := createBranch[interfaces.LightClientSyncCommitteeBranchElectra](
 		"sync committee",
 		p.CurrentSyncCommitteeBranch,

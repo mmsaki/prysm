@@ -808,7 +808,7 @@ func CreateLightClientBootstrap(
 		return nil, fmt.Errorf("latest block header root %#x not equal to block root %#x", latestBlockHeaderRoot, beaconBlockRoot)
 	}
 
-	bootstrap, err := CreateDefaultLightClientBootstrap(currentSlot)
+	bootstrap, err := createDefaultLightClientBootstrap(currentSlot)
 	if err != nil {
 		return nil, errors.Wrap(err, "could not create default light client bootstrap")
 	}
@@ -846,7 +846,7 @@ func CreateLightClientBootstrap(
 	return bootstrap, nil
 }
 
-func CreateDefaultLightClientBootstrap(currentSlot primitives.Slot) (interfaces.LightClientBootstrap, error) {
+func createDefaultLightClientBootstrap(currentSlot primitives.Slot) (interfaces.LightClientBootstrap, error) {
 	currentEpoch := slots.ToEpoch(currentSlot)
 	syncCommitteeSize := params.BeaconConfig().SyncCommitteeSize
 	pubKeys := make([][]byte, syncCommitteeSize)
@@ -859,45 +859,37 @@ func CreateDefaultLightClientBootstrap(currentSlot primitives.Slot) (interfaces.
 	}
 
 	var currentSyncCommitteeBranch [][]byte
-	if currentEpoch < params.BeaconConfig().ElectraForkEpoch {
-		currentSyncCommitteeBranch = make([][]byte, fieldparams.SyncCommitteeBranchDepth)
-		for i := 0; i < len(currentSyncCommitteeBranch); i++ {
-			currentSyncCommitteeBranch[i] = make([]byte, fieldparams.RootLength)
-		}
-	} else {
+	if currentEpoch >= params.BeaconConfig().ElectraForkEpoch {
 		currentSyncCommitteeBranch = make([][]byte, fieldparams.SyncCommitteeBranchDepthElectra)
-		for i := 0; i < len(currentSyncCommitteeBranch); i++ {
-			currentSyncCommitteeBranch[i] = make([]byte, fieldparams.RootLength)
-		}
+	} else {
+		currentSyncCommitteeBranch = make([][]byte, fieldparams.SyncCommitteeBranchDepth)
+	}
+	for i := 0; i < len(currentSyncCommitteeBranch); i++ {
+		currentSyncCommitteeBranch[i] = make([]byte, fieldparams.RootLength)
 	}
 
+	// TODO: can this be based on the current epoch?
 	var m proto.Message
 	if currentEpoch < params.BeaconConfig().CapellaForkEpoch {
 		m = &pb.LightClientBootstrapAltair{
-			Header:                     &pb.LightClientHeaderAltair{},
 			CurrentSyncCommittee:       currentSyncCommittee,
 			CurrentSyncCommitteeBranch: currentSyncCommitteeBranch,
 		}
 	} else if currentEpoch < params.BeaconConfig().DenebForkEpoch {
 		m = &pb.LightClientBootstrapCapella{
-			Header:                     &pb.LightClientHeaderCapella{},
 			CurrentSyncCommittee:       currentSyncCommittee,
 			CurrentSyncCommitteeBranch: currentSyncCommitteeBranch,
 		}
 	} else if currentEpoch < params.BeaconConfig().ElectraForkEpoch {
 		m = &pb.LightClientBootstrapDeneb{
-			Header:                     &pb.LightClientHeaderDeneb{},
 			CurrentSyncCommittee:       currentSyncCommittee,
 			CurrentSyncCommitteeBranch: currentSyncCommitteeBranch,
 		}
 	} else {
-
 		m = &pb.LightClientBootstrapElectra{
-			Header:                     &pb.LightClientHeaderDeneb{},
 			CurrentSyncCommittee:       currentSyncCommittee,
 			CurrentSyncCommitteeBranch: currentSyncCommitteeBranch,
 		}
-
 	}
 
 	return light_client.NewWrappedBootstrap(m)
