@@ -141,6 +141,12 @@ func configureTestnet(ctx *cli.Context) error {
 		}
 		applyHoleskyFeatureFlags(ctx)
 		params.UseHoleskyNetworkConfig()
+	} else if ctx.Bool(MekongTestnet.Name) {
+		log.Info("Running on the Mekong Beacon Chain Testnet")
+		if err := params.SetActive(params.MekongConfig().Copy()); err != nil {
+			return err
+		}
+		params.UseMekongNetworkConfig()
 	} else {
 		if ctx.IsSet(cmd.ChainConfigFileFlag.Name) {
 			log.Warn("Running on custom Ethereum network specified in a chain configuration yaml file")

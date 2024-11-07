@@ -18,6 +18,11 @@ var (
 		Name:  "holesky",
 		Usage: "Runs Prysm configured for the Holesky test network.",
 	}
+	// MekongTestnet flag for the multiclient Ethereum consensus testnet.
+	MekongTestnet = &cli.BoolFlag{
+		Name:  "mekong",
+		Usage: "Runs Prysm configured for the Mekong test network.",
+	}
 	// Mainnet flag for easier tooling, no-op
 	Mainnet = &cli.BoolFlag{
 		Value: true,
@@ -187,6 +192,7 @@ var ValidatorFlags = append(deprecatedFlags, []cli.Flag{
 	writeWalletPasswordOnWebOnboarding,
 	HoleskyTestnet,
 	SepoliaTestnet,
+	MekongTestnet,
 	Mainnet,
 	dynamicKeyReloadDebounceInterval,
 	attestTimely,
@@ -211,6 +217,7 @@ var BeaconChainFlags = append(deprecatedBeaconFlags, append(deprecatedFlags, []c
 	disableGRPCConnectionLogging,
 	HoleskyTestnet,
 	SepoliaTestnet,
+	MekongTestnet,
 	Mainnet,
 	disablePeerScorer,
 	disableBroadcastSlashingFlag,
@@ -244,4 +251,5 @@ var NetworkFlags = []cli.Flag{
 	Mainnet,
 	SepoliaTestnet,
 	HoleskyTestnet,
+	MekongTestnet,
 }

@@ -16,6 +16,7 @@ go_library(
         "network_config.go",
         "testnet_e2e_config.go",
         "testnet_holesky_config.go",
+        "testnet_mekong_config.go",
         "testnet_sepolia_config.go",
         "testutils.go",
         "testutils_develop.go",  # keep
@@ -30,6 +31,7 @@ go_library(
         "//math:go_default_library",
         "//runtime/version:go_default_library",
         "@com_github_ethereum_go_ethereum//common:go_default_library",
+        "@com_github_ethereum_go_ethereum//common/hexutil:go_default_library",
         "@com_github_ethereum_go_ethereum//params:go_default_library",
         "@com_github_mohae_deepcopy//:go_default_library",
         "@com_github_pkg_errors//:go_default_library",
@@ -49,6 +51,7 @@ go_test(
         "mainnet_config_test.go",
         "testnet_config_test.go",
         "testnet_holesky_config_test.go",
+        "testnet_mekong_config_test.go",
         "testnet_sepolia_config_test.go",
     ],
     data = glob(["*.yaml"]) + [
@@ -58,6 +61,7 @@ go_test(
         "@consensus_spec_tests_minimal//:test_data",
         "@eth2_networks//:configs",
         "@holesky_testnet//:configs",
+        "@mekong_testnet//:configs",
         "@sepolia_testnet//:configs",
     ],
     embed = [":go_default_library"],
