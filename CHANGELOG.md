@@ -22,6 +22,7 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
 - Added benchmarks for process slots for Capella, Deneb, Electra.
 - Add helper to cast bytes to string without allocating memory.
 - Added GetAggregatedAttestationV2 endpoint.
+- Added testnet config for [mekong](https://blog.ethereum.org/2024/11/07/introducing-mekong-testnet)
 
 ### Changed
 
