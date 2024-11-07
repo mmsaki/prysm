@@ -166,41 +166,17 @@ func WriteLightClientBootstrapChunk(
 		return err
 	}
 
-	var obtainedCtx []byte
 	valRoot := tor.GenesisValidatorsRoot()
-	switch v := bootstrap.Version(); v {
-	case version.Altair:
-		digest, err := forks.ForkDigestFromEpoch(params.BeaconConfig().AltairForkEpoch, valRoot[:])
-		if err != nil {
-			return err
-		}
-		obtainedCtx = digest[:]
-	case version.Capella:
-		digest, err := forks.ForkDigestFromEpoch(params.BeaconConfig().CapellaForkEpoch, valRoot[:])
-		if err != nil {
-			return err
-		}
-		obtainedCtx = digest[:]
-	case version.Deneb:
-		digest, err := forks.ForkDigestFromEpoch(params.BeaconConfig().DenebForkEpoch, valRoot[:])
-		if err != nil {
-			return err
-		}
-		obtainedCtx = digest[:]
-	case version.Electra:
-		digest, err := forks.ForkDigestFromEpoch(params.BeaconConfig().ElectraForkEpoch, valRoot[:])
-		if err != nil {
-			return err
-		}
-		obtainedCtx = digest[:]
-	default:
-		return errors.Wrapf(ErrUnrecognizedVersion, "light client boostrap version %s is not recognized", version.String(v))
-	}
-
-	if err := writeContextToStream(obtainedCtx, stream); err != nil {
+	digest, err := forks.ForkDigestFromEpoch(slots.ToEpoch(bootstrap.Header().Beacon().Slot), valRoot[:])
+	if err != nil {
 		return err
 	}
-	_, err := encoding.EncodeWithMaxLength(stream, bootstrap)
+	obtainedCtx := digest[:]
+
+	if err = writeContextToStream(obtainedCtx, stream); err != nil {
+		return err
+	}
+	_, err = encoding.EncodeWithMaxLength(stream, bootstrap)
 	return err
 }
 
@@ -214,41 +190,17 @@ func WriteLightClientUpdateChunk(
 		return err
 	}
 
-	var obtainedCtx []byte
 	valRoot := tor.GenesisValidatorsRoot()
-	switch v := update.Version(); v {
-	case version.Altair:
-		digest, err := forks.ForkDigestFromEpoch(params.BeaconConfig().AltairForkEpoch, valRoot[:])
-		if err != nil {
-			return err
-		}
-		obtainedCtx = digest[:]
-	case version.Capella:
-		digest, err := forks.ForkDigestFromEpoch(params.BeaconConfig().CapellaForkEpoch, valRoot[:])
-		if err != nil {
-			return err
-		}
-		obtainedCtx = digest[:]
-	case version.Deneb:
-		digest, err := forks.ForkDigestFromEpoch(params.BeaconConfig().DenebForkEpoch, valRoot[:])
-		if err != nil {
-			return err
-		}
-		obtainedCtx = digest[:]
-	case version.Electra:
-		digest, err := forks.ForkDigestFromEpoch(params.BeaconConfig().ElectraForkEpoch, valRoot[:])
-		if err != nil {
-			return err
-		}
-		obtainedCtx = digest[:]
-	default:
-		return errors.Wrapf(ErrUnrecognizedVersion, "light client boostrap version %s is not recognized", version.String(v))
-	}
-
-	if err := writeContextToStream(obtainedCtx, stream); err != nil {
+	digest, err := forks.ForkDigestFromEpoch(slots.ToEpoch(update.AttestedHeader().Beacon().Slot), valRoot[:])
+	if err != nil {
 		return err
 	}
-	_, err := encoding.EncodeWithMaxLength(stream, update)
+	obtainedCtx := digest[:]
+
+	if err = writeContextToStream(obtainedCtx, stream); err != nil {
+		return err
+	}
+	_, err = encoding.EncodeWithMaxLength(stream, update)
 	return err
 }
 
@@ -262,41 +214,17 @@ func WriteLightClientFinalityUpdateChunk(
 		return err
 	}
 
-	var obtainedCtx []byte
 	valRoot := tor.GenesisValidatorsRoot()
-	switch v := update.Version(); v {
-	case version.Altair:
-		digest, err := forks.ForkDigestFromEpoch(params.BeaconConfig().AltairForkEpoch, valRoot[:])
-		if err != nil {
-			return err
-		}
-		obtainedCtx = digest[:]
-	case version.Capella:
-		digest, err := forks.ForkDigestFromEpoch(params.BeaconConfig().CapellaForkEpoch, valRoot[:])
-		if err != nil {
-			return err
-		}
-		obtainedCtx = digest[:]
-	case version.Deneb:
-		digest, err := forks.ForkDigestFromEpoch(params.BeaconConfig().DenebForkEpoch, valRoot[:])
-		if err != nil {
-			return err
-		}
-		obtainedCtx = digest[:]
-	case version.Electra:
-		digest, err := forks.ForkDigestFromEpoch(params.BeaconConfig().ElectraForkEpoch, valRoot[:])
-		if err != nil {
-			return err
-		}
-		obtainedCtx = digest[:]
-	default:
-		return errors.Wrapf(ErrUnrecognizedVersion, "light client boostrap version %s is not recognized", version.String(v))
-	}
-
-	if err := writeContextToStream(obtainedCtx, stream); err != nil {
+	digest, err := forks.ForkDigestFromEpoch(slots.ToEpoch(update.AttestedHeader().Beacon().Slot), valRoot[:])
+	if err != nil {
 		return err
 	}
-	_, err := encoding.EncodeWithMaxLength(stream, update)
+	obtainedCtx := digest[:]
+
+	if err = writeContextToStream(obtainedCtx, stream); err != nil {
+		return err
+	}
+	_, err = encoding.EncodeWithMaxLength(stream, update)
 	return err
 }
 func WriteLightClientOptimisticUpdateChunk(
@@ -309,40 +237,16 @@ func WriteLightClientOptimisticUpdateChunk(
 		return err
 	}
 
-	var obtainedCtx []byte
 	valRoot := tor.GenesisValidatorsRoot()
-	switch v := update.Version(); v {
-	case version.Altair:
-		digest, err := forks.ForkDigestFromEpoch(params.BeaconConfig().AltairForkEpoch, valRoot[:])
-		if err != nil {
-			return err
-		}
-		obtainedCtx = digest[:]
-	case version.Capella:
-		digest, err := forks.ForkDigestFromEpoch(params.BeaconConfig().CapellaForkEpoch, valRoot[:])
-		if err != nil {
-			return err
-		}
-		obtainedCtx = digest[:]
-	case version.Deneb:
-		digest, err := forks.ForkDigestFromEpoch(params.BeaconConfig().DenebForkEpoch, valRoot[:])
-		if err != nil {
-			return err
-		}
-		obtainedCtx = digest[:]
-	case version.Electra:
-		digest, err := forks.ForkDigestFromEpoch(params.BeaconConfig().ElectraForkEpoch, valRoot[:])
-		if err != nil {
-			return err
-		}
-		obtainedCtx = digest[:]
-	default:
-		return errors.Wrapf(ErrUnrecognizedVersion, "light client boostrap version %s is not recognized", version.String(v))
-	}
-
-	if err := writeContextToStream(obtainedCtx, stream); err != nil {
+	digest, err := forks.ForkDigestFromEpoch(slots.ToEpoch(update.AttestedHeader().Beacon().Slot), valRoot[:])
+	if err != nil {
 		return err
 	}
-	_, err := encoding.EncodeWithMaxLength(stream, update)
+	obtainedCtx := digest[:]
+
+	if err = writeContextToStream(obtainedCtx, stream); err != nil {
+		return err
+	}
+	_, err = encoding.EncodeWithMaxLength(stream, update)
 	return err
 }
