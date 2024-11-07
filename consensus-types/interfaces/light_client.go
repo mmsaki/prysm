@@ -60,6 +60,7 @@ type LightClientUpdate interface {
 
 type LightClientFinalityUpdate interface {
 	ssz.Marshaler
+	ssz.Unmarshaler
 	Proto() proto.Message
 	Version() int
 	AttestedHeader() LightClientHeader
@@ -72,6 +73,7 @@ type LightClientFinalityUpdate interface {
 
 type LightClientOptimisticUpdate interface {
 	ssz.Marshaler
+	ssz.Unmarshaler
 	Proto() proto.Message
 	Version() int
 	AttestedHeader() LightClientHeader

@@ -247,7 +247,7 @@ func (s *Service) processLightClientFinalityUpdate(
 		finalizedBlock,
 	)
 	if err != nil {
-		return errors.Wrap(err, "could not create light client update")
+		return errors.Wrap(err, "could not create light client finality update")
 	}
 
 	maxActiveParticipants := update.SyncAggregate().SyncCommitteeBits.Len()
@@ -274,6 +274,10 @@ func (s *Service) processLightClientFinalityUpdate(
 
 	log.Info("LC: storing new finality update post-block")
 	s.lcStore.LastLCFinalityUpdate = update
+
+	if err = s.cfg.P2p.BroadcastLightClientFinalityUpdate(ctx, update); err != nil {
+		return errors.Wrap(err, "could not broadcast light client finality update")
+	}
 
 	s.cfg.StateNotifier.StateFeed().Send(&feed.Event{
 		Type: statefeed.LightClientFinalityUpdate,
@@ -304,7 +308,7 @@ func (s *Service) processLightClientOptimisticUpdate(ctx context.Context, signed
 		attestedBlock,
 	)
 	if err != nil {
-		return errors.Wrap(err, "could not create light client update")
+		return errors.Wrap(err, "could not create light client optimistic update")
 	}
 
 	last := s.lcStore.LastLCOptimisticUpdate
@@ -317,6 +321,10 @@ func (s *Service) processLightClientOptimisticUpdate(ctx context.Context, signed
 
 	log.Info("LC: storing new optimistic update post-block")
 	s.lcStore.LastLCOptimisticUpdate = update
+
+	if err = s.cfg.P2p.BroadcastLightClientOptimisticUpdate(ctx, update); err != nil {
+		return errors.Wrap(err, "could not broadcast light client optimistic update")
+	}
 
 	s.cfg.StateNotifier.StateFeed().Send(&feed.Event{
 		Type: statefeed.LightClientOptimisticUpdate,

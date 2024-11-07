@@ -12,9 +12,11 @@ import (
 	"github.com/prysmaticlabs/prysm/v5/beacon-chain/core/altair"
 	"github.com/prysmaticlabs/prysm/v5/beacon-chain/core/helpers"
 	"github.com/prysmaticlabs/prysm/v5/config/params"
+	"github.com/prysmaticlabs/prysm/v5/consensus-types/interfaces"
 	"github.com/prysmaticlabs/prysm/v5/crypto/hash"
 	"github.com/prysmaticlabs/prysm/v5/monitoring/tracing"
 	"github.com/prysmaticlabs/prysm/v5/monitoring/tracing/trace"
+	"github.com/prysmaticlabs/prysm/v5/network/forks"
 	ethpb "github.com/prysmaticlabs/prysm/v5/proto/prysm/v1alpha1"
 	"github.com/prysmaticlabs/prysm/v5/time/slots"
 	"github.com/sirupsen/logrus"
@@ -266,6 +268,63 @@ func (s *Service) internalBroadcastBlob(ctx context.Context, subnet uint64, blob
 		log.WithError(err).Error("Failed to broadcast blob sidecar")
 		tracing.AnnotateError(span, err)
 	}
+}
+
+func (s *Service) BroadcastLightClientOptimisticUpdate(ctx context.Context, update interfaces.LightClientOptimisticUpdate) error {
+	ctx, span := trace.StartSpan(ctx, "p2p.BroadcastLightClientOptimisticUpdate")
+	defer span.End()
+
+	log.Info("LC: broadcasting optimistic update")
+
+	forkDigest, err := forks.ForkDigestFromEpoch(slots.ToEpoch(update.AttestedHeader().Beacon().Slot), s.genesisValidatorsRoot)
+	if err != nil {
+		err := errors.Wrap(err, "could not retrieve fork digest")
+		tracing.AnnotateError(span, err)
+		log.WithError(err).Error("forks.ForkDigestFromEpoch")
+		return err
+	}
+	topic, ok := GossipTypeMapping[reflect.TypeOf(update.Proto())]
+	if !ok {
+		tracing.AnnotateError(span, ErrMessageNotMapped)
+		log.Error("GossipTypeMapping")
+		return ErrMessageNotMapped
+	}
+	if err = s.broadcastObject(ctx, update, fmt.Sprintf(topic, forkDigest)); err != nil {
+		log.WithError(err).Error("s.broadcastObject")
+		tracing.AnnotateError(span, err)
+	}
+
+	log.Info("LC: successfully broadcast optimistic update")
+
+	return nil
+}
+
+func (s *Service) BroadcastLightClientFinalityUpdate(ctx context.Context, update interfaces.LightClientFinalityUpdate) error {
+	ctx, span := trace.StartSpan(ctx, "p2p.BroadcastLightClientFinalityUpdate")
+	defer span.End()
+
+	log.Info("LC: broadcasting finality update")
+
+	forkDigest, err := forks.ForkDigestFromEpoch(slots.ToEpoch(update.AttestedHeader().Beacon().Slot), s.genesisValidatorsRoot)
+	if err != nil {
+		err := errors.Wrap(err, "could not retrieve fork digest")
+		tracing.AnnotateError(span, err)
+		log.WithError(err).Error("forks.ForkDigestFromEpoch")
+		return err
+	}
+	topic, ok := GossipTypeMapping[reflect.TypeOf(update.Proto())]
+	if !ok {
+		tracing.AnnotateError(span, ErrMessageNotMapped)
+		return ErrMessageNotMapped
+	}
+	if err = s.broadcastObject(ctx, update, fmt.Sprintf(topic, forkDigest)); err != nil {
+		log.WithError(err).Error("s.broadcastObject")
+		tracing.AnnotateError(span, err)
+	}
+
+	log.Info("LC: successfully broadcast finality update")
+
+	return nil
 }
 
 // method to broadcast messages to other peers in our gossip mesh.

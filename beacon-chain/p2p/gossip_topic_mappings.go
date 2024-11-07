@@ -118,11 +118,16 @@ func init() {
 	GossipTypeMapping[reflect.TypeOf(&ethpb.SignedBeaconBlockBellatrix{})] = BlockSubnetTopicFormat
 	// Specially handle Capella objects.
 	GossipTypeMapping[reflect.TypeOf(&ethpb.SignedBeaconBlockCapella{})] = BlockSubnetTopicFormat
+	GossipTypeMapping[reflect.TypeOf(&ethpb.LightClientOptimisticUpdateCapella{})] = LightClientOptimisticUpdateTopicFormat
+	GossipTypeMapping[reflect.TypeOf(&ethpb.LightClientFinalityUpdateCapella{})] = LightClientFinalityUpdateTopicFormat
 	// Specially handle Deneb objects.
 	GossipTypeMapping[reflect.TypeOf(&ethpb.SignedBeaconBlockDeneb{})] = BlockSubnetTopicFormat
+	GossipTypeMapping[reflect.TypeOf(&ethpb.LightClientOptimisticUpdateDeneb{})] = LightClientOptimisticUpdateTopicFormat
+	GossipTypeMapping[reflect.TypeOf(&ethpb.LightClientFinalityUpdateDeneb{})] = LightClientFinalityUpdateTopicFormat
 	// Specially handle Electra objects.
 	GossipTypeMapping[reflect.TypeOf(&ethpb.SignedBeaconBlockElectra{})] = BlockSubnetTopicFormat
 	GossipTypeMapping[reflect.TypeOf(&ethpb.AttestationElectra{})] = AttestationSubnetTopicFormat
 	GossipTypeMapping[reflect.TypeOf(&ethpb.AttesterSlashingElectra{})] = AttesterSlashingSubnetTopicFormat
 	GossipTypeMapping[reflect.TypeOf(&ethpb.SignedAggregateAttestationAndProofElectra{})] = AggregateAndProofSubnetTopicFormat
+	GossipTypeMapping[reflect.TypeOf(&ethpb.LightClientFinalityUpdateElectra{})] = LightClientFinalityUpdateTopicFormat
 }
