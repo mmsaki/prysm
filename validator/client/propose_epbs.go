@@ -77,10 +77,14 @@ func (v *validator) SubmitExecutionPayloadEnvelope(ctx context.Context, slot pri
 		return errors.Wrap(err, "failed to sign execution payload envelope")
 	}
 
-	if _, err := v.validatorClient.SubmitSignedExecutionPayloadEnvelope(ctx, &enginev1.SignedExecutionPayloadEnvelope{
-		Message:   env,
-		Signature: sig,
-	}); err != nil {
+	req := &ethpb.SubmitSignedExecutionPayloadEnvelopeRequest{
+		SignedExecutionPayloadEnvelope: &enginev1.SignedExecutionPayloadEnvelope{
+			Message:   env,
+			Signature: sig,
+		},
+		Slot: slot,
+	}
+	if _, err := v.validatorClient.SubmitSignedExecutionPayloadEnvelope(ctx, req); err != nil {
 		return errors.Wrap(err, "failed to submit signed execution payload envelope")
 	}
 

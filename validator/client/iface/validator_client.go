@@ -135,7 +135,7 @@ type ValidatorClient interface {
 	GetLocalHeader(ctx context.Context, req *ethpb.HeaderRequest) (*enginev1.ExecutionPayloadHeaderEPBS, error)
 	GetExecutionPayloadEnvelope(ctx context.Context, in *ethpb.PayloadEnvelopeRequest) (*enginev1.ExecutionPayloadEnvelope, error)
 	SubmitSignedExecutionPayloadHeader(ctx context.Context, h *enginev1.SignedExecutionPayloadHeader) (*empty.Empty, error)
-	SubmitSignedExecutionPayloadEnvelope(ctx context.Context, env *enginev1.SignedExecutionPayloadEnvelope) (*empty.Empty, error)
+	SubmitSignedExecutionPayloadEnvelope(ctx context.Context, req *ethpb.SubmitSignedExecutionPayloadEnvelopeRequest) (*empty.Empty, error)
 	AttestationData(ctx context.Context, in *ethpb.AttestationDataRequest) (*ethpb.AttestationData, error)
 	ProposeAttestation(ctx context.Context, in *ethpb.Attestation) (*ethpb.AttestResponse, error)
 	ProposeAttestationElectra(ctx context.Context, in *ethpb.AttestationElectra) (*ethpb.AttestResponse, error)

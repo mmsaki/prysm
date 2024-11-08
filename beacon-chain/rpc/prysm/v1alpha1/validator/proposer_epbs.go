@@ -23,16 +23,22 @@ import (
 )
 
 // SubmitSignedExecutionPayloadEnvelope submits a signed execution payload envelope to the validator client.
-func (vs *Server) SubmitSignedExecutionPayloadEnvelope(ctx context.Context, env *enginev1.SignedExecutionPayloadEnvelope) (*emptypb.Empty, error) {
+func (vs *Server) SubmitSignedExecutionPayloadEnvelope(ctx context.Context, req *eth.SubmitSignedExecutionPayloadEnvelopeRequest) (*emptypb.Empty, error) {
+	env := req.SignedExecutionPayloadEnvelope
 	if err := vs.P2P.Broadcast(ctx, env); err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to broadcast signed execution payload envelope: %v", err)
 	}
-	
+
 	env.Message.BlobKzgCommitments = [][]byte{}
 	m, err := blocks.WrappedROSignedExecutionPayloadEnvelope(env)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "failed to wrap execution payload envelope: %v", err)
 	}
+	mEnv, err := m.Envelope()
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "failed to get execution payload envelope: %v", err)
+	}
+	mEnv.SetSlot(req.Slot)
 
 	if err := vs.ExecutionPayloadReceiver.ReceiveExecutionPayloadEnvelope(ctx, m, nil); err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to receive execution payload envelope: %v", err)

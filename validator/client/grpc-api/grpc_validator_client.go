@@ -179,8 +179,8 @@ func (c *grpcValidatorClient) SubmitSignedExecutionPayloadHeader(ctx context.Con
 	return c.beaconNodeValidatorClient.SubmitSignedExecutionPayloadHeader(ctx, h)
 }
 
-func (c *grpcValidatorClient) SubmitSignedExecutionPayloadEnvelope(ctx context.Context, env *enginev1.SignedExecutionPayloadEnvelope) (*empty.Empty, error) {
-	return c.beaconNodeValidatorClient.SubmitSignedExecutionPayloadEnvelope(ctx, env)
+func (c *grpcValidatorClient) SubmitSignedExecutionPayloadEnvelope(ctx context.Context, req *ethpb.SubmitSignedExecutionPayloadEnvelopeRequest) (*empty.Empty, error) {
+	return c.beaconNodeValidatorClient.SubmitSignedExecutionPayloadEnvelope(ctx, req)
 }
 
 func NewGrpcValidatorClient(cc grpc.ClientConnInterface) iface.ValidatorClient {

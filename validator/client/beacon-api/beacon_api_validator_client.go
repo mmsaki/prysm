@@ -180,7 +180,7 @@ func (c *beaconApiValidatorClient) SubmitSignedExecutionPayloadHeader(ctx contex
 	return nil, errors.New("not implemented")
 }
 
-func (c *beaconApiValidatorClient) SubmitSignedExecutionPayloadEnvelope(ctx context.Context, env *enginev1.SignedExecutionPayloadEnvelope) (*empty.Empty, error) {
+func (c *beaconApiValidatorClient) SubmitSignedExecutionPayloadEnvelope(ctx context.Context, req *ethpb.SubmitSignedExecutionPayloadEnvelopeRequest) (*empty.Empty, error) {
 	return nil, errors.New("not implemented")
 }
 
