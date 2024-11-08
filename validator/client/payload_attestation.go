@@ -52,6 +52,9 @@ func (v *validator) SubmitPayloadAttestationMessage(ctx context.Context, slot pr
 	if _, err := v.validatorClient.SubmitPayloadAttestation(ctx, message); err != nil {
 		log.WithError(err).Error("could not submit payload attestation")
 	}
+
+	v.payloadData = data
+	v.payloadAttested = append(v.payloadAttested, index)
 }
 
 func (v *validator) signPayloadAttestation(ctx context.Context, p *ethpb.PayloadAttestationData, pubKey [fieldparams.BLSPubkeyLength]byte) ([]byte, error) {

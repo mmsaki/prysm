@@ -55,6 +55,7 @@ type Validator interface {
 	SubmitPayloadAttestationMessage(ctx context.Context, slot primitives.Slot, pubKey [fieldparams.BLSPubkeyLength]byte)
 	LogSubmittedAtts(slot primitives.Slot)
 	LogSubmittedSyncCommitteeMessages()
+	LogPayloadAtts()
 	UpdateDomainDataCaches(ctx context.Context, slot primitives.Slot)
 	WaitForKeymanagerInitialization(ctx context.Context) error
 	Keymanager() (keymanager.IKeymanager, error)

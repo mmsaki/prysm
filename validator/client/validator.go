@@ -112,6 +112,8 @@ type validator struct {
 	blacklistedPubkeysLock             sync.RWMutex
 	attSelectionLock                   sync.Mutex
 	dutiesLock                         sync.RWMutex
+	payloadData                        *ethpb.PayloadAttestationData
+	payloadAttested                    []primitives.ValidatorIndex
 }
 
 type validatorStatus struct {

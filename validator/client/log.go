@@ -86,6 +86,19 @@ func (v *validator) saveSubmittedAtt(data *ethpb.AttestationData, pubkey []byte,
 	return nil
 }
 
+func (v *validator) LogPayloadAtts() {
+	if v.payloadData == nil || len(v.payloadAttested) == 0 {
+		return
+	}
+	log.WithFields(logrus.Fields{
+		"slot":            v.payloadData.Slot,
+		"beaconBlockRoot": fmt.Sprintf("%#x", bytesutil.Trunc(v.payloadData.BeaconBlockRoot)),
+		"status":          v.payloadData.PayloadStatus,
+		"validatorCount":  len(v.payloadAttested),
+	}).Info("Submitted payload attestations")
+	v.payloadAttested = []primitives.ValidatorIndex{}
+}
+
 // LogSubmittedAtts logs info about submitted attestations.
 func (v *validator) LogSubmittedAtts(slot primitives.Slot) {
 	v.attLogsLock.Lock()
