@@ -146,13 +146,15 @@ func (s *Service) lightClientFinalityUpdateRPCHandler(ctx context.Context, _ int
 	log.Info("LC: lightClientFinalityUpdateRPCHandler invoked")
 
 	SetRPCStreamDeadlines(stream)
-	if err := s.rateLimiter.validateRequest(stream, 1); err != nil {
+	/*if err := s.rateLimiter.validateRequest(stream, 1); err != nil {
+		log.WithError(err).Error("s.rateLimiter.validateRequest")
 		return err
 	}
-	s.rateLimiter.add(stream, 1)
+	s.rateLimiter.add(stream, 1)*/
 
 	if s.lcStore.LastLCFinalityUpdate == nil {
 		s.writeErrorResponseToStream(responseCodeResourceUnavailable, types.ErrResourceUnavailable.Error(), stream)
+		log.Error("No finality update available")
 		return nil
 	}
 
@@ -160,6 +162,7 @@ func (s *Service) lightClientFinalityUpdateRPCHandler(ctx context.Context, _ int
 	if err := WriteLightClientFinalityUpdateChunk(stream, s.cfg.clock, s.cfg.p2p.Encoding(), s.lcStore.LastLCFinalityUpdate); err != nil {
 		s.writeErrorResponseToStream(responseCodeServerError, types.ErrGeneric.Error(), stream)
 		tracing.AnnotateError(span, err)
+		log.WithError(err).Error("WriteLightClientFinalityUpdateChunk")
 		return err
 	}
 
@@ -182,13 +185,15 @@ func (s *Service) lightClientOptimisticUpdateRPCHandler(ctx context.Context, _ i
 	log.Info("LC: lightClientOptimisticUpdateRPCHandler invoked")
 
 	SetRPCStreamDeadlines(stream)
-	if err := s.rateLimiter.validateRequest(stream, 1); err != nil {
+	/*if err := s.rateLimiter.validateRequest(stream, 1); err != nil {
+		log.WithError(err).Error("s.rateLimiter.validateRequest")
 		return err
 	}
-	s.rateLimiter.add(stream, 1)
+	s.rateLimiter.add(stream, 1)*/
 
 	if s.lcStore.LastLCOptimisticUpdate == nil {
 		s.writeErrorResponseToStream(responseCodeResourceUnavailable, types.ErrResourceUnavailable.Error(), stream)
+		log.Error("No optimistic update available")
 		return nil
 	}
 
@@ -196,6 +201,7 @@ func (s *Service) lightClientOptimisticUpdateRPCHandler(ctx context.Context, _ i
 	if err := WriteLightClientOptimisticUpdateChunk(stream, s.cfg.clock, s.cfg.p2p.Encoding(), s.lcStore.LastLCOptimisticUpdate); err != nil {
 		s.writeErrorResponseToStream(responseCodeServerError, types.ErrGeneric.Error(), stream)
 		tracing.AnnotateError(span, err)
+		log.WithError(err).Error("WriteLightClientOptimisticUpdateChunk")
 		return err
 	}
 
