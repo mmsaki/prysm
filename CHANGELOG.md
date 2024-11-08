@@ -50,6 +50,7 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
 - Capella blocks are execution.
 - Fixed panic when http request to subscribe to event stream fails.
 - Return early for blob reconstructor during capella fork
+- Add more efficient method of computing the cache key for unaggregated attestations.
 
 ### Deprecated
 
