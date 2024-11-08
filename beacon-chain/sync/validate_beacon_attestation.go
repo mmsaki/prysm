@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"reflect"
 	"strings"
-	"unsafe"
 
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
 	"github.com/libp2p/go-libp2p/core/peer"
@@ -327,14 +326,14 @@ func (s *Service) hasBlockAndState(ctx context.Context, blockRoot [32]byte) bool
 	return hasState && s.cfg.chain.HasBlock(ctx, blockRoot)
 }
 
+// Amount of bytes required to store a uint64 value.
+const uint64ByteLength = 8
+
 func seenAttCacheKey(slot primitives.Slot, committeeID primitives.CommitteeIndex, aggregationBits []byte) string {
-	totalLen := 8 + 8 + len(aggregationBits)
+	totalLen := uint64ByteLength + uint64ByteLength + len(aggregationBits)
 	key := make([]byte, totalLen)
 	binary.LittleEndian.PutUint64(key[:8], uint64(slot))
 	binary.LittleEndian.PutUint64(key[8:16], uint64(committeeID))
 	copy(key[16:], aggregationBits)
-
-	// Avoid copying to reduce allocation when casting. It is guaranteed to be immutable as the
-	// slice is only created in this method and isn't accessed/returned anywhere else.
-	return unsafe.String(&key[0], len(key)) // #nosec G103
+	return bytesutil.UnsafeCastToString(key)
 }
