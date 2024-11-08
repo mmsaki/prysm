@@ -332,6 +332,7 @@ func (s *Service) getPayloadAttribute(ctx context.Context, st state.BeaconState,
 	}
 
 	// Get timestamp.
+	log.WithFields(logrus.Fields{"slot": slot, "stateslot": st.Slot()}).Info("about to compute attributes")
 	t, err := slots.ToTime(uint64(s.genesisTime.Unix()), slot)
 	if err != nil {
 		log.WithError(err).Error("Could not get timestamp to get payload attribute")

@@ -27,7 +27,7 @@ func (vs *Server) SubmitSignedExecutionPayloadEnvelope(ctx context.Context, env 
 	if err := vs.P2P.Broadcast(ctx, env); err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to broadcast signed execution payload envelope: %v", err)
 	}
-	
+
 	env.Message.BlobKzgCommitments = [][]byte{}
 	m, err := blocks.WrappedROSignedExecutionPayloadEnvelope(env)
 	if err != nil {

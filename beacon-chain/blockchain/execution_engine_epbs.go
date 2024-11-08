@@ -32,6 +32,12 @@ func (s *Service) notifyForkchoiceUpdateEPBS(ctx context.Context, blockhash [32]
 	if attributes == nil {
 		attributes = payloadattribute.EmptyWithVersion(version.EPBS)
 	}
+	log.WithFields(logrus.Fields{
+		"Version":   attributes.Version(),
+		"Timestamp": attributes.Timestamp(),
+		"blockHash": fmt.Sprintf("%#x", blockhash),
+	}).Info("calling FCU V3 with attributes")
+
 	payloadID, lastValidHash, err := s.cfg.ExecutionEngineCaller.ForkchoiceUpdated(ctx, fcs, attributes)
 	if err != nil {
 		switch {
@@ -55,7 +61,7 @@ func (s *Service) notifyForkchoiceUpdateEPBS(ctx context.Context, blockhash [32]
 	hasAttr := attributes != nil && !attributes.IsEmpty()
 	if hasAttr && payloadID == nil && !features.Get().PrepareAllPayloads {
 		log.WithFields(logrus.Fields{
-			"blockHash": fmt.Sprintf("%#x", blockhash[:]),
+			"blockHash": fmt.Sprintf("%#x", blockhash),
 		}).Error("Received nil payload ID on VALID engine response")
 	}
 	return payloadID, nil

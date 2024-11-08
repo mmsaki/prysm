@@ -39,6 +39,7 @@ func (s *Service) ReceiveExecutionPayloadEnvelope(ctx context.Context, signed in
 	if err != nil {
 		return errors.Wrap(err, "could not get prestate")
 	}
+	log.WithField("slot", preState.Slot()).Info("receiving envelope with prestate slot")
 
 	eg, _ := errgroup.WithContext(ctx)
 	eg.Go(func() error {
@@ -84,8 +85,17 @@ func (s *Service) ReceiveExecutionPayloadEnvelope(ctx context.Context, signed in
 		log.WithError(err).Error("could not get headroot to compute attributes")
 		return nil
 	}
+	logWithFields := logrus.WithFields(logrus.Fields{
+		"blockRoot": fmt.Sprintf("%#x", root),
+		"stateRoot": fmt.Sprintf("%#x", envelope.StateRoot()),
+		"builder":   envelope.BuilderIndex(),
+	})
 	if bytes.Equal(headRoot, root[:]) {
-		attr := s.getPayloadAttribute(ctx, preState, envelope.Slot()+1, headRoot)
+		slot := envelope.Slot()
+		if slot == 0 {
+			slot = preState.Slot()
+		}
+		attr := s.getPayloadAttribute(ctx, preState, slot+1, headRoot)
 		execution, err := envelope.Execution()
 		if err != nil {
 			log.WithError(err).Error("could not get execution data")
@@ -105,33 +115,26 @@ func (s *Service) ReceiveExecutionPayloadEnvelope(ctx context.Context, signed in
 			copy(pid[:], payloadID[:])
 			log.WithFields(logrus.Fields{
 				"blockRoot": fmt.Sprintf("%#x", bytesutil.Trunc(headRoot)),
-				"headSlot":  envelope.Slot(),
+				"headSlot":  slot,
 				"payloadID": fmt.Sprintf("%#x", bytesutil.Trunc(payloadID[:])),
 			}).Info("Forkchoice updated with payload attributes for proposal")
-			s.cfg.PayloadIDCache.Set(envelope.Slot()+1, root, pid)
+			s.cfg.PayloadIDCache.Set(slot+1, root, pid)
 		}
-		headBlk, err := s.HeadBlock(ctx)
-		if err != nil {
-			log.WithError(err).Error("could not get head block")
-		}
-		if err := s.saveHead(ctx, root, headBlk, preState); err != nil {
-			log.WithError(err).Error("could not save new head")
-		}
+		// simply update the headstate in head
+		s.headLock.Lock()
+		s.head.state = preState.Copy()
+		s.headLock.Unlock()
 		// update the NSC with the hash for the full block
 		if err := transition.UpdateNextSlotCache(ctx, blockHash[:], preState); err != nil {
 			log.WithError(err).Error("could not update next slot cache with payload")
 		}
-
+		logWithFields = logWithFields.WithFields(logrus.Fields{
+			"blockHash": fmt.Sprintf("%#x", blockHash),
+		})
 	}
 	timeWithoutDaWait := time.Since(receivedTime) - daWaitedTime
 	executionEngineProcessingTime.Observe(float64(timeWithoutDaWait.Milliseconds()))
-
-	log.WithFields(logrus.Fields{
-		"blockRoot": fmt.Sprintf("%#x", root),
-		"stateRoot": fmt.Sprintf("%#x", envelope.StateRoot()),
-		"builder":   envelope.BuilderIndex(),
-	}).Info("Successfully processed execution payload envelope")
-
+	logWithFields.Info("Successfully processed execution payload envelope")
 	return nil
 }
 
