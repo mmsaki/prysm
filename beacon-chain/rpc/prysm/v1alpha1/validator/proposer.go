@@ -498,6 +498,27 @@ func (vs *Server) computeStateRoot(ctx context.Context, block interfaces.ReadOnl
 	if err != nil {
 		return nil, errors.Wrap(err, "could not retrieve beacon state")
 	}
+	if block.Version() >= version.EPBS && beaconState.Version() >= version.EPBS {
+		// Check if the parent is full
+		parentHeader, err := beaconState.LatestExecutionPayloadHeaderEPBS()
+		if err != nil {
+			return nil, errors.Wrap(err, "could not retrieve latest execution payload header")
+		}
+		signed, err := block.Block().Body().SignedExecutionPayloadHeader()
+		if err != nil {
+			return nil, errors.Wrap(err, "could not retrieve signed execution payload header")
+		}
+		header, err := signed.Header()
+		if err != nil {
+			return nil, errors.Wrap(err, "could not retrieve execution payload header")
+		}
+		if header.ParentBlockHash() == [32]byte(parentHeader.BlockHash) {
+			beaconState, err = vs.StateGen.StateByRoot(ctx, [32]byte(parentHeader.BlockHash))
+			if err != nil {
+				return nil, errors.Wrap(err, "could not retrieve beacon state by hash")
+			}
+		}
+	}
 	root, err := transition.CalculateStateRoot(
 		ctx,
 		beaconState,

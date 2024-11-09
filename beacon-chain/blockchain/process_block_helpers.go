@@ -306,8 +306,14 @@ func (s *Service) getBlockPreState(ctx context.Context, b interfaces.ReadOnlyBea
 	}
 
 	parentRoot := b.ParentRoot()
-
-	if b.Version() >= version.EPBS {
+	s.ForkChoicer().RLock()
+	parentSlot, err := s.ForkChoicer().Slot(parentRoot)
+	if err != nil {
+		return nil, err
+	}
+	parentIsEPBS := slots.ToEpoch(parentSlot) >= params.BeaconConfig().EPBSForkEpoch
+	s.ForkChoicer().RUnlock()
+	if parentIsEPBS && b.Version() >= version.EPBS {
 		s.ForkChoicer().RLock()
 		parentHash := s.ForkChoicer().HashForBlockRoot(parentRoot)
 		s.ForkChoicer().RUnlock()
@@ -319,7 +325,7 @@ func (s *Service) getBlockPreState(ctx context.Context, b interfaces.ReadOnlyBea
 		if err != nil {
 			return nil, errors.Wrap(err, "could not get execution payload header")
 		}
-		if parentHash == bid.BlockHash() {
+		if parentHash == bid.ParentBlockHash() {
 			// It's based on full, use the state by hash
 			parentRoot = parentHash
 		}
