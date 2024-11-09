@@ -17,6 +17,7 @@ import (
 	eth "github.com/prysmaticlabs/prysm/v5/proto/prysm/v1alpha1"
 	"github.com/prysmaticlabs/prysm/v5/runtime/version"
 	"github.com/prysmaticlabs/prysm/v5/time/slots"
+	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
@@ -75,7 +76,13 @@ func (vs *Server) SubmitSignedExecutionPayloadHeader(ctx context.Context, h *eng
 	}
 
 	vs.signedExecutionPayloadHeader = h
-	log.Info("Cached signed execution payload header ", h.Message.Slot, h.Message.BuilderIndex)
+	log.WithFields(logrus.Fields{
+		"slot":         h.Message.Slot,
+		"builderIndex": h.Message.BuilderIndex,
+		"blockHash":    fmt.Sprintf("%#x", h.Message.BlockHash),
+		"parentHash":   fmt.Sprintf("%#x", h.Message.ParentBlockHash),
+		"parentRoot":   fmt.Sprintf("%#x", h.Message.ParentBlockRoot),
+	}).Info("Cached signed execution payload header")
 
 	headState, _, err := vs.getParentState(ctx, h.Message.Slot)
 	if err != nil {
