@@ -217,7 +217,9 @@ func New(cliCtx *cli.Context, cancel context.CancelFunc, opts ...Option) (*Beaco
 		return nil, err
 	}
 	beacon.collector = c
-
+	if err := beacon.trackedValidatorsCache.RegisterTrackedValidatorMetric(); err != nil {
+		return nil, errors.Wrap(err, "unable to register tracked validator metric")
+	}
 	// Do not store the finalized state as it has been provided to the respective services during
 	// their initialization.
 	beacon.finalizedStateAtStartUp = nil
@@ -457,6 +459,7 @@ func (b *BeaconNode) Close() {
 		log.WithError(err).Error("Failed to close database")
 	}
 	b.collector.unregister()
+	b.trackedValidatorsCache.UnregisterTrackedValidatorMetric()
 	b.cancel()
 	close(b.stop)
 }
