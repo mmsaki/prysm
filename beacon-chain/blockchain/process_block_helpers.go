@@ -40,13 +40,6 @@ func (s *Service) getFCUArgs(cfg *postBlockProcessConfig, fcuArgs *fcuConfig) er
 	if err := s.getFCUArgsEarlyBlock(cfg, fcuArgs); err != nil {
 		return err
 	}
-	if !s.inRegularSync() {
-		return nil
-	}
-	slot := cfg.roblock.Block().Slot()
-	if slots.WithinVotingWindow(uint64(s.genesisTime.Unix()), slot) {
-		return nil
-	}
 	return s.computePayloadAttributes(cfg, fcuArgs)
 }
 
@@ -261,15 +254,6 @@ func (s *Service) updateCachesPostBlockProcessing(cfg *postBlockProcessConfig) e
 		return nil
 	}
 	return s.handleEpochBoundary(cfg.ctx, slot, cfg.postState, root[:])
-}
-
-// handleSecondFCUCall handles a second call to FCU when syncing a new block.
-// This is useful when proposing in the next block and we want to defer the
-// computation of the next slot shuffling.
-func (s *Service) handleSecondFCUCall(cfg *postBlockProcessConfig, fcuArgs *fcuConfig) {
-	if (fcuArgs.attributes == nil || fcuArgs.attributes.IsEmpty()) && cfg.headRoot == cfg.roblock.Root() {
-		go s.sendFCUWithAttributes(cfg, fcuArgs)
-	}
 }
 
 // reportProcessingTime reports the metric of how long it took to process the

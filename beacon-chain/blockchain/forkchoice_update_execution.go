@@ -57,33 +57,21 @@ type fcuConfig struct {
 // always updates the shuffling caches and handles epoch transitions when the
 // incoming block is late, preparing payload attributes in this case while it
 // only sends a message with empty attributes for early blocks.
-func (s *Service) sendFCU(cfg *postBlockProcessConfig, fcuArgs *fcuConfig) error {
+func (s *Service) sendFCU(cfg *postBlockProcessConfig, fcuArgs *fcuConfig) {
+	s.ForkChoicer().RLock()
+	defer s.ForkChoicer().RUnlock()
+	if err := s.getFCUArgs(cfg, fcuArgs); err != nil {
+		log.WithError(err).Error("Could not get forkchoice update argument")
+		return
+	}
 	if !s.isNewHead(cfg.headRoot) {
-		return nil
+		return
 	}
 	if fcuArgs.attributes != nil && !fcuArgs.attributes.IsEmpty() && s.shouldOverrideFCU(cfg.headRoot, s.CurrentSlot()+1) {
-		return nil
-	}
-	return s.forkchoiceUpdateWithExecution(cfg.ctx, fcuArgs)
-}
-
-// sendFCUWithAttributes computes the payload attributes and sends an FCU message
-// to the engine if needed
-func (s *Service) sendFCUWithAttributes(cfg *postBlockProcessConfig, fcuArgs *fcuConfig) {
-	slotCtx, cancel := context.WithTimeout(context.Background(), slotDeadline)
-	defer cancel()
-	cfg.ctx = slotCtx
-	s.cfg.ForkChoiceStore.RLock()
-	defer s.cfg.ForkChoiceStore.RUnlock()
-	if err := s.computePayloadAttributes(cfg, fcuArgs); err != nil {
-		log.WithError(err).Error("could not compute payload attributes")
 		return
 	}
-	if fcuArgs.attributes.IsEmpty() {
-		return
-	}
-	if _, err := s.notifyForkchoiceUpdate(cfg.ctx, fcuArgs); err != nil {
-		log.WithError(err).Error("could not update forkchoice with payload attributes for proposal")
+	if err := s.forkchoiceUpdateWithExecution(cfg.ctx, fcuArgs); err != nil {
+		log.WithError(err).Warn("could not update forkchoice with the engine")
 	}
 }
 
