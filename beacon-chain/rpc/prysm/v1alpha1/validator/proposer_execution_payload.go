@@ -224,7 +224,7 @@ func (vs *Server) getTerminalBlockHashIfExists(ctx context.Context, transitionTi
 	terminalBlockHash := params.BeaconConfig().TerminalBlockHash
 	// Terminal block hash override takes precedence over terminal total difficulty.
 	if params.BeaconConfig().TerminalBlockHash != params.BeaconConfig().ZeroHash {
-		exists, _, err := vs.Eth1BlockFetcher.BlockExists(ctx, terminalBlockHash)
+		exists, _, err := vs.ExecutionBlockFetcher.BlockExists(ctx, terminalBlockHash)
 		if err != nil {
 			return nil, false, err
 		}

@@ -33,7 +33,7 @@ type Server struct {
 	CanonicalFetcher            blockchain.CanonicalFetcher
 	FinalizationFetcher         blockchain.FinalizationFetcher
 	DepositFetcher              cache.DepositFetcher
-	BlockFetcher                execution.POWBlockFetcher
+	ExecutionBlockFetcher       execution.BlockFetcher
 	GenesisTimeFetcher          blockchain.TimeFetcher
 	StateNotifier               statefeed.Notifier
 	BlockNotifier               blockfeed.Notifier

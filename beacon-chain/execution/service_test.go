@@ -40,7 +40,7 @@ import (
 
 var _ ChainStartFetcher = (*Service)(nil)
 var _ ChainInfoFetcher = (*Service)(nil)
-var _ POWBlockFetcher = (*Service)(nil)
+var _ ExecutionBlockFetcher = (*Service)(nil)
 var _ Chain = (*Service)(nil)
 
 type goodLogger struct {
@@ -580,7 +580,7 @@ func TestService_EnsureConsistentPowchainData(t *testing.T) {
 	assert.NoError(t, genState.SetSlot(1000))
 
 	require.NoError(t, s1.cfg.beaconDB.SaveGenesisData(context.Background(), genState))
-	_, err = s1.validPowchainData(context.Background())
+	_, err = s1.validExecutionChainData(context.Background())
 	require.NoError(t, err)
 
 	eth1Data, err := s1.cfg.beaconDB.ExecutionChainData(context.Background())
@@ -611,7 +611,7 @@ func TestService_InitializeCorrectly(t *testing.T) {
 	assert.NoError(t, genState.SetSlot(1000))
 
 	require.NoError(t, s1.cfg.beaconDB.SaveGenesisData(context.Background(), genState))
-	_, err = s1.validPowchainData(context.Background())
+	_, err = s1.validExecutionChainData(context.Background())
 	require.NoError(t, err)
 
 	eth1Data, err := s1.cfg.beaconDB.ExecutionChainData(context.Background())
@@ -647,7 +647,7 @@ func TestService_EnsureValidPowchainData(t *testing.T) {
 		DepositContainers: []*ethpb.DepositContainer{{Index: 1}},
 	})
 	require.NoError(t, err)
-	_, err = s1.validPowchainData(context.Background())
+	_, err = s1.validExecutionChainData(context.Background())
 	require.NoError(t, err)
 
 	eth1Data, err := s1.cfg.beaconDB.ExecutionChainData(context.Background())

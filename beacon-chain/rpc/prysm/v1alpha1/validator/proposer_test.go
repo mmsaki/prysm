@@ -276,7 +276,7 @@ func TestServer_GetBeaconBlock_Bellatrix(t *testing.T) {
 	}
 
 	proposerServer := getProposerServer(db, beaconState, parentRoot[:])
-	proposerServer.Eth1BlockFetcher = c
+	proposerServer.ExecutionBlockFetcher = c
 	ed, err := blocks.NewWrappedExecutionData(payload)
 	require.NoError(t, err)
 	proposerServer.ExecutionEngineCaller = &mockExecution.EngineClient{
@@ -715,7 +715,7 @@ func getProposerServer(db db.HeadAccessDatabase, headState state.BeaconState, he
 		BlockReceiver:         mockChainService,
 		ChainStartFetcher:     &mockExecution.Chain{},
 		Eth1InfoFetcher:       &mockExecution.Chain{},
-		Eth1BlockFetcher:      &mockExecution.Chain{},
+		ExecutionBlockFetcher: &mockExecution.Chain{},
 		FinalizationFetcher:   mockChainService,
 		ForkFetcher:           mockChainService,
 		ForkchoiceFetcher:     mockChainService,
@@ -1009,10 +1009,10 @@ func TestProposer_ComputeStateRoot_OK(t *testing.T) {
 	beaconState, parentRoot, privKeys := util.DeterministicGenesisStateWithGenesisBlock(t, ctx, db, 100)
 
 	proposerServer := &Server{
-		ChainStartFetcher: &mockExecution.Chain{},
-		Eth1InfoFetcher:   &mockExecution.Chain{},
-		Eth1BlockFetcher:  &mockExecution.Chain{},
-		StateGen:          stategen.New(db, doublylinkedtree.New()),
+		ChainStartFetcher:     &mockExecution.Chain{},
+		Eth1InfoFetcher:       &mockExecution.Chain{},
+		ExecutionBlockFetcher: &mockExecution.Chain{},
+		StateGen:              stategen.New(db, doublylinkedtree.New()),
 	}
 	req := util.NewBeaconBlock()
 	req.Block.ProposerIndex = 84
@@ -1079,11 +1079,11 @@ func TestProposer_PendingDeposits_Eth1DataVoteOK(t *testing.T) {
 	require.NoError(t, err)
 
 	bs := &Server{
-		ChainStartFetcher: p,
-		Eth1InfoFetcher:   p,
-		Eth1BlockFetcher:  p,
-		BlockReceiver:     &mock.ChainService{State: beaconState, Root: blkRoot[:]},
-		HeadFetcher:       &mock.ChainService{State: beaconState, Root: blkRoot[:]},
+		ChainStartFetcher:     p,
+		Eth1InfoFetcher:       p,
+		ExecutionBlockFetcher: p,
+		BlockReceiver:         &mock.ChainService{State: beaconState, Root: blkRoot[:]},
+		HeadFetcher:           &mock.ChainService{State: beaconState, Root: blkRoot[:]},
 	}
 
 	// It should also return the recent deposits after their follow window.
@@ -1214,7 +1214,7 @@ func TestProposer_PendingDeposits_OutsideEth1FollowWindow(t *testing.T) {
 	bs := &Server{
 		ChainStartFetcher:      p,
 		Eth1InfoFetcher:        p,
-		Eth1BlockFetcher:       p,
+		ExecutionBlockFetcher:  p,
 		DepositFetcher:         depositCache,
 		PendingDepositsFetcher: depositCache,
 		BlockReceiver:          &mock.ChainService{State: beaconState, Root: blkRoot[:]},
@@ -1347,7 +1347,7 @@ func TestProposer_PendingDeposits_FollowsCorrectEth1Block(t *testing.T) {
 	bs := &Server{
 		ChainStartFetcher:      p,
 		Eth1InfoFetcher:        p,
-		Eth1BlockFetcher:       p,
+		ExecutionBlockFetcher:  p,
 		DepositFetcher:         depositCache,
 		PendingDepositsFetcher: depositCache,
 		BlockReceiver:          &mock.ChainService{State: beaconState, Root: blkRoot[:]},
@@ -1450,7 +1450,7 @@ func TestProposer_PendingDeposits_CantReturnBelowStateEth1DepositIndex(t *testin
 	bs := &Server{
 		ChainStartFetcher:      p,
 		Eth1InfoFetcher:        p,
-		Eth1BlockFetcher:       p,
+		ExecutionBlockFetcher:  p,
 		DepositFetcher:         depositCache,
 		PendingDepositsFetcher: depositCache,
 		BlockReceiver:          &mock.ChainService{State: beaconState, Root: blkRoot[:]},
@@ -1550,7 +1550,7 @@ func TestProposer_PendingDeposits_CantReturnMoreThanMax(t *testing.T) {
 	bs := &Server{
 		ChainStartFetcher:      p,
 		Eth1InfoFetcher:        p,
-		Eth1BlockFetcher:       p,
+		ExecutionBlockFetcher:  p,
 		DepositFetcher:         depositCache,
 		PendingDepositsFetcher: depositCache,
 		BlockReceiver:          &mock.ChainService{State: beaconState, Root: blkRoot[:]},
@@ -1650,7 +1650,7 @@ func TestProposer_PendingDeposits_CantReturnMoreThanDepositCount(t *testing.T) {
 		HeadFetcher:            &mock.ChainService{State: beaconState, Root: blkRoot[:]},
 		ChainStartFetcher:      p,
 		Eth1InfoFetcher:        p,
-		Eth1BlockFetcher:       p,
+		ExecutionBlockFetcher:  p,
 		DepositFetcher:         depositCache,
 		PendingDepositsFetcher: depositCache,
 	}
@@ -1761,7 +1761,7 @@ func TestProposer_DepositTrie_UtilizesCachedFinalizedDeposits(t *testing.T) {
 	bs := &Server{
 		ChainStartFetcher:      p,
 		Eth1InfoFetcher:        p,
-		Eth1BlockFetcher:       p,
+		ExecutionBlockFetcher:  p,
 		DepositFetcher:         depositCache,
 		PendingDepositsFetcher: depositCache,
 		BlockReceiver:          &mock.ChainService{State: beaconState, Root: blkRoot[:]},
@@ -1890,7 +1890,7 @@ func TestProposer_DepositTrie_RebuildTrie(t *testing.T) {
 	bs := &Server{
 		ChainStartFetcher:      p,
 		Eth1InfoFetcher:        p,
-		Eth1BlockFetcher:       p,
+		ExecutionBlockFetcher:  p,
 		DepositFetcher:         depositCache,
 		PendingDepositsFetcher: depositCache,
 		BlockReceiver:          &mock.ChainService{State: beaconState, Root: blkRoot[:]},
@@ -1998,12 +1998,11 @@ func TestProposer_Eth1Data_MajorityVote_SpansGenesis(t *testing.T) {
 	depositCache, err := depositsnapshot.New()
 	require.NoError(t, err)
 	ps := &Server{
-		ChainStartFetcher: p,
-		Eth1InfoFetcher:   p,
-		Eth1BlockFetcher:  p,
-		BlockFetcher:      p,
-		DepositFetcher:    depositCache,
-		HeadFetcher:       &mock.ChainService{ETH1Data: &ethpb.Eth1Data{BlockHash: headBlockHash, DepositCount: 0}},
+		ChainStartFetcher:     p,
+		Eth1InfoFetcher:       p,
+		ExecutionBlockFetcher: p,
+		DepositFetcher:        depositCache,
+		HeadFetcher:           &mock.ChainService{ETH1Data: &ethpb.Eth1Data{BlockHash: headBlockHash, DepositCount: 0}},
 	}
 
 	beaconState, err := state_native.InitializeFromProtoPhase0(&ethpb.BeaconState{
@@ -2061,12 +2060,11 @@ func TestProposer_Eth1Data_MajorityVote(t *testing.T) {
 		require.NoError(t, err)
 
 		ps := &Server{
-			ChainStartFetcher: p,
-			Eth1InfoFetcher:   p,
-			Eth1BlockFetcher:  p,
-			BlockFetcher:      p,
-			DepositFetcher:    depositCache,
-			HeadFetcher:       &mock.ChainService{ETH1Data: &ethpb.Eth1Data{DepositCount: 1}},
+			ChainStartFetcher:     p,
+			Eth1InfoFetcher:       p,
+			ExecutionBlockFetcher: p,
+			DepositFetcher:        depositCache,
+			HeadFetcher:           &mock.ChainService{ETH1Data: &ethpb.Eth1Data{DepositCount: 1}},
 		}
 
 		ctx := context.Background()
@@ -2097,12 +2095,11 @@ func TestProposer_Eth1Data_MajorityVote(t *testing.T) {
 		require.NoError(t, err)
 
 		ps := &Server{
-			ChainStartFetcher: p,
-			Eth1InfoFetcher:   p,
-			Eth1BlockFetcher:  p,
-			BlockFetcher:      p,
-			DepositFetcher:    depositCache,
-			HeadFetcher:       &mock.ChainService{ETH1Data: &ethpb.Eth1Data{DepositCount: 1}},
+			ChainStartFetcher:     p,
+			Eth1InfoFetcher:       p,
+			ExecutionBlockFetcher: p,
+			DepositFetcher:        depositCache,
+			HeadFetcher:           &mock.ChainService{ETH1Data: &ethpb.Eth1Data{DepositCount: 1}},
 		}
 
 		ctx := context.Background()
@@ -2133,12 +2130,11 @@ func TestProposer_Eth1Data_MajorityVote(t *testing.T) {
 		require.NoError(t, err)
 
 		ps := &Server{
-			ChainStartFetcher: p,
-			Eth1InfoFetcher:   p,
-			Eth1BlockFetcher:  p,
-			BlockFetcher:      p,
-			DepositFetcher:    depositCache,
-			HeadFetcher:       &mock.ChainService{ETH1Data: &ethpb.Eth1Data{DepositCount: 1}},
+			ChainStartFetcher:     p,
+			Eth1InfoFetcher:       p,
+			ExecutionBlockFetcher: p,
+			DepositFetcher:        depositCache,
+			HeadFetcher:           &mock.ChainService{ETH1Data: &ethpb.Eth1Data{DepositCount: 1}},
 		}
 
 		ctx := context.Background()
@@ -2170,12 +2166,11 @@ func TestProposer_Eth1Data_MajorityVote(t *testing.T) {
 		require.NoError(t, err)
 
 		ps := &Server{
-			ChainStartFetcher: p,
-			Eth1InfoFetcher:   p,
-			Eth1BlockFetcher:  p,
-			BlockFetcher:      p,
-			DepositFetcher:    depositCache,
-			HeadFetcher:       &mock.ChainService{ETH1Data: &ethpb.Eth1Data{DepositCount: 1}},
+			ChainStartFetcher:     p,
+			Eth1InfoFetcher:       p,
+			ExecutionBlockFetcher: p,
+			DepositFetcher:        depositCache,
+			HeadFetcher:           &mock.ChainService{ETH1Data: &ethpb.Eth1Data{DepositCount: 1}},
 		}
 
 		ctx := context.Background()
@@ -2207,12 +2202,11 @@ func TestProposer_Eth1Data_MajorityVote(t *testing.T) {
 		require.NoError(t, err)
 
 		ps := &Server{
-			ChainStartFetcher: p,
-			Eth1InfoFetcher:   p,
-			Eth1BlockFetcher:  p,
-			BlockFetcher:      p,
-			DepositFetcher:    depositCache,
-			HeadFetcher:       &mock.ChainService{ETH1Data: &ethpb.Eth1Data{DepositCount: 1}},
+			ChainStartFetcher:     p,
+			Eth1InfoFetcher:       p,
+			ExecutionBlockFetcher: p,
+			DepositFetcher:        depositCache,
+			HeadFetcher:           &mock.ChainService{ETH1Data: &ethpb.Eth1Data{DepositCount: 1}},
 		}
 
 		ctx := context.Background()
@@ -2244,12 +2238,11 @@ func TestProposer_Eth1Data_MajorityVote(t *testing.T) {
 		require.NoError(t, err)
 
 		ps := &Server{
-			ChainStartFetcher: p,
-			Eth1InfoFetcher:   p,
-			Eth1BlockFetcher:  p,
-			BlockFetcher:      p,
-			DepositFetcher:    depositCache,
-			HeadFetcher:       &mock.ChainService{ETH1Data: &ethpb.Eth1Data{DepositCount: 1}},
+			ChainStartFetcher:     p,
+			Eth1InfoFetcher:       p,
+			ExecutionBlockFetcher: p,
+			DepositFetcher:        depositCache,
+			HeadFetcher:           &mock.ChainService{ETH1Data: &ethpb.Eth1Data{DepositCount: 1}},
 		}
 
 		ctx := context.Background()
@@ -2274,12 +2267,11 @@ func TestProposer_Eth1Data_MajorityVote(t *testing.T) {
 
 		currentEth1Data := &ethpb.Eth1Data{DepositCount: 1, BlockHash: []byte("current")}
 		ps := &Server{
-			ChainStartFetcher: p,
-			Eth1InfoFetcher:   p,
-			Eth1BlockFetcher:  p,
-			BlockFetcher:      p,
-			DepositFetcher:    depositCache,
-			HeadFetcher:       &mock.ChainService{ETH1Data: currentEth1Data},
+			ChainStartFetcher:     p,
+			Eth1InfoFetcher:       p,
+			ExecutionBlockFetcher: p,
+			DepositFetcher:        depositCache,
+			HeadFetcher:           &mock.ChainService{ETH1Data: currentEth1Data},
 		}
 
 		ctx := context.Background()
@@ -2309,12 +2301,11 @@ func TestProposer_Eth1Data_MajorityVote(t *testing.T) {
 		require.NoError(t, err)
 
 		ps := &Server{
-			ChainStartFetcher: p,
-			Eth1InfoFetcher:   p,
-			Eth1BlockFetcher:  p,
-			BlockFetcher:      p,
-			DepositFetcher:    depositCache,
-			HeadFetcher:       &mock.ChainService{ETH1Data: &ethpb.Eth1Data{DepositCount: 1}},
+			ChainStartFetcher:     p,
+			Eth1InfoFetcher:       p,
+			ExecutionBlockFetcher: p,
+			DepositFetcher:        depositCache,
+			HeadFetcher:           &mock.ChainService{ETH1Data: &ethpb.Eth1Data{DepositCount: 1}},
 		}
 
 		ctx := context.Background()
@@ -2339,12 +2330,11 @@ func TestProposer_Eth1Data_MajorityVote(t *testing.T) {
 		require.NoError(t, err)
 
 		ps := &Server{
-			ChainStartFetcher: p,
-			Eth1InfoFetcher:   p,
-			Eth1BlockFetcher:  p,
-			BlockFetcher:      p,
-			DepositFetcher:    depositCache,
-			HeadFetcher:       &mock.ChainService{ETH1Data: &ethpb.Eth1Data{DepositCount: 1}},
+			ChainStartFetcher:     p,
+			Eth1InfoFetcher:       p,
+			ExecutionBlockFetcher: p,
+			DepositFetcher:        depositCache,
+			HeadFetcher:           &mock.ChainService{ETH1Data: &ethpb.Eth1Data{DepositCount: 1}},
 		}
 
 		ctx := context.Background()
@@ -2371,12 +2361,11 @@ func TestProposer_Eth1Data_MajorityVote(t *testing.T) {
 		// Set the deposit count in current eth1data to exceed the latest most recent block's deposit count.
 		currentEth1Data := &ethpb.Eth1Data{DepositCount: 2, BlockHash: []byte("current")}
 		ps := &Server{
-			ChainStartFetcher: p,
-			Eth1InfoFetcher:   p,
-			Eth1BlockFetcher:  p,
-			BlockFetcher:      p,
-			DepositFetcher:    depositCache,
-			HeadFetcher:       &mock.ChainService{ETH1Data: currentEth1Data},
+			ChainStartFetcher:     p,
+			Eth1InfoFetcher:       p,
+			ExecutionBlockFetcher: p,
+			DepositFetcher:        depositCache,
+			HeadFetcher:           &mock.ChainService{ETH1Data: currentEth1Data},
 		}
 
 		ctx := context.Background()
@@ -2407,12 +2396,11 @@ func TestProposer_Eth1Data_MajorityVote(t *testing.T) {
 		require.NoError(t, err)
 
 		ps := &Server{
-			ChainStartFetcher: p,
-			Eth1InfoFetcher:   p,
-			Eth1BlockFetcher:  p,
-			BlockFetcher:      p,
-			DepositFetcher:    depositCache,
-			HeadFetcher:       &mock.ChainService{ETH1Data: &ethpb.Eth1Data{DepositCount: 1}},
+			ChainStartFetcher:     p,
+			Eth1InfoFetcher:       p,
+			ExecutionBlockFetcher: p,
+			DepositFetcher:        depositCache,
+			HeadFetcher:           &mock.ChainService{ETH1Data: &ethpb.Eth1Data{DepositCount: 1}},
 		}
 
 		ctx := context.Background()
@@ -2444,12 +2432,11 @@ func TestProposer_Eth1Data_MajorityVote(t *testing.T) {
 		require.NoError(t, err)
 
 		ps := &Server{
-			ChainStartFetcher: p,
-			Eth1InfoFetcher:   p,
-			Eth1BlockFetcher:  p,
-			BlockFetcher:      p,
-			DepositFetcher:    depositCache,
-			HeadFetcher:       &mock.ChainService{ETH1Data: &ethpb.Eth1Data{DepositCount: 1}},
+			ChainStartFetcher:     p,
+			Eth1InfoFetcher:       p,
+			ExecutionBlockFetcher: p,
+			DepositFetcher:        depositCache,
+			HeadFetcher:           &mock.ChainService{ETH1Data: &ethpb.Eth1Data{DepositCount: 1}},
 		}
 
 		ctx := context.Background()
@@ -2475,12 +2462,11 @@ func TestProposer_Eth1Data_MajorityVote(t *testing.T) {
 		require.NoError(t, err)
 
 		ps := &Server{
-			ChainStartFetcher: p,
-			Eth1InfoFetcher:   p,
-			Eth1BlockFetcher:  p,
-			BlockFetcher:      p,
-			DepositFetcher:    depositCache,
-			HeadFetcher:       &mock.ChainService{ETH1Data: &ethpb.Eth1Data{DepositCount: 1}},
+			ChainStartFetcher:     p,
+			Eth1InfoFetcher:       p,
+			ExecutionBlockFetcher: p,
+			DepositFetcher:        depositCache,
+			HeadFetcher:           &mock.ChainService{ETH1Data: &ethpb.Eth1Data{DepositCount: 1}},
 		}
 
 		ctx := context.Background()
@@ -2509,12 +2495,11 @@ func TestProposer_Eth1Data_MajorityVote(t *testing.T) {
 		require.NoError(t, err)
 
 		ps := &Server{
-			ChainStartFetcher: p,
-			Eth1InfoFetcher:   p,
-			Eth1BlockFetcher:  p,
-			BlockFetcher:      p,
-			DepositFetcher:    depositCache,
-			HeadFetcher:       &mock.ChainService{ETH1Data: &ethpb.Eth1Data{DepositCount: 1}},
+			ChainStartFetcher:     p,
+			Eth1InfoFetcher:       p,
+			ExecutionBlockFetcher: p,
+			DepositFetcher:        depositCache,
+			HeadFetcher:           &mock.ChainService{ETH1Data: &ethpb.Eth1Data{DepositCount: 1}},
 		}
 
 		ctx := context.Background()
@@ -2548,12 +2533,11 @@ func TestProposer_Eth1Data_MajorityVote(t *testing.T) {
 		require.NoError(t, err)
 
 		ps := &Server{
-			ChainStartFetcher: p,
-			Eth1InfoFetcher:   p,
-			Eth1BlockFetcher:  p,
-			BlockFetcher:      p,
-			DepositFetcher:    depositCache,
-			HeadFetcher:       &mock.ChainService{ETH1Data: &ethpb.Eth1Data{DepositCount: 0}},
+			ChainStartFetcher:     p,
+			Eth1InfoFetcher:       p,
+			ExecutionBlockFetcher: p,
+			DepositFetcher:        depositCache,
+			HeadFetcher:           &mock.ChainService{ETH1Data: &ethpb.Eth1Data{DepositCount: 0}},
 		}
 
 		ctx := context.Background()
@@ -2755,7 +2739,7 @@ func TestProposer_Deposits_ReturnsEmptyList_IfLatestEth1DataEqGenesisEth1Block(t
 		HeadFetcher:            &mock.ChainService{State: beaconState, Root: blkRoot[:]},
 		ChainStartFetcher:      p,
 		Eth1InfoFetcher:        p,
-		Eth1BlockFetcher:       p,
+		ExecutionBlockFetcher:  p,
 		DepositFetcher:         depositCache,
 		PendingDepositsFetcher: depositCache,
 	}
@@ -3057,10 +3041,10 @@ func TestProposer_GetParentHeadState(t *testing.T) {
 	require.NoError(t, transition.UpdateNextSlotCache(ctx, parentRoot[:], parentState))
 
 	proposerServer := &Server{
-		ChainStartFetcher: &mockExecution.Chain{},
-		Eth1InfoFetcher:   &mockExecution.Chain{},
-		Eth1BlockFetcher:  &mockExecution.Chain{},
-		StateGen:          stategen.New(db, doublylinkedtree.New()),
+		ChainStartFetcher:     &mockExecution.Chain{},
+		Eth1InfoFetcher:       &mockExecution.Chain{},
+		ExecutionBlockFetcher: &mockExecution.Chain{},
+		StateGen:              stategen.New(db, doublylinkedtree.New()),
 	}
 	t.Run("successful reorg", func(tt *testing.T) {
 		head, err := proposerServer.getParentStateFromReorgData(ctx, 1, parentRoot, parentRoot, headRoot)

@@ -83,8 +83,8 @@ type ChainInfoFetcher interface {
 	ExecutionClientConnectionErr() error
 }
 
-// POWBlockFetcher defines a struct that can retrieve mainchain blocks.
-type POWBlockFetcher interface {
+// BlockFetcher defines a struct that can retrieve mainchain blocks.
+type BlockFetcher interface {
 	BlockTimeByHeight(ctx context.Context, height *big.Int) (uint64, error)
 	BlockByTimestamp(ctx context.Context, time uint64) (*types.HeaderInfo, error)
 	BlockHashByHeight(ctx context.Context, height *big.Int) (common.Hash, error)
@@ -95,7 +95,7 @@ type POWBlockFetcher interface {
 type Chain interface {
 	ChainStartFetcher
 	ChainInfoFetcher
-	POWBlockFetcher
+	BlockFetcher
 }
 
 // RPCClient defines the rpc methods required to interact with the eth1 node.
@@ -206,7 +206,7 @@ func NewService(ctx context.Context, opts ...Option) (*Service, error) {
 		}
 	}
 
-	eth1Data, err := s.validPowchainData(ctx)
+	eth1Data, err := s.validExecutionChainData(ctx)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to validate powchain data")
 	}
@@ -812,9 +812,9 @@ func validateDepositContainers(ctrs []*ethpb.DepositContainer) bool {
 	return true
 }
 
-// Validates the current powchain data is saved and makes sure that any
+// Validates the current execution chain data is saved and makes sure that any
 // embedded genesis state is correctly accounted for.
-func (s *Service) validPowchainData(ctx context.Context) (*ethpb.ETH1ChainData, error) {
+func (s *Service) validExecutionChainData(ctx context.Context) (*ethpb.ETH1ChainData, error) {
 	genState, err := s.cfg.beaconDB.GenesisState(ctx)
 	if err != nil {
 		return nil, err
@@ -844,11 +844,11 @@ func (s *Service) validPowchainData(ctx context.Context) (*ethpb.ETH1ChainData, 
 			BeaconState:       pbState,
 			DepositContainers: s.cfg.depositCache.AllDepositContainers(ctx),
 		}
-		trie, ok := s.depositTrie.(*depositsnapshot.DepositTree)
+		depositTrie, ok := s.depositTrie.(*depositsnapshot.DepositTree)
 		if !ok {
 			return nil, errors.New("deposit trie was not EIP4881 DepositTree")
 		}
-		eth1Data.DepositSnapshot, err = trie.ToProto()
+		eth1Data.DepositSnapshot, err = depositTrie.ToProto()
 		if err != nil {
 			return nil, err
 		}

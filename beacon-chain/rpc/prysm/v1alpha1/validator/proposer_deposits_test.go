@@ -187,7 +187,7 @@ func TestProposer_PendingDeposits_Electra(t *testing.T) {
 	bs := &Server{
 		ChainStartFetcher:      p,
 		Eth1InfoFetcher:        p,
-		Eth1BlockFetcher:       p,
+		ExecutionBlockFetcher:  p,
 		DepositFetcher:         depositCache,
 		PendingDepositsFetcher: depositCache,
 		BlockReceiver:          &mock.ChainService{State: beaconState, Root: blkRoot[:]},

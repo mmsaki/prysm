@@ -51,7 +51,6 @@ type Server struct {
 	GenesisFetcher         blockchain.GenesisFetcher
 	FinalizationFetcher    blockchain.FinalizationFetcher
 	TimeFetcher            blockchain.TimeFetcher
-	BlockFetcher           execution.POWBlockFetcher
 	DepositFetcher         cache.DepositFetcher
 	ChainStartFetcher      execution.ChainStartFetcher
 	Eth1InfoFetcher        execution.ChainInfoFetcher
@@ -67,7 +66,7 @@ type Server struct {
 	BlockReceiver          blockchain.BlockReceiver
 	BlobReceiver           blockchain.BlobReceiver
 	MockEth1Votes          bool
-	Eth1BlockFetcher       execution.POWBlockFetcher
+	ExecutionBlockFetcher  execution.BlockFetcher
 	PendingDepositsFetcher depositsnapshot.PendingDepositsFetcher
 	OperationNotifier      opfeed.Notifier
 	StateGen               stategen.StateManager
