@@ -316,6 +316,7 @@ func (s *Service) updateConnectedETH1(state bool) {
 	s.updateBeaconNodeStats()
 }
 
+// TODO: deprecate sometime after Electra
 // refers to the latest eth1 block which follows the condition: eth1_timestamp +
 // SECONDS_PER_ETH1_BLOCK * ETH1_FOLLOW_DISTANCE <= current_unix_time
 func (s *Service) followedBlockHeight(ctx context.Context) (uint64, error) {
@@ -460,6 +461,7 @@ func safelyHandlePanic() {
 	}
 }
 
+// TODO: deprecate sometime after Electra
 func (s *Service) handleETH1FollowDistance() {
 	defer safelyHandlePanic()
 	ctx := s.ctx
@@ -498,7 +500,7 @@ func (s *Service) handleETH1FollowDistance() {
 	}
 }
 
-func (s *Service) initPOWService() {
+func (s *Service) initExecutionChainService() {
 	// Use a custom logger to only log errors
 	logCounter := 0
 	errorLogger := func(err error, msg string) {
@@ -584,7 +586,7 @@ func (s *Service) initPOWService() {
 func (s *Service) run(done <-chan struct{}) {
 	s.runError = nil
 
-	s.initPOWService()
+	s.initExecutionChainService()
 	// Do not keep storing the finalized state as it is
 	// no longer of use.
 	s.removeStartupState()

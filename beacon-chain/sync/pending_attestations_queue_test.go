@@ -52,7 +52,7 @@ func TestProcessPendingAtts_NoBlockRequestBlock(t *testing.T) {
 
 	a := &ethpb.AggregateAttestationAndProof{Aggregate: &ethpb.Attestation{Data: &ethpb.AttestationData{Target: &ethpb.Checkpoint{Root: make([]byte, 32)}}}}
 	r.blkRootToPendingAtts[[32]byte{'A'}] = []ethpb.SignedAggregateAttAndProof{&ethpb.SignedAggregateAttestationAndProof{Message: a}}
-	require.NoError(t, r.processPendingAtts(context.Background()))
+	require.NoError(t, r.processPendingAttsByBlkRoot(context.Background()))
 	require.LogsContain(t, hook, "Requesting block by root")
 }
 
@@ -135,7 +135,7 @@ func TestProcessPendingAtts_HasBlockSaveUnAggregatedAtt(t *testing.T) {
 	require.NoError(t, r.cfg.beaconDB.SaveState(context.Background(), s, root))
 
 	r.blkRootToPendingAtts[root] = []ethpb.SignedAggregateAttAndProof{&ethpb.SignedAggregateAttestationAndProof{Message: aggregateAndProof, Signature: aggreSig}}
-	require.NoError(t, r.processPendingAtts(context.Background()))
+	require.NoError(t, r.processPendingAttsByBlkRoot(context.Background()))
 
 	atts, err := r.cfg.attPool.UnaggregatedAttestations()
 	require.NoError(t, err)
@@ -183,7 +183,7 @@ func TestProcessPendingAtts_NoBroadcastWithBadSignature(t *testing.T) {
 	require.NoError(t, r.cfg.beaconDB.SaveState(context.Background(), s, r32))
 
 	r.blkRootToPendingAtts[r32] = []ethpb.SignedAggregateAttAndProof{&ethpb.SignedAggregateAttestationAndProof{Message: a, Signature: make([]byte, fieldparams.BLSSignatureLength)}}
-	require.NoError(t, r.processPendingAtts(context.Background()))
+	require.NoError(t, r.processPendingAttsByBlkRoot(context.Background()))
 
 	assert.Equal(t, false, p1.BroadcastCalled.Load(), "Broadcasted bad aggregate")
 	// Clear pool.
@@ -252,7 +252,7 @@ func TestProcessPendingAtts_NoBroadcastWithBadSignature(t *testing.T) {
 	go r.verifierRoutine()
 
 	r.blkRootToPendingAtts[r32] = []ethpb.SignedAggregateAttAndProof{&ethpb.SignedAggregateAttestationAndProof{Message: aggregateAndProof, Signature: aggreSig}}
-	require.NoError(t, r.processPendingAtts(context.Background()))
+	require.NoError(t, r.processPendingAttsByBlkRoot(context.Background()))
 
 	assert.Equal(t, true, p1.BroadcastCalled.Load(), "Could not broadcast the good aggregate")
 	cancel()
@@ -340,7 +340,7 @@ func TestProcessPendingAtts_HasBlockSaveAggregatedAtt(t *testing.T) {
 	require.NoError(t, r.cfg.beaconDB.SaveState(context.Background(), s, root))
 
 	r.blkRootToPendingAtts[root] = []ethpb.SignedAggregateAttAndProof{&ethpb.SignedAggregateAttestationAndProof{Message: aggregateAndProof, Signature: aggreSig}}
-	require.NoError(t, r.processPendingAtts(context.Background()))
+	require.NoError(t, r.processPendingAttsByBlkRoot(context.Background()))
 
 	assert.Equal(t, 1, len(r.cfg.attPool.AggregatedAttestations()), "Did not save aggregated att")
 	assert.DeepEqual(t, att, r.cfg.attPool.AggregatedAttestations()[0], "Incorrect saved att")

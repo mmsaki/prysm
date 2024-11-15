@@ -320,8 +320,8 @@ func registerServices(cliCtx *cli.Context, beacon *BeaconNode, synchronizer *sta
 		return errors.Wrap(err, "could not register backfill service")
 	}
 
-	log.Debugln("Registering POW Chain Service")
-	if err := beacon.registerPOWChainService(); err != nil {
+	log.Debugln("Registering Execution Chain Service")
+	if err := beacon.registerExecutionChainService(); err != nil {
 		return errors.Wrap(err, "could not register POW chain service")
 	}
 
@@ -729,8 +729,8 @@ func (b *BeaconNode) registerAttestationPool() error {
 }
 
 func (b *BeaconNode) registerBlockchainService(fc forkchoice.ForkChoicer, gs *startup.ClockSynchronizer, syncComplete chan struct{}) error {
-	var web3Service *execution.Service
-	if err := b.services.FetchService(&web3Service); err != nil {
+	var executionChainService *execution.Service
+	if err := b.services.FetchService(&executionChainService); err != nil {
 		return err
 	}
 
@@ -745,8 +745,8 @@ func (b *BeaconNode) registerBlockchainService(fc forkchoice.ForkChoicer, gs *st
 		blockchain.WithForkChoiceStore(fc),
 		blockchain.WithDatabase(b.db),
 		blockchain.WithDepositCache(b.depositCache),
-		blockchain.WithChainStartFetcher(web3Service),
-		blockchain.WithExecutionEngineCaller(web3Service),
+		blockchain.WithChainStartFetcher(executionChainService),
+		blockchain.WithExecutionEngineCaller(executionChainService),
 		blockchain.WithAttestationPool(b.attestationPool),
 		blockchain.WithExitPool(b.exitPool),
 		blockchain.WithSlashingPool(b.slashingsPool),
@@ -772,10 +772,11 @@ func (b *BeaconNode) registerBlockchainService(fc forkchoice.ForkChoicer, gs *st
 	return b.services.RegisterService(blockchainService)
 }
 
-func (b *BeaconNode) registerPOWChainService() error {
+func (b *BeaconNode) registerExecutionChainService() error {
 	if b.cliCtx.Bool(testSkipPowFlag) {
 		return b.services.RegisterService(&execution.Service{})
 	}
+	// TODO: rename POW to execution
 	bs, err := execution.NewPowchainCollector(b.ctx)
 	if err != nil {
 		return err
@@ -798,17 +799,17 @@ func (b *BeaconNode) registerPOWChainService() error {
 		execution.WithJwtId(b.cliCtx.String(flags.JwtId.Name)),
 		execution.WithVerifierWaiter(b.verifyInitWaiter),
 	)
-	web3Service, err := execution.NewService(b.ctx, opts...)
+	executionChainService, err := execution.NewService(b.ctx, opts...)
 	if err != nil {
-		return errors.Wrap(err, "could not register proof-of-work chain web3Service")
+		return errors.Wrap(err, "could not register execution chain service")
 	}
 
-	return b.services.RegisterService(web3Service)
+	return b.services.RegisterService(executionChainService)
 }
 
 func (b *BeaconNode) registerSyncService(initialSyncComplete chan struct{}, bFillStore *backfill.Store) error {
-	var web3Service *execution.Service
-	if err := b.services.FetchService(&web3Service); err != nil {
+	var executionChainService *execution.Service
+	if err := b.services.FetchService(&executionChainService); err != nil {
 		return err
 	}
 
@@ -839,7 +840,7 @@ func (b *BeaconNode) registerSyncService(initialSyncComplete chan struct{}, bFil
 		regularsync.WithStateGen(b.stateGen),
 		regularsync.WithSlasherAttestationsFeed(b.slasherAttestationsFeed),
 		regularsync.WithSlasherBlockHeadersFeed(b.slasherBlockHeadersFeed),
-		regularsync.WithReconstructor(web3Service),
+		regularsync.WithReconstructor(executionChainService),
 		regularsync.WithClockWaiter(b.clockWaiter),
 		regularsync.WithInitialSyncComplete(initialSyncComplete),
 		regularsync.WithStateNotifier(b),
@@ -910,8 +911,8 @@ func (b *BeaconNode) registerRPCService(router *http.ServeMux) error {
 		return err
 	}
 
-	var web3Service *execution.Service
-	if err := b.services.FetchService(&web3Service); err != nil {
+	var executionChainService *execution.Service
+	if err := b.services.FetchService(&executionChainService); err != nil {
 		return err
 	}
 
@@ -939,7 +940,7 @@ func (b *BeaconNode) registerRPCService(router *http.ServeMux) error {
 		chainStartFetcher = interopService
 	} else {
 		depositFetcher = b.depositCache
-		chainStartFetcher = web3Service
+		chainStartFetcher = executionChainService
 	}
 
 	host := b.cliCtx.String(flags.RPCHost.Name)
@@ -954,8 +955,8 @@ func (b *BeaconNode) registerRPCService(router *http.ServeMux) error {
 
 	p2pService := b.fetchP2P()
 	rpcService := rpc.NewService(b.ctx, &rpc.Config{
-		ExecutionEngineCaller:     web3Service,
-		ExecutionReconstructor:    web3Service,
+		ExecutionEngineCaller:     executionChainService,
+		ExecutionReconstructor:    executionChainService,
 		Host:                      host,
 		Port:                      port,
 		BeaconMonitoringHost:      beaconMonitoringHost,
@@ -984,8 +985,8 @@ func (b *BeaconNode) registerRPCService(router *http.ServeMux) error {
 		SlashingsPool:             b.slashingsPool,
 		BLSChangesPool:            b.blsToExecPool,
 		SyncCommitteeObjectPool:   b.syncCommitteePool,
-		ExecutionChainService:     web3Service,
-		ExecutionChainInfoFetcher: web3Service,
+		ExecutionChainService:     executionChainService,
+		ExecutionChainInfoFetcher: executionChainService,
 		ChainStartFetcher:         chainStartFetcher,
 		MockEth1Votes:             mockEth1DataVotes,
 		SyncService:               syncService,

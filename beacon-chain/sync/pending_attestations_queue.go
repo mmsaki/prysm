@@ -31,7 +31,7 @@ func (s *Service) processPendingAttsQueue() {
 	mutex := new(sync.Mutex)
 	async.RunEvery(s.ctx, processPendingAttsPeriod, func() {
 		mutex.Lock()
-		if err := s.processPendingAtts(s.ctx); err != nil {
+		if err := s.processPendingAttsByBlkRoot(s.ctx); err != nil {
 			log.WithError(err).Debugf("Could not process pending attestation: %v", err)
 		}
 		mutex.Unlock()
@@ -42,7 +42,7 @@ func (s *Service) processPendingAttsQueue() {
 // 1. Clean up invalid pending attestations from the queue.
 // 2. Check if pending attestations can be processed when the block has arrived.
 // 3. Request block from a random peer if unable to proceed step 2.
-func (s *Service) processPendingAtts(ctx context.Context) error {
+func (s *Service) processPendingAttsByBlkRoot(ctx context.Context) error {
 	ctx, span := trace.StartSpan(ctx, "processPendingAtts")
 	defer span.End()
 
@@ -66,7 +66,7 @@ func (s *Service) processPendingAtts(ctx context.Context) error {
 		s.pendingAttsLock.RUnlock()
 		// has the pending attestation's missing block arrived and the node processed block yet?
 		if s.cfg.beaconDB.HasBlock(ctx, bRoot) && (s.cfg.beaconDB.HasState(ctx, bRoot) || s.cfg.beaconDB.HasStateSummary(ctx, bRoot)) {
-			s.processAttestations(ctx, attestations)
+			s.processPendingAttestations(ctx, attestations)
 			log.WithFields(logrus.Fields{
 				"blockRoot":        hex.EncodeToString(bytesutil.Trunc(bRoot[:])),
 				"pendingAttsCount": len(attestations),
@@ -88,7 +88,7 @@ func (s *Service) processPendingAtts(ctx context.Context) error {
 	return s.sendBatchRootRequest(ctx, pendingRoots, randGen)
 }
 
-func (s *Service) processAttestations(ctx context.Context, attestations []ethpb.SignedAggregateAttAndProof) {
+func (s *Service) processPendingAttestations(ctx context.Context, attestations []ethpb.SignedAggregateAttAndProof) {
 	for _, signedAtt := range attestations {
 		aggregate := signedAtt.AggregateAttestationAndProof().AggregateVal()
 		data := aggregate.GetData()
@@ -102,7 +102,7 @@ func (s *Service) processAttestations(ctx context.Context, attestations []ethpb.
 				log.WithError(err).Debug("Pending aggregated attestation failed validation")
 			}
 			aggValid := pubsub.ValidationAccept == valRes
-			if s.validateBlockInAttestation(ctx, signedAtt) && aggValid {
+			if s.validateBlockPresenceOrQueueAttestation(ctx, signedAtt) && aggValid {
 				if err := s.cfg.attPool.SaveAggregatedAttestation(aggregate); err != nil {
 					log.WithError(err).Debug("Could not save aggregate attestation")
 					continue
