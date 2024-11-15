@@ -40,7 +40,7 @@ import (
 
 var _ ChainStartFetcher = (*Service)(nil)
 var _ ChainInfoFetcher = (*Service)(nil)
-var _ ExecutionBlockFetcher = (*Service)(nil)
+var _ BlockFetcher = (*Service)(nil)
 var _ Chain = (*Service)(nil)
 
 type goodLogger struct {
