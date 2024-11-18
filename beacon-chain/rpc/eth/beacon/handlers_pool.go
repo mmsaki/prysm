@@ -49,13 +49,18 @@ func (s *Server) ListAttestations(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	attestations := s.AttestationsPool.AggregatedAttestations()
-	unaggAtts, err := s.AttestationsPool.UnaggregatedAttestations()
-	if err != nil {
-		httputil.HandleError(w, "Could not get unaggregated attestations: "+err.Error(), http.StatusInternalServerError)
-		return
+	var attestations []eth.Att
+	if features.Get().EnableExperimentalAttestationPool {
+		attestations = s.AttestationCache.GetAll()
+	} else {
+		attestations = s.AttestationsPool.AggregatedAttestations()
+		unaggAtts, err := s.AttestationsPool.UnaggregatedAttestations()
+		if err != nil {
+			httputil.HandleError(w, "Could not get unaggregated attestations: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+		attestations = append(attestations, unaggAtts...)
 	}
-	attestations = append(attestations, unaggAtts...)
 
 	filteredAtts := make([]*structs.Attestation, 0, len(attestations))
 	for _, a := range attestations {
@@ -105,13 +110,18 @@ func (s *Server) ListAttestationsV2(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	attestations := s.AttestationsPool.AggregatedAttestations()
-	unaggAtts, err := s.AttestationsPool.UnaggregatedAttestations()
-	if err != nil {
-		httputil.HandleError(w, "Could not get unaggregated attestations: "+err.Error(), http.StatusInternalServerError)
-		return
+	var attestations []eth.Att
+	if features.Get().EnableExperimentalAttestationPool {
+		attestations = s.AttestationCache.GetAll()
+	} else {
+		attestations = s.AttestationsPool.AggregatedAttestations()
+		unaggAtts, err := s.AttestationsPool.UnaggregatedAttestations()
+		if err != nil {
+			httputil.HandleError(w, "Could not get unaggregated attestations: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+		attestations = append(attestations, unaggAtts...)
 	}
-	attestations = append(attestations, unaggAtts...)
 
 	filteredAtts := make([]interface{}, 0, len(attestations))
 	for _, att := range attestations {
@@ -311,7 +321,7 @@ func (s *Server) handleAttestationsElectra(ctx context.Context, data json.RawMes
 		// Broadcast the unaggregated attestation on a feed to notify other services in the beacon node
 		// of a received unaggregated attestation.
 		// Note we can't send for aggregated att because we don't have selection proof.
-		if !corehelpers.IsAggregated(att) {
+		if !att.IsAggregated() {
 			s.OperationNotifier.OperationFeed().Send(&feed.Event{
 				Type: operation.UnaggregatedAttReceived,
 				Data: &operation.UnAggregatedAttReceivedData{
@@ -337,7 +347,11 @@ func (s *Server) handleAttestationsElectra(ctx context.Context, data json.RawMes
 			continue
 		}
 
-		if corehelpers.IsAggregated(att) {
+		if features.Get().EnableExperimentalAttestationPool {
+			if err = s.AttestationCache.Add(att); err != nil {
+				log.WithError(err).Error("could not save attestation")
+			}
+		} else if att.IsAggregated() {
 			if err = s.AttestationsPool.SaveAggregatedAttestation(att); err != nil {
 				log.WithError(err).Error("could not save aggregated attestation")
 			}
@@ -386,7 +400,7 @@ func (s *Server) handleAttestations(ctx context.Context, data json.RawMessage) (
 		// Broadcast the unaggregated attestation on a feed to notify other services in the beacon node
 		// of a received unaggregated attestation.
 		// Note we can't send for aggregated att because we don't have selection proof.
-		if !corehelpers.IsAggregated(att) {
+		if !att.IsAggregated() {
 			s.OperationNotifier.OperationFeed().Send(&feed.Event{
 				Type: operation.UnaggregatedAttReceived,
 				Data: &operation.UnAggregatedAttReceivedData{
@@ -409,7 +423,11 @@ func (s *Server) handleAttestations(ctx context.Context, data json.RawMessage) (
 			continue
 		}
 
-		if corehelpers.IsAggregated(att) {
+		if features.Get().EnableExperimentalAttestationPool {
+			if err = s.AttestationCache.Add(att); err != nil {
+				log.WithError(err).Error("could not save attestation")
+			}
+		} else if att.IsAggregated() {
 			if err = s.AttestationsPool.SaveAggregatedAttestation(att); err != nil {
 				log.WithError(err).Error("could not save aggregated attestation")
 			}
