@@ -322,7 +322,7 @@ func registerServices(cliCtx *cli.Context, beacon *BeaconNode, synchronizer *sta
 
 	log.Debugln("Registering Execution Chain Service")
 	if err := beacon.registerExecutionChainService(); err != nil {
-		return errors.Wrap(err, "could not register POW chain service")
+		return errors.Wrap(err, "could not register execution chain service")
 	}
 
 	log.Debugln("Registering Attestation Pool Service")
