@@ -43,7 +43,7 @@ func (s *Service) processPendingAttsQueue() {
 // 2. Check if pending attestations can be processed when the block has arrived.
 // 3. Request block from a random peer if unable to proceed step 2.
 func (s *Service) processPendingAttsByBlkRoot(ctx context.Context) error {
-	ctx, span := trace.StartSpan(ctx, "processPendingAtts")
+	ctx, span := trace.StartSpan(ctx, "processPendingAttsByBlkRoot")
 	defer span.End()
 
 	// Before a node processes pending attestations queue, it verifies
