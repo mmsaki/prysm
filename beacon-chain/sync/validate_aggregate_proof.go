@@ -117,7 +117,7 @@ func (s *Service) validateAggregateAndProof(ctx context.Context, pid peer.ID, ms
 	if seen {
 		return pubsub.ValidationIgnore, nil
 	}
-	if !s.validateBlockPresenceOrQueueAttestation(ctx, m) {
+	if !s.checkBlockOrQueueAtt(ctx, m) {
 		return pubsub.ValidationIgnore, nil
 	}
 
@@ -222,7 +222,8 @@ func (s *Service) validateAggregatedAtt(ctx context.Context, signed ethpb.Signed
 	return s.validateWithBatchVerifier(ctx, "aggregate", set)
 }
 
-func (s *Service) validateBlockPresenceOrQueueAttestation(ctx context.Context, satt ethpb.SignedAggregateAttAndProof) bool {
+// checkBlockOrQueueAtt validates the block root from the pending attestation, if it's not there it queues the pending attestation
+func (s *Service) checkBlockOrQueueAtt(ctx context.Context, satt ethpb.SignedAggregateAttAndProof) bool {
 	// Verify the block being voted and the processed state is in beaconDB. The block should have passed validation if it's in the beaconDB.
 	blockRoot := bytesutil.ToBytes32(satt.AggregateAttestationAndProof().AggregateVal().GetData().BeaconBlockRoot)
 	if !s.hasBlockAndState(ctx, blockRoot) {

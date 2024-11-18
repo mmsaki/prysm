@@ -102,7 +102,7 @@ func (s *Service) processPendingAttestations(ctx context.Context, attestations [
 				log.WithError(err).Debug("Pending aggregated attestation failed validation")
 			}
 			aggValid := pubsub.ValidationAccept == valRes
-			if s.validateBlockPresenceOrQueueAttestation(ctx, signedAtt) && aggValid {
+			if s.checkBlockOrQueueAtt(ctx, signedAtt) && aggValid {
 				if err := s.cfg.attPool.SaveAggregatedAttestation(aggregate); err != nil {
 					log.WithError(err).Debug("Could not save aggregate attestation")
 					continue
