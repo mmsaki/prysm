@@ -21,7 +21,7 @@ func New() *Attestations {
 
 // SaveForkchoiceAttestation saves a forkchoice attestation.
 func (a *Attestations) SaveForkchoiceAttestation(att ethpb.Att) error {
-	if att == nil {
+	if att == nil || att.IsNil() {
 		return nil
 	}
 
@@ -65,7 +65,7 @@ func (a *Attestations) ForkchoiceAttestations() []ethpb.Att {
 
 // DeleteForkchoiceAttestation deletes a forkchoice attestation.
 func (a *Attestations) DeleteForkchoiceAttestation(att ethpb.Att) error {
-	if att == nil {
+	if att == nil || att.IsNil() {
 		return nil
 	}
 
