@@ -154,6 +154,7 @@ func (s *Service) processPendingBlocks(ctx context.Context) error {
 		}
 		span.End()
 	}
+	// request missing parent blocks
 	return s.sendBatchRootRequest(ctx, parentRoots, randGen)
 }
 
