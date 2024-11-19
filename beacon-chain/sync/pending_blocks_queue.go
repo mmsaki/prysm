@@ -59,9 +59,9 @@ func (s *Service) processPendingBlocks(ctx context.Context) error {
 	// Remove old blocks from our expiration cache.
 	s.deleteExpiredBlocksFromCache()
 
-	// Validate pending slots before processing.
-	if err := s.validatePendingSlots(); err != nil {
-		return errors.Wrap(err, "could not validate pending slots")
+	// remove expired pending blocks that are before the finalized checkpoint.
+	if err := s.removeExpiredPendingBlocksBySlot(); err != nil {
+		return errors.Wrap(err, "could not remove expired pending blocks before finalized checkpoint")
 	}
 
 	// Sort slots for ordered processing.
@@ -82,14 +82,14 @@ func (s *Service) processPendingBlocks(ctx context.Context) error {
 		ctx, span := startInnerSpan(ctx, slot)
 
 		// Get blocks in the pending queue for the current slot.
-		blocksInCache := s.getBlocksInQueue(slot)
-		if len(blocksInCache) == 0 {
+		blocksInQueue := s.getBlocksInQueue(slot)
+		if len(blocksInQueue) == 0 {
 			span.End()
 			continue
 		}
 
 		// Process each block in the queue.
-		for _, b := range blocksInCache {
+		for _, b := range blocksInQueue {
 			if err := blocks.BeaconBlockIsNil(b); err != nil {
 				continue
 			}
@@ -355,10 +355,10 @@ func (s *Service) sortedPendingSlots() []primitives.Slot {
 	return ss
 }
 
-// validatePendingSlots validates the pending blocks
+// removeExpiredPendingBlocksBySlot validates the pending blocks
 // by their slot. If they are before the current finalized
 // checkpoint, these blocks are removed from the queue.
-func (s *Service) validatePendingSlots() error {
+func (s *Service) removeExpiredPendingBlocksBySlot() error {
 	s.pendingQueueLock.Lock()
 	defer s.pendingQueueLock.Unlock()
 	oldBlockRoots := make(map[[32]byte]bool)
