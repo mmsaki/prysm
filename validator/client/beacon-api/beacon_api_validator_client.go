@@ -192,7 +192,12 @@ func (c *beaconApiValidatorClient) SubmitAggregateSelectionProof(ctx context.Con
 }
 
 func (c *beaconApiValidatorClient) SubmitAggregateSelectionProofElectra(ctx context.Context, in *ethpb.AggregateSelectionRequest, index primitives.ValidatorIndex, committeeLength uint64) (*ethpb.AggregateSelectionElectraResponse, error) {
-	return nil, errors.New("SubmitAggregateSelectionProofElectra is not implemented")
+	ctx, span := trace.StartSpan(ctx, "beacon-api.SubmitAggregateSelectionProofElectra")
+	defer span.End()
+
+	return wrapInMetrics[*ethpb.AggregateSelectionElectraResponse]("SubmitAggregateSelectionProofElectra", func() (*ethpb.AggregateSelectionElectraResponse, error) {
+		return c.submitAggregateSelectionProofElectra(ctx, in, index, committeeLength)
+	})
 }
 
 func (c *beaconApiValidatorClient) SubmitSignedAggregateSelectionProof(ctx context.Context, in *ethpb.SignedAggregateSubmitRequest) (*ethpb.SignedAggregateSubmitResponse, error) {
@@ -205,7 +210,12 @@ func (c *beaconApiValidatorClient) SubmitSignedAggregateSelectionProof(ctx conte
 }
 
 func (c *beaconApiValidatorClient) SubmitSignedAggregateSelectionProofElectra(ctx context.Context, in *ethpb.SignedAggregateSubmitElectraRequest) (*ethpb.SignedAggregateSubmitResponse, error) {
-	return nil, errors.New("SubmitSignedAggregateSelectionProofElectra is not implemented")
+	ctx, span := trace.StartSpan(ctx, "beacon-api.SubmitSignedAggregateSelectionProofElectra")
+	defer span.End()
+
+	return wrapInMetrics[*ethpb.SignedAggregateSubmitResponse]("SubmitSignedAggregateSelectionProofElectra", func() (*ethpb.SignedAggregateSubmitResponse, error) {
+		return c.submitSignedAggregateSelectionProofElectra(ctx, in)
+	})
 }
 
 func (c *beaconApiValidatorClient) SubmitSignedContributionAndProof(ctx context.Context, in *ethpb.SignedContributionAndProof) (*empty.Empty, error) {

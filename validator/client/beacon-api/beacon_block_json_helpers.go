@@ -209,6 +209,17 @@ func jsonifySignedAggregateAndProof(signedAggregateAndProof *ethpb.SignedAggrega
 	}
 }
 
+func jsonifySignedAggregateAndProofElectra(signedAggregateAndProof *ethpb.SignedAggregateAttestationAndProofElectra) *structs.SignedAggregateAttestationAndProofElectra {
+	return &structs.SignedAggregateAttestationAndProofElectra{
+		Message: &structs.AggregateAttestationAndProofElectra{
+			AggregatorIndex: uint64ToString(signedAggregateAndProof.Message.AggregatorIndex),
+			Aggregate:       jsonifyAttestationElectra(signedAggregateAndProof.Message.Aggregate),
+			SelectionProof:  hexutil.Encode(signedAggregateAndProof.Message.SelectionProof),
+		},
+		Signature: hexutil.Encode(signedAggregateAndProof.Signature),
+	}
+}
+
 func jsonifyWithdrawals(withdrawals []*enginev1.Withdrawal) []*structs.Withdrawal {
 	jsonWithdrawals := make([]*structs.Withdrawal, len(withdrawals))
 	for index, withdrawal := range withdrawals {
