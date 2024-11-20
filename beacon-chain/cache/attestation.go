@@ -56,6 +56,11 @@ func NewAttestationCache() *AttestationCache {
 //   - For aggregated attestations, it appends the attestation to the existng list of attestations for the slot.
 func (c *AttestationCache) Add(att ethpb.Att) error {
 	if att.IsNil() {
+		log.Debug("Attempted to add a nil attestation to the attestation cache")
+		return nil
+	}
+	if len(att.GetAggregationBits().BitIndices()) == 0 {
+		log.Debug("Attempted to add an attestation with 0 bits set to the attestation cache")
 		return nil
 	}
 
@@ -89,6 +94,8 @@ func (c *AttestationCache) Add(att ethpb.Att) error {
 	}
 
 	a := group.atts[0]
+
+	// Indexing is safe because we have guarded against 0 bits set.
 	bit := att.GetAggregationBits().BitIndices()[0]
 	if a.GetAggregationBits().BitAt(uint64(bit)) {
 		return nil
