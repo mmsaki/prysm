@@ -9,41 +9,40 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
 ### Added
 
 - Electra EIP6110: Queue deposit [pr](https://github.com/prysmaticlabs/prysm/pull/14430)
-- Add Bellatrix tests for light client functions.
-- Add Discovery Rebooter Feature.
-- Added GetBlockAttestationsV2 endpoint.
-- Light client support: Consensus types for Electra
-- Added SubmitPoolAttesterSlashingV2 endpoint.
-- Added SubmitAggregateAndProofsRequestV2 endpoint.
+- Add Bellatrix tests for light client functions. [pr](https://github.com/prysmaticlabs/prysm/pull/14520)
+- Add Discovery Rebooter Feature. [pr](https://github.com/prysmaticlabs/prysm/pull/14487)
+- Added GetBlockAttestationsV2 endpoint. [pr](https://github.com/prysmaticlabs/prysm/pull/14478)
+- Light client support: Consensus types for Electra. [pr](https://github.com/prysmaticlabs/prysm/pull/14527)
+- Added SubmitPoolAttesterSlashingV2 endpoint. [pr](https://github.com/prysmaticlabs/prysm/pull/14480)
+- Added SubmitAggregateAndProofsRequestV2 endpoint. [pr](https://github.com/prysmaticlabs/prysm/pull/14490)
 - Updated the `beacon-chain/monitor` package to Electra. [PR](https://github.com/prysmaticlabs/prysm/pull/14562)
-- Added ListAttestationsV2 endpoint.
-- Add ability to rollback node's internal state during processing.
-- Change how unsafe protobuf state is created to prevent unnecessary copies.
+- Added ListAttestationsV2 endpoint. [pr](https://github.com/prysmaticlabs/prysm/pull/14560)
+- Add ability to rollback node's internal state during processing. [pr](https://github.com/prysmaticlabs/prysm/pull/14554)
+- Change how unsafe protobuf state is created to prevent unnecessary copies. [pr](https://github.com/prysmaticlabs/prysm/pull/14613)
 
 ### Changed
 
 - Electra EIP6110: Queue deposit requests changes from consensus spec pr #3818
-- reversed the boolean return on `BatchVerifyDepositsSignatures`, from need verification, to all keys successfully verified
-- Fix `engine_exchangeCapabilities` implementation.
-- Updated the default `scrape-interval` in `Client-stats` to 2 minutes to accommodate Beaconcha.in API rate limits.
-- Switch to compounding when consolidating with source==target.
-- Revert block db save when saving state fails.
-- Return false from HasBlock if the block is being synced. 
-- Cleanup forkchoice on failed insertions.
-- Use read only validator for core processing to avoid unnecessary copying.
-- Use ROBlock across block processing pipeline.
-- Added missing Eth-Consensus-Version headers to GetBlockAttestationsV2 and GetAttesterSlashingsV2 endpoints.
-- When instantiating new validators, explicit set `Slashed` to false and move `EffectiveBalance` to match struct definition.
-- Updated pgo profile for beacon chain with holesky data. This improves the profile guided
-  optimizations in the go compiler.
-- Use read only state when computing the active validator list.
-- Simplified `ExitedValidatorIndices`.
-- Simplified `EjectedValidatorIndices`.
+- reversed the boolean return on `BatchVerifyDepositsSignatures`, from need verification, to all keys successfully verified. [pr](https://github.com/prysmaticlabs/prysm/pull/14526)
+- Fix `engine_exchangeCapabilities` implementation. [pr](https://github.com/prysmaticlabs/prysm/pull/14533)
+- Updated the default `scrape-interval` in `Client-stats` to 2 minutes to accommodate Beaconcha.in API rate limits. [pr](https://github.com/prysmaticlabs/prysm/pull/14537)
+- Switch to compounding when consolidating with source==target. [pr](https://github.com/prysmaticlabs/prysm/pull/14511)
+- Revert block db save when saving state fails. [pr](https://github.com/prysmaticlabs/prysm/pull/14555)
+- Return false from HasBlock if the block is being synced. [pr](https://github.com/prysmaticlabs/prysm/pull/14555)
+- Cleanup forkchoice on failed insertions. [pr](https://github.com/prysmaticlabs/prysm/pull/14556)
+- Use read only validator for core processing to avoid unnecessary copying. [pr](https://github.com/prysmaticlabs/prysm/pull/14558)
+- Use ROBlock across block processing pipeline. [pr](https://github.com/prysmaticlabs/prysm/pull/14571)
+- Added missing Eth-Consensus-Version headers to GetBlockAttestationsV2 and GetAttesterSlashingsV2 endpoints. [pr](https://github.com/prysmaticlabs/prysm/pull/14581)
+- When instantiating new validators, explicit set `Slashed` to false and move `EffectiveBalance` to match struct definition. [pr](https://github.com/prysmaticlabs/prysm/pull/14595)
+- Updated pgo profile for beacon chain with holesky data. This improves the profile guided optimizations in the go compiler. [pr](https://github.com/prysmaticlabs/prysm/pull/14589)
+- Use read only state when computing the active validator list. [pr](https://github.com/prysmaticlabs/prysm/pull/14592)
+- Simplified `ExitedValidatorIndices`. [pr](https://github.com/prysmaticlabs/prysm/pull/14588)
+- Simplified `EjectedValidatorIndices`. [pr](https://github.com/prysmaticlabs/prysm/pull/14587)
 - `engine_newPayloadV4`,`engine_getPayloadV4` are changes due to new execution request serialization decisions, [PR](https://github.com/prysmaticlabs/prysm/pull/14580)
-- Use ROBlock earlier in block syncing pipeline. 
-- Changed the signature of `ProcessPayload`.
-- Only Build the Protobuf state once during serialization.
-- Capella blocks are execution.
+- Use ROBlock earlier in block syncing pipeline. [pr](https://github.com/prysmaticlabs/prysm/pull/14609)
+- Changed the signature of `ProcessPayload`. [pr](https://github.com/prysmaticlabs/prysm/pull/14610)
+- Only Build the Protobuf state once during serialization. [pr](https://github.com/prysmaticlabs/prysm/pull/14612)
+- Capella blocks are execution. [pr](https://github.com/prysmaticlabs/prysm/pull/14614)
 
 ### Deprecated
 
@@ -51,21 +50,20 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
 
 ### Removed
 
-- Removed finalized validator index cache, no longer needed.
-- Removed validator queue position log on key reload and wait for activation.
+- Removed finalized validator index cache, no longer needed. [pr](https://github.com/prysmaticlabs/prysm/pull/14497)
+- Removed validator queue position log on key reload and wait for activation. [pr](https://github.com/prysmaticlabs/prysm/pull/14600)
 
 ### Fixed
 
-- Fixed mesh size by appending `gParams.Dhi = gossipSubDhi`
-- Fix skipping partial withdrawals count.
+- Fixed mesh size by appending `gParams.Dhi = gossipSubDhi. [pr](https://github.com/prysmaticlabs/prysm/pull/14521)
+- Fix skipping partial withdrawals count. [pr](https://github.com/prysmaticlabs/prysm/pull/14509)
 - wait for the async StreamEvent writer to exit before leaving the http handler, avoiding race condition panics [pr](https://github.com/prysmaticlabs/prysm/pull/14557)
-- Certain deb files were returning a 404 which made building new docker images without an existing
-  cache impossible. This has been fixed with updates to rules_oci and bazel-lib.
-- Fixed an issue where the length check between block body KZG commitments and the existing cache from the database was incompatible.
+- Certain deb files were returning a 404 which made building new docker images without an existing cache impossible. This has been fixed with updates to rules_oci and bazel-lib. [pr](https://github.com/prysmaticlabs/prysm/pull/14579)
+- Fixed an issue where the length check between block body KZG commitments and the existing cache from the database was incompatible. [pr](https://github.com/prysmaticlabs/prysm/pull/14581)
 - Fix `--backfill-oldest-slot` handling - this flag was totally broken, the code would always backfill to the default slot [pr](https://github.com/prysmaticlabs/prysm/pull/14584)
-- Fix keymanager API should return corrected error format for malformed tokens
-- Fix keymanager API so that get keys returns an empty response instead of a 500 error when using an unsupported keystore.
-- Small log imporvement, removing some redundant or duplicate logs
+- Fix keymanager API should return corrected error format for malformed tokens. (pr)[https://github.com/prysmaticlabs/prysm/pull/14586]
+- Fix keymanager API so that get keys returns an empty response instead of a 500 error when using an unsupported keystore. (pr)[https://github.com/prysmaticlabs/prysm/pull/14586]
+- Small log imporvement, removing some redundant or duplicate logs. [pr](https://github.com/prysmaticlabs/prysm/pull/14405)
 - EIP7521 - Fixes withdrawal bug by accounting for pending partial withdrawals and deducting already withdrawn amounts from the sweep balance. [PR](https://github.com/prysmaticlabs/prysm/pull/14578)
 
 
@@ -120,8 +118,8 @@ Updating to this release is recommended at your convenience.
 - Add Electra support and tests for light client functions.
 - fastssz version bump (better error messages).
 - SSE implementation that sheds stuck clients. [pr](https://github.com/prysmaticlabs/prysm/pull/14413)
-- Added GetPoolAttesterSlashingsV2 endpoint.
-- Use engine API get-blobs for block subscriber to reduce block import latency and potentially reduce bandwidth.
+- Added GetPoolAttesterSlashingsV2 endpoint. [pr](https://github.com/prysmaticlabs/prysm/pull/14479)
+- Use engine API get-blobs for block subscriber to reduce block import latency and potentially reduce bandwidth. [pr](https://github.com/prysmaticlabs/prysm/pull/14513)
 
 ### Changed
 
@@ -151,7 +149,7 @@ Updating to this release is recommended at your convenience.
 - Updated Sepolia bootnodes.
 - Make committee aware packing the default by deprecating `--enable-committee-aware-packing`.
 - Moved `ConvertKzgCommitmentToVersionedHash` to the `primitives` package.
-- Updated correlation penalty for EIP-7251. 
+- Updated correlation penalty for EIP-7251. [pr](https://github.com/prysmaticlabs/prysm/pull/14456)
 
 ### Deprecated
 - `--disable-grpc-gateway` flag is deprecated due to grpc gateway removal.
@@ -162,7 +160,7 @@ Updating to this release is recommended at your convenience.
 - Removed gRPC Gateway.
 - Removed unused blobs bundle cache.
 - Removed consolidation signing domain from params. The Electra design changed such that EL handles consolidation signature verification.
-- Remove engine_getPayloadBodiesBy{Hash|Range}V2
+- Remove engine_getPayloadBodiesBy{Hash|Range}V2. [pr](https://github.com/prysmaticlabs/prysm/pull/14538)
 
 ### Fixed
 
@@ -181,7 +179,7 @@ Updating to this release is recommended at your convenience.
 - Light client support: fix light client attested header execution fields' wrong version bug.
 - Testing: added custom matcher for better push settings testing.
 - Registered `GetDepositSnapshot` Beacon API endpoint.
-- Fix rolling back of a block due to a context deadline.
+- Fix rolling back of a block due to a context deadline. [pm](https://github.com/prysmaticlabs/prysm/pull/14608)
 
 ### Security
 
