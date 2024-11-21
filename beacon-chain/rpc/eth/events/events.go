@@ -489,13 +489,18 @@ func (s *Server) lazyReaderForEvent(ctx context.Context, event *feed.Event, topi
 			})
 		}, nil
 	case *operation.AttesterSlashingReceivedData:
-		slashing, ok := v.AttesterSlashing.(*eth.AttesterSlashing)
-		if !ok {
+		switch slashing := v.AttesterSlashing.(type) {
+		case *eth.AttesterSlashing:
+			return func() io.Reader {
+				return jsonMarshalReader(eventName, structs.AttesterSlashingFromConsensus(slashing))
+			}, nil
+		case *eth.AttesterSlashingElectra:
+			return func() io.Reader {
+				return jsonMarshalReader(eventName, structs.AttesterSlashingElectraFromConsensus(slashing))
+			}, nil
+		default:
 			return nil, errors.Wrapf(errUnhandledEventData, "Unexpected type %T for the .AttesterSlashing field of AttesterSlashingReceivedData", v.AttesterSlashing)
 		}
-		return func() io.Reader {
-			return jsonMarshalReader(eventName, structs.AttesterSlashingFromConsensus(slashing))
-		}, nil
 	case *operation.ProposerSlashingReceivedData:
 		return func() io.Reader {
 			return jsonMarshalReader(eventName, structs.ProposerSlashingFromConsensus(v.ProposerSlashing))
