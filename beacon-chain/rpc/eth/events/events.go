@@ -437,14 +437,20 @@ func (s *Server) lazyReaderForEvent(ctx context.Context, event *feed.Event, topi
 			return jsonMarshalReader(eventName, att)
 		}, nil
 	case *operation.UnAggregatedAttReceivedData:
-		att, ok := v.Attestation.(*eth.Attestation)
-		if !ok {
+		switch att := v.Attestation.(type) {
+		case *eth.Attestation:
+			return func() io.Reader {
+				att := structs.AttFromConsensus(att)
+				return jsonMarshalReader(eventName, att)
+			}, nil
+		case *eth.AttestationElectra:
+			return func() io.Reader {
+				att := structs.AttElectraFromConsensus(att)
+				return jsonMarshalReader(eventName, att)
+			}, nil
+		default:
 			return nil, errors.Wrapf(errUnhandledEventData, "Unexpected type %T for the .Attestation field of UnAggregatedAttReceivedData", v.Attestation)
 		}
-		return func() io.Reader {
-			att := structs.AttFromConsensus(att)
-			return jsonMarshalReader(eventName, att)
-		}, nil
 	case *operation.ExitReceivedData:
 		return func() io.Reader {
 			return jsonMarshalReader(eventName, structs.SignedExitFromConsensus(v.Exit))
