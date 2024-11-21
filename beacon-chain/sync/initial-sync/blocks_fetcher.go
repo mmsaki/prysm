@@ -164,8 +164,8 @@ func newBlocksFetcher(ctx context.Context, cfg *blocksFetcherConfig) *blocksFetc
 	}
 }
 
-// This specifies the block batch limit the initial sync fetcher will use. In the event the user has provided
-// and excessive number, this is automatically lowered.
+// This specifies the block batch limit the initial sync fetcher will use.
+// In the event the user has provided an excessive number, this is automatically lowered.
 func maxBatchLimit() int {
 	currLimit := flags.Get().BlockBatchLimit
 	maxLimit := params.BeaconConfig().MaxRequestBlocks
