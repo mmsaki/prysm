@@ -12,7 +12,6 @@ import (
 	"github.com/prysmaticlabs/prysm/v5/monitoring/tracing"
 	"github.com/prysmaticlabs/prysm/v5/monitoring/tracing/trace"
 	ethpb "github.com/prysmaticlabs/prysm/v5/proto/prysm/v1alpha1"
-	"github.com/prysmaticlabs/prysm/v5/time/slots"
 	octrace "go.opentelemetry.io/otel/trace"
 )
 
@@ -122,27 +121,6 @@ func (v *validator) waitForAccountsChange(ctx context.Context, accountsChangedCh
 	case <-accountsChangedChan:
 		// If the accounts changed, try again.
 		return v.internalWaitForActivation(ctx, accountsChangedChan)
-	}
-}
-
-// waitForNextEpoch creates a blocking function to wait until the next epoch start given the current slot
-func (v *validator) waitForNextEpoch(ctx context.Context, genesisTimeSec uint64, accountsChangedChan <-chan [][fieldparams.BLSPubkeyLength]byte) error {
-	waitTime, err := slots.SecondsUntilNextEpochStart(genesisTimeSec)
-	if err != nil {
-		return err
-	}
-	log.WithField("seconds_until_next_epoch", waitTime).Warn("No active validator keys provided. Waiting until next epoch to check again...")
-	select {
-	case <-ctx.Done():
-		log.Debug("Context closed, exiting waitForNextEpoch")
-		return ctx.Err()
-	case <-accountsChangedChan:
-		// Accounts (keys) changed, restart the process.
-		return v.internalWaitForActivation(ctx, accountsChangedChan)
-	case <-time.After(time.Duration(waitTime) * time.Second):
-		log.Debug("Done waiting for epoch start")
-		// The ticker has ticked, indicating we've reached the next epoch
-		return nil
 	}
 }
 
