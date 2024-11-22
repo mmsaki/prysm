@@ -88,7 +88,6 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
 - Fix panic in validator REST mode when checking status after removing all keys
 - Fix panic on attestation interface since we call data before validation
 - corrects nil check on some interface attestation types
-- Fix rolling back of a block due to a context deadline.
 - temporary solution to handling electra attesation and attester_slashing events. [pr](14655)
 
 
@@ -205,6 +204,7 @@ Updating to this release is recommended at your convenience.
 - Light client support: fix light client attested header execution fields' wrong version bug.
 - Testing: added custom matcher for better push settings testing.
 - Registered `GetDepositSnapshot` Beacon API endpoint.
+- Fix rolling back of a block due to a context deadline.
 
 ### Security
 
