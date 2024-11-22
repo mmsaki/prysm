@@ -63,8 +63,6 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
 
 ### Deprecated
 
-- `/eth/v1alpha1/validator/activation/stream` grpc wait for activation stream is deprecated. [pr](https://github.com/prysmaticlabs/prysm/pull/14514)
-
 ### Removed
 
 - Removed finalized validator index cache, no longer needed.

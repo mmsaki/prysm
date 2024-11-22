@@ -157,6 +157,19 @@ func (*mockKeymanager) DeleteKeystores(context.Context, [][]byte,
 	return nil, nil
 }
 
+func generateMockStatusResponse(pubkeys [][]byte) *ethpb.ValidatorActivationResponse {
+	multipleStatus := make([]*ethpb.ValidatorActivationResponse_Status, len(pubkeys))
+	for i, key := range pubkeys {
+		multipleStatus[i] = &ethpb.ValidatorActivationResponse_Status{
+			PublicKey: key,
+			Status: &ethpb.ValidatorStatusResponse{
+				Status: ethpb.ValidatorStatus_UNKNOWN_STATUS,
+			},
+		}
+	}
+	return &ethpb.ValidatorActivationResponse{Statuses: multipleStatus}
+}
+
 func TestWaitForChainStart_SetsGenesisInfo(t *testing.T) {
 	for _, isSlashingProtectionMinimal := range [...]bool{false, true} {
 		t.Run(fmt.Sprintf("SlashingProtectionMinimal:%v", isSlashingProtectionMinimal), func(t *testing.T) {

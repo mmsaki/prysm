@@ -2,13 +2,16 @@ package client
 
 import (
 	"context"
+	"io"
 	"time"
 
 	"github.com/pkg/errors"
 	fieldparams "github.com/prysmaticlabs/prysm/v5/config/fieldparams"
+	"github.com/prysmaticlabs/prysm/v5/encoding/bytesutil"
 	"github.com/prysmaticlabs/prysm/v5/math"
 	"github.com/prysmaticlabs/prysm/v5/monitoring/tracing"
 	"github.com/prysmaticlabs/prysm/v5/monitoring/tracing/trace"
+	ethpb "github.com/prysmaticlabs/prysm/v5/proto/prysm/v1alpha1"
 	"github.com/prysmaticlabs/prysm/v5/time/slots"
 	octrace "go.opentelemetry.io/otel/trace"
 )
@@ -54,29 +57,50 @@ func (v *validator) internalWaitForActivation(ctx context.Context, accountsChang
 		return v.waitForAccountsChange(ctx, accountsChangedChan)
 	}
 
-	// Step 3: update validator statuses in cache.
-	if err := v.updateValidatorStatusCache(ctx, validatingKeys); err != nil {
+	// Step 3: setup stream
+	stream, err := v.validatorClient.WaitForActivation(ctx, &ethpb.ValidatorActivationRequest{
+		PublicKeys: bytesutil.FromBytes48Array(validatingKeys),
+	})
+	if err != nil {
 		return v.retryWaitForActivation(ctx, span, err, "Connection broken while waiting for activation. Reconnecting...", accountsChangedChan)
 	}
 
 	// Step 4: Check and log validator statuses.
-	someAreActive := v.checkAndLogValidatorStatus()
-	if !someAreActive {
-		// Step 6: If no active validators, wait for accounts change, context cancellation, or next epoch.
+	someAreActive := false
+	for !someAreActive {
 		select {
 		case <-ctx.Done():
-			log.Debug("Context closed, exiting WaitForActivation")
+			log.Debug("Context closed, exiting fetching validating keys")
 			return ctx.Err()
 		case <-accountsChangedChan:
 			// Accounts (keys) changed, restart the process.
 			return v.internalWaitForActivation(ctx, accountsChangedChan)
 		default:
-			if err := v.waitForNextEpoch(ctx, v.genesisTime, accountsChangedChan); err != nil {
-				return v.retryWaitForActivation(ctx, span, err, "Failed to wait for next epoch. Reconnecting...", accountsChangedChan)
+			res, err := (stream).Recv() // retrieve from stream one loop at a time
+			// If the stream is closed, we stop the loop.
+			if errors.Is(err, io.EOF) {
+				break
 			}
-			return v.internalWaitForActivation(incrementRetries(ctx), accountsChangedChan)
+			// If context is canceled we return from the function.
+			if errors.Is(ctx.Err(), context.Canceled) {
+				return errors.Wrap(ctx.Err(), "context has been canceled so shutting down the loop")
+			}
+			if err != nil {
+				return v.retryWaitForActivation(ctx, span, err, "Connection broken while waiting for activation. Reconnecting...", accountsChangedChan)
+			}
+
+			for _, s := range res.Statuses {
+				v.pubkeyToStatus[bytesutil.ToBytes48(s.PublicKey)] = &validatorStatus{
+					publicKey: s.PublicKey,
+					status:    s.Status,
+					index:     s.Index,
+				}
+			}
+
+			someAreActive = v.checkAndLogValidatorStatus()
 		}
 	}
+
 	return nil
 }
 

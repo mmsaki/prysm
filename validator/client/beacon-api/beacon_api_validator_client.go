@@ -257,6 +257,13 @@ func (c *beaconApiValidatorClient) SubscribeCommitteeSubnets(ctx context.Context
 	})
 }
 
+func (c *beaconApiValidatorClient) WaitForActivation(ctx context.Context, in *ethpb.ValidatorActivationRequest) (ethpb.BeaconNodeValidator_WaitForActivationClient, error) {
+	ctx, span := trace.StartSpan(ctx, "beacon-api.WaitForActivation")
+	defer span.End()
+
+	return c.waitForActivation(ctx, in)
+}
+
 func (c *beaconApiValidatorClient) ValidatorIndex(ctx context.Context, in *ethpb.ValidatorIndexRequest) (*ethpb.ValidatorIndexResponse, error) {
 	ctx, span := trace.StartSpan(ctx, "beacon-api.ValidatorIndex")
 	defer span.End()
