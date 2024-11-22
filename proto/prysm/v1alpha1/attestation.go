@@ -21,10 +21,12 @@ type Att interface {
 	Version() int
 	Clone() Att
 	GetAggregationBits() bitfield.Bitlist
+	GetAttestingIndex() primitives.ValidatorIndex
 	GetData() *AttestationData
 	CommitteeBitsVal() bitfield.Bitfield
 	GetSignature() []byte
 	GetCommitteeIndex() (primitives.CommitteeIndex, error)
+	IsSingle() bool
 }
 
 // IndexedAtt defines common functionality for all indexed attestation types.
@@ -103,6 +105,11 @@ func (a *Attestation) Version() int {
 	return version.Phase0
 }
 
+// IsSingle returns true when the attestation can have only a single attester index.
+func (*Attestation) IsSingle() bool {
+	return false
+}
+
 // Clone --
 func (a *Attestation) Clone() Att {
 	return a.Copy()
@@ -118,6 +125,11 @@ func (att *Attestation) Copy() *Attestation {
 		Data:            att.Data.Copy(),
 		Signature:       bytesutil.SafeCopyBytes(att.Signature),
 	}
+}
+
+// GetAttestingIndex --
+func (*Attestation) GetAttestingIndex() primitives.ValidatorIndex {
+	return 0
 }
 
 // CommitteeBitsVal --
@@ -140,6 +152,11 @@ func (a *PendingAttestation) Version() int {
 	return version.Phase0
 }
 
+// IsSingle returns true when the attestation can have only a single attester index.
+func (*PendingAttestation) IsSingle() bool {
+	return false
+}
+
 // Clone --
 func (a *PendingAttestation) Clone() Att {
 	return a.Copy()
@@ -156,6 +173,11 @@ func (a *PendingAttestation) Copy() *PendingAttestation {
 		InclusionDelay:  a.InclusionDelay,
 		ProposerIndex:   a.ProposerIndex,
 	}
+}
+
+// GetAttestingIndex --
+func (*PendingAttestation) GetAttestingIndex() primitives.ValidatorIndex {
+	return 0
 }
 
 // CommitteeBitsVal --
@@ -181,6 +203,11 @@ func (a *AttestationElectra) Version() int {
 	return version.Electra
 }
 
+// IsSingle returns true when the attestation can have only a single attester index.
+func (*AttestationElectra) IsSingle() bool {
+	return false
+}
+
 // Clone --
 func (a *AttestationElectra) Clone() Att {
 	return a.Copy()
@@ -199,6 +226,11 @@ func (att *AttestationElectra) Copy() *AttestationElectra {
 	}
 }
 
+// GetAttestingIndex --
+func (*AttestationElectra) GetAttestingIndex() primitives.ValidatorIndex {
+	return 0
+}
+
 // CommitteeBitsVal --
 func (a *AttestationElectra) CommitteeBitsVal() bitfield.Bitfield {
 	return a.CommitteeBits
@@ -212,14 +244,86 @@ func (a *AttestationElectra) GetCommitteeIndex() (primitives.CommitteeIndex, err
 	if len(a.CommitteeBits) == 0 {
 		return 0, errors.New("no committee bits found in attestation")
 	}
-	if a.Data.CommitteeIndex != 0 {
-		return 0, fmt.Errorf("attestation data's committee index must be 0 but was %d", a.Data.CommitteeIndex)
-	}
 	indices := a.CommitteeBits.BitIndices()
 	if len(indices) != 1 {
 		return 0, fmt.Errorf("exactly 1 committee index must be set but %d were set", len(indices))
 	}
 	return primitives.CommitteeIndex(uint64(indices[0])), nil
+}
+
+// Version --
+func (a *SingleAttestation) Version() int {
+	return version.Electra
+}
+
+// IsNil --
+func (a *SingleAttestation) IsNil() bool {
+	return a == nil || a.Data == nil
+}
+
+// IsSingle returns true when the attestation can have only a single attester index.
+func (*SingleAttestation) IsSingle() bool {
+	return true
+}
+
+// Clone --
+func (a *SingleAttestation) Clone() Att {
+	return a.Copy()
+}
+
+// Copy --
+func (a *SingleAttestation) Copy() *SingleAttestation {
+	if a == nil {
+		return nil
+	}
+	return &SingleAttestation{
+		CommitteeId:   a.CommitteeId,
+		AttesterIndex: a.AttesterIndex,
+		Data:          a.Data.Copy(),
+		Signature:     bytesutil.SafeCopyBytes(a.Signature),
+	}
+}
+
+// GetAttestingIndex --
+func (a *SingleAttestation) GetAttestingIndex() primitives.ValidatorIndex {
+	return a.AttesterIndex
+}
+
+// CommitteeBitsVal --
+func (a *SingleAttestation) CommitteeBitsVal() bitfield.Bitfield {
+	cb := primitives.NewAttestationCommitteeBits()
+	cb.SetBitAt(uint64(a.CommitteeId), true)
+	return cb
+}
+
+// GetAggregationBits --
+func (a *SingleAttestation) GetAggregationBits() bitfield.Bitlist {
+	return nil
+}
+
+// GetCommitteeIndex --
+func (a *SingleAttestation) GetCommitteeIndex() (primitives.CommitteeIndex, error) {
+	return a.CommitteeId, nil
+}
+
+func (a *SingleAttestation) ToAttestation(committee []primitives.ValidatorIndex) *AttestationElectra {
+	cb := primitives.NewAttestationCommitteeBits()
+	cb.SetBitAt(uint64(a.CommitteeId), true)
+
+	ab := bitfield.NewBitlist(uint64(len(committee)))
+	for i, ix := range committee {
+		if a.AttesterIndex == ix {
+			ab.SetBitAt(uint64(i), true)
+			break
+		}
+	}
+
+	return &AttestationElectra{
+		AggregationBits: ab,
+		Data:            a.Data.Copy(),
+		Signature:       bytesutil.SafeCopyBytes(a.Signature),
+		CommitteeBits:   cb,
+	}
 }
 
 // Version --
