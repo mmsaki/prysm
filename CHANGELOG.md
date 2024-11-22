@@ -88,7 +88,9 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
 - Fix panic in validator REST mode when checking status after removing all keys
 - Fix panic on attestation interface since we call data before validation
 - corrects nil check on some interface attestation types
+- Fix rolling back of a block due to a context deadline.
 - temporary solution to handling electra attesation and attester_slashing events. [pr](14655)
+
 
 
 ### Security
