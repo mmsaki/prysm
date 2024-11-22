@@ -10,14 +10,12 @@ import (
 	"github.com/pkg/errors"
 	fieldparams "github.com/prysmaticlabs/prysm/v5/config/fieldparams"
 	"github.com/prysmaticlabs/prysm/v5/config/params"
-	validatorType "github.com/prysmaticlabs/prysm/v5/consensus-types/validator"
 	ethpb "github.com/prysmaticlabs/prysm/v5/proto/prysm/v1alpha1"
 	"github.com/prysmaticlabs/prysm/v5/testing/assert"
 	"github.com/prysmaticlabs/prysm/v5/testing/mock"
 	"github.com/prysmaticlabs/prysm/v5/testing/require"
 	validatormock "github.com/prysmaticlabs/prysm/v5/testing/validator-mock"
 	walletMock "github.com/prysmaticlabs/prysm/v5/validator/accounts/testing"
-	"github.com/prysmaticlabs/prysm/v5/validator/client/iface"
 	"github.com/prysmaticlabs/prysm/v5/validator/keymanager/derived"
 	constant "github.com/prysmaticlabs/prysm/v5/validator/testing"
 	logTest "github.com/sirupsen/logrus/hooks/test"
@@ -75,11 +73,6 @@ func TestWaitActivation_StreamSetupFails_AttemptsToReconnect(t *testing.T) {
 			PublicKeys: [][]byte{kp.pub[:]},
 		},
 	).Return(clientStream, errors.New("failed stream")).Return(clientStream, nil)
-	prysmChainClient.EXPECT().ValidatorCount(
-		gomock.Any(),
-		"head",
-		[]validatorType.Status{validatorType.Active},
-	).Return([]iface.ValidatorCount{}, nil)
 	resp := generateMockStatusResponse([][]byte{kp.pub[:]})
 	resp.Statuses[0].Status.Status = ethpb.ValidatorStatus_ACTIVE
 	clientStream.EXPECT().Recv().Return(resp, nil)
@@ -107,11 +100,6 @@ func TestWaitForActivation_ReceiveErrorFromStream_AttemptsReconnection(t *testin
 			PublicKeys: [][]byte{kp.pub[:]},
 		},
 	).Return(clientStream, nil)
-	prysmChainClient.EXPECT().ValidatorCount(
-		gomock.Any(),
-		"head",
-		[]validatorType.Status{validatorType.Active},
-	).Return([]iface.ValidatorCount{}, nil)
 	// A stream fails the first time, but succeeds the second time.
 	resp := generateMockStatusResponse([][]byte{kp.pub[:]})
 	resp.Statuses[0].Status.Status = ethpb.ValidatorStatus_ACTIVE
@@ -147,11 +135,6 @@ func TestWaitActivation_LogsActivationEpochOK(t *testing.T) {
 			PublicKeys: [][]byte{kp.pub[:]},
 		},
 	).Return(clientStream, nil)
-	prysmChainClient.EXPECT().ValidatorCount(
-		gomock.Any(),
-		"head",
-		[]validatorType.Status{validatorType.Active},
-	).Return([]iface.ValidatorCount{}, nil)
 	clientStream.EXPECT().Recv().Return(
 		resp,
 		nil,
@@ -183,11 +166,6 @@ func TestWaitForActivation_Exiting(t *testing.T) {
 			PublicKeys: [][]byte{kp.pub[:]},
 		},
 	).Return(clientStream, nil)
-	prysmChainClient.EXPECT().ValidatorCount(
-		gomock.Any(),
-		"head",
-		[]validatorType.Status{validatorType.Active},
-	).Return([]iface.ValidatorCount{}, nil)
 	clientStream.EXPECT().Recv().Return(
 		resp,
 		nil,
@@ -227,11 +205,6 @@ func TestWaitForActivation_RefetchKeys(t *testing.T) {
 			PublicKeys: [][]byte{kp.pub[:]},
 		},
 	).Return(clientStream, nil)
-	prysmChainClient.EXPECT().ValidatorCount(
-		gomock.Any(),
-		"head",
-		[]validatorType.Status{validatorType.Active},
-	).Return([]iface.ValidatorCount{}, nil)
 	clientStream.EXPECT().Recv().Return(
 		resp,
 		nil)
@@ -285,11 +258,6 @@ func TestWaitForActivation_AccountsChanged(t *testing.T) {
 			time.Sleep(time.Second * 2)
 			return inactiveClientStream, nil
 		})
-		prysmChainClient.EXPECT().ValidatorCount(
-			gomock.Any(),
-			"head",
-			[]validatorType.Status{validatorType.Active},
-		).Return([]iface.ValidatorCount{}, nil).AnyTimes()
 		inactiveClientStream.EXPECT().Recv().Return(
 			inactiveResp,
 			nil,
@@ -378,11 +346,6 @@ func TestWaitForActivation_AccountsChanged(t *testing.T) {
 			time.Sleep(time.Second * 2)
 			return inactiveClientStream, nil
 		})
-		prysmChainClient.EXPECT().ValidatorCount(
-			gomock.Any(),
-			"head",
-			[]validatorType.Status{validatorType.Active},
-		).Return([]iface.ValidatorCount{}, nil).AnyTimes()
 		inactiveClientStream.EXPECT().Recv().Return(
 			inactiveResp,
 			nil,
@@ -440,11 +403,6 @@ func TestWaitActivation_NotAllValidatorsActivatedOK(t *testing.T) {
 		gomock.Any(),
 		gomock.Any(),
 	).Return(clientStream, nil)
-	prysmChainClient.EXPECT().ValidatorCount(
-		gomock.Any(),
-		"head",
-		[]validatorType.Status{validatorType.Active},
-	).Return([]iface.ValidatorCount{}, nil).Times(2)
 	clientStream.EXPECT().Recv().Return(
 		&ethpb.ValidatorActivationResponse{},
 		nil,

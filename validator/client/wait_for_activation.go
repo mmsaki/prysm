@@ -7,13 +7,11 @@ import (
 
 	"github.com/pkg/errors"
 	fieldparams "github.com/prysmaticlabs/prysm/v5/config/fieldparams"
-	validator2 "github.com/prysmaticlabs/prysm/v5/consensus-types/validator"
 	"github.com/prysmaticlabs/prysm/v5/encoding/bytesutil"
 	"github.com/prysmaticlabs/prysm/v5/math"
 	"github.com/prysmaticlabs/prysm/v5/monitoring/tracing"
 	"github.com/prysmaticlabs/prysm/v5/monitoring/tracing/trace"
 	ethpb "github.com/prysmaticlabs/prysm/v5/proto/prysm/v1alpha1"
-	"github.com/prysmaticlabs/prysm/v5/validator/client/iface"
 )
 
 // WaitForActivation checks whether the validator pubkey is in the active
@@ -117,18 +115,7 @@ func (v *validator) internalWaitForActivation(ctx context.Context, accountsChang
 				}
 			}
 
-			// "-1" indicates that validator count endpoint is not supported by the beacon node.
-			var valCount int64 = -1
-			valCounts, err := v.prysmChainClient.ValidatorCount(ctx, "head", []validator2.Status{validator2.Active})
-			if err != nil && !errors.Is(err, iface.ErrNotSupported) {
-				return errors.Wrap(err, "could not get active validator count")
-			}
-
-			if len(valCounts) > 0 {
-				valCount = int64(valCounts[0].Count)
-			}
-
-			someAreActive = v.checkAndLogValidatorStatus(valCount)
+			someAreActive = v.checkAndLogValidatorStatus()
 		}
 	}
 
