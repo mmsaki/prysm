@@ -68,7 +68,6 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
 ### Removed
 
 - Removed finalized validator index cache, no longer needed.
-- Removed validator queue position log on key reload and wait for activation.
 - Removed outdated spectest exclusions for EIP-6110.
 
 ### Fixed
@@ -202,7 +201,6 @@ Updating to this release is recommended at your convenience.
 - Light client support: fix light client attested header execution fields' wrong version bug.
 - Testing: added custom matcher for better push settings testing.
 - Registered `GetDepositSnapshot` Beacon API endpoint.
-- Fix rolling back of a block due to a context deadline.
 
 ### Security
 

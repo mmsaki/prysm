@@ -10,6 +10,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"math"
 	"strconv"
 	"strings"
 	"sync"
@@ -348,9 +349,9 @@ func (v *validator) WaitForSync(ctx context.Context) error {
 	}
 }
 
-func (v *validator) checkAndLogValidatorStatus() bool {
+func (v *validator) checkAndLogValidatorStatus(activeValCount int64) bool {
 	nonexistentIndex := primitives.ValidatorIndex(^uint64(0))
-	var someAreActive bool
+	var validatorActivated bool
 	for _, s := range v.pubkeyToStatus {
 		fields := logrus.Fields{
 			"pubkey": fmt.Sprintf("%#x", bytesutil.Trunc(s.publicKey)),
@@ -368,11 +369,29 @@ func (v *validator) checkAndLogValidatorStatus() bool {
 		case ethpb.ValidatorStatus_UNKNOWN_STATUS:
 			log.Info("Waiting for deposit to be observed by beacon node")
 		case ethpb.ValidatorStatus_DEPOSITED:
-			log.Info("Validator deposited, entering activation queue after finalization")
+			if s.status.PositionInActivationQueue != 0 {
+				log.WithField(
+					"positionInActivationQueue", s.status.PositionInActivationQueue,
+				).Info("Deposit processed, entering activation queue after finalization")
+			}
 		case ethpb.ValidatorStatus_PENDING:
-			log.Info("Waiting for activation... Check validator queue status in a block explorer")
+			if activeValCount >= 0 && s.status.ActivationEpoch == params.BeaconConfig().FarFutureEpoch {
+				activationsPerEpoch :=
+					uint64(math.Max(float64(params.BeaconConfig().MinPerEpochChurnLimit), float64(uint64(activeValCount)/params.BeaconConfig().ChurnLimitQuotient)))
+				secondsPerEpoch := uint64(params.BeaconConfig().SlotsPerEpoch.Mul(params.BeaconConfig().SecondsPerSlot))
+				expectedWaitingTime :=
+					time.Duration((s.status.PositionInActivationQueue+activationsPerEpoch)/activationsPerEpoch*secondsPerEpoch) * time.Second
+				log.WithFields(logrus.Fields{
+					"positionInActivationQueue": s.status.PositionInActivationQueue,
+					"expectedWaitingTime":       expectedWaitingTime.String(),
+				}).Info("Waiting to be assigned activation epoch")
+			} else if s.status.ActivationEpoch != params.BeaconConfig().FarFutureEpoch {
+				log.WithFields(logrus.Fields{
+					"activationEpoch": s.status.ActivationEpoch,
+				}).Info("Waiting for activation")
+			}
 		case ethpb.ValidatorStatus_ACTIVE, ethpb.ValidatorStatus_EXITING:
-			someAreActive = true
+			validatorActivated = true
 			log.WithFields(logrus.Fields{
 				"index": s.index,
 			}).Info("Validator activated")
@@ -382,11 +401,11 @@ func (v *validator) checkAndLogValidatorStatus() bool {
 			log.Warn("Invalid Eth1 deposit")
 		default:
 			log.WithFields(logrus.Fields{
-				"status": s.status.Status.String(),
+				"activationEpoch": s.status.ActivationEpoch,
 			}).Info("Validator status")
 		}
 	}
-	return someAreActive
+	return validatorActivated
 }
 
 // CanonicalHeadSlot returns the slot of canonical block currently found in the
