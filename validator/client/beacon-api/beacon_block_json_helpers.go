@@ -51,6 +51,22 @@ func jsonifyAttestations(attestations []*ethpb.Attestation) []*structs.Attestati
 	return jsonAttestations
 }
 
+func jsonifyAttestationsElectra(attestations []*ethpb.AttestationElectra) []*structs.AttestationElectra {
+	jsonAttestations := make([]*structs.AttestationElectra, len(attestations))
+	for index, attestation := range attestations {
+		jsonAttestations[index] = jsonifyAttestationElectra(attestation)
+	}
+	return jsonAttestations
+}
+
+func jsonifySingleAttestations(attestations []*ethpb.SingleAttestation) []*structs.SingleAttestation {
+	jsonAttestations := make([]*structs.SingleAttestation, len(attestations))
+	for index, attestation := range attestations {
+		jsonAttestations[index] = jsonifySingleAttestation(attestation)
+	}
+	return jsonAttestations
+}
+
 func jsonifyAttesterSlashings(attesterSlashings []*ethpb.AttesterSlashing) []*structs.AttesterSlashing {
 	jsonAttesterSlashings := make([]*structs.AttesterSlashing, len(attesterSlashings))
 	for index, attesterSlashing := range attesterSlashings {
@@ -161,6 +177,24 @@ func jsonifyAttestation(attestation *ethpb.Attestation) *structs.Attestation {
 		AggregationBits: hexutil.Encode(attestation.AggregationBits),
 		Data:            jsonifyAttestationData(attestation.Data),
 		Signature:       hexutil.Encode(attestation.Signature),
+	}
+}
+
+func jsonifyAttestationElectra(attestation *ethpb.AttestationElectra) *structs.AttestationElectra {
+	return &structs.AttestationElectra{
+		AggregationBits: hexutil.Encode(attestation.AggregationBits),
+		Data:            jsonifyAttestationData(attestation.Data),
+		Signature:       hexutil.Encode(attestation.Signature),
+		CommitteeBits:   hexutil.Encode(attestation.CommitteeBits),
+	}
+}
+
+func jsonifySingleAttestation(attestation *ethpb.SingleAttestation) *structs.SingleAttestation {
+	return &structs.SingleAttestation{
+		CommitteeIndex: uint64ToString(attestation.CommitteeId),
+		AttesterIndex:  uint64ToString(attestation.AttesterIndex),
+		Data:           jsonifyAttestationData(attestation.Data),
+		Signature:      hexutil.Encode(attestation.Signature),
 	}
 }
 
