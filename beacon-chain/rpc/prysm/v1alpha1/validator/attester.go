@@ -62,7 +62,7 @@ func (vs *Server) ProposeAttestation(ctx context.Context, att *ethpb.Attestation
 
 // ProposeAttestationElectra is a function called by an attester to vote
 // on a block via an attestation object as defined in the Ethereum specification.
-func (vs *Server) ProposeAttestationElectra(ctx context.Context, att *ethpb.AttestationElectra) (*ethpb.AttestResponse, error) {
+func (vs *Server) ProposeAttestationElectra(ctx context.Context, att *ethpb.SingleAttestation) (*ethpb.AttestResponse, error) {
 	ctx, span := trace.StartSpan(ctx, "AttesterServer.ProposeAttestationElectra")
 	defer span.End()
 
@@ -78,8 +78,17 @@ func (vs *Server) ProposeAttestationElectra(ctx context.Context, att *ethpb.Atte
 
 	go func() {
 		ctx = trace.NewContext(context.Background(), trace.FromContext(ctx))
-		attCopy := att.Copy()
-		if err := vs.AttPool.SaveUnaggregatedAttestation(attCopy); err != nil {
+		preState, err := vs.AttestationStateFetcher.AttestationTargetState(ctx, att.Data.Target)
+		if err != nil {
+			log.WithError(err).Error("Could not get target state for proposed attestation")
+			return
+		}
+		committee, err := helpers.BeaconCommitteeFromState(ctx, preState, att.Data.Slot, committeeIndex)
+		if err != nil {
+			log.WithError(err).Error("Could not get committee for proposed attestation")
+			return
+		}
+		if err := vs.AttPool.SaveUnaggregatedAttestation(att.ToAttestation(committee)); err != nil {
 			log.WithError(err).Error("Could not save unaggregated attestation")
 			return
 		}
@@ -146,6 +155,7 @@ func (vs *Server) proposeAtt(ctx context.Context, att ethpb.Att, committee primi
 		return nil, status.Errorf(codes.Internal, "Could not tree hash attestation: %v", err)
 	}
 
+	// TODO: Send single or not?
 	// Broadcast the unaggregated attestation on a feed to notify other services in the beacon node
 	// of a received unaggregated attestation.
 	vs.OperationNotifier.OperationFeed().Send(&feed.Event{

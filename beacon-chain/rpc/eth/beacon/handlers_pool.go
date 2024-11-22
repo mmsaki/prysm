@@ -277,8 +277,11 @@ func (s *Server) SubmitAttestationsV2(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (s *Server) handleAttestationsElectra(ctx context.Context, data json.RawMessage) (attFailures []*server.IndexedVerificationFailure, failedBroadcasts []string, err error) {
-	var sourceAttestations []*structs.AttestationElectra
+func (s *Server) handleAttestationsElectra(
+	ctx context.Context,
+	data json.RawMessage,
+) (attFailures []*server.IndexedVerificationFailure, failedBroadcasts []string, err error) {
+	var sourceAttestations []*structs.SingleAttestation
 
 	if err = json.Unmarshal(data, &sourceAttestations); err != nil {
 		return nil, nil, errors.Wrap(err, "failed to unmarshal attestation")
@@ -288,7 +291,7 @@ func (s *Server) handleAttestationsElectra(ctx context.Context, data json.RawMes
 		return nil, nil, errors.New("no data submitted")
 	}
 
-	var validAttestations []*eth.AttestationElectra
+	var validAttestations []*eth.SingleAttestation
 	for i, sourceAtt := range sourceAttestations {
 		att, err := sourceAtt.ToConsensus()
 		if err != nil {
@@ -308,6 +311,7 @@ func (s *Server) handleAttestationsElectra(ctx context.Context, data json.RawMes
 		validAttestations = append(validAttestations, att)
 	}
 
+	// TODO: Send single or not?
 	for i, att := range validAttestations {
 		// Broadcast the unaggregated attestation on a feed to notify other services in the beacon node
 		// of a received unaggregated attestation.
@@ -338,6 +342,7 @@ func (s *Server) handleAttestationsElectra(ctx context.Context, data json.RawMes
 			continue
 		}
 
+		// TODO: convert to AttestationElectra
 		if corehelpers.IsAggregated(att) {
 			if err = s.AttestationsPool.SaveAggregatedAttestation(att); err != nil {
 				log.WithError(err).Error("could not save aggregated attestation")

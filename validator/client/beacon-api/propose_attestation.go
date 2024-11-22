@@ -58,11 +58,11 @@ func (c *beaconApiValidatorClient) proposeAttestation(ctx context.Context, attes
 	return &ethpb.AttestResponse{AttestationDataRoot: attestationDataRoot[:]}, nil
 }
 
-func (c *beaconApiValidatorClient) proposeAttestationElectra(ctx context.Context, attestation *ethpb.AttestationElectra) (*ethpb.AttestResponse, error) {
+func (c *beaconApiValidatorClient) proposeAttestationElectra(ctx context.Context, attestation *ethpb.SingleAttestation) (*ethpb.AttestResponse, error) {
 	if err := validateNilAttestation(attestation); err != nil {
 		return nil, err
 	}
-	marshalledAttestation, err := json.Marshal(jsonifyAttestationsElectra([]*ethpb.AttestationElectra{attestation}))
+	marshalledAttestation, err := json.Marshal(jsonifySingleAttestations([]*ethpb.SingleAttestation{attestation}))
 	if err != nil {
 		return nil, err
 	}
