@@ -266,8 +266,8 @@ func ProcessConsolidationRequests(ctx context.Context, st state.BeaconState, req
 			continue
 		}
 
-		e, ok := math.SafeAdd(uint64(srcV.ActivationEpoch), uint64(params.BeaconConfig().ShardCommitteePeriod))
-		if !ok {
+		e, overflow := math.SafeAdd(uint64(srcV.ActivationEpoch), uint64(params.BeaconConfig().ShardCommitteePeriod))
+		if overflow {
 			log.Error("Overflow when adding activation epoch and shard committee period")
 			continue
 		}
