@@ -8,7 +8,7 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
 
 ### Added
 
-- Electra EIP6110: Queue deposit [pr](https://github.com/prysmaticlabs/prysm/pull/14430)
+- Electra EIP6110: Queue deposit [pr](https://github.com/prysmaticlabs/prysm/pull/14430).
 - Add Bellatrix tests for light client functions.
 - Add Discovery Rebooter Feature.
 - Added GetBlockAttestationsV2 endpoint.
@@ -22,6 +22,11 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
 - Added benchmarks for process slots for Capella, Deneb, Electra.
 - Add helper to cast bytes to string without allocating memory.
 - Added GetAggregatedAttestationV2 endpoint.
+- Added SubmitAttestationsV2 endpoint.
+- Validator REST mode Electra block support.
+- Added validator index label to `validator_statuses` metric.
+- Added Validator REST mode use of Attestation V2 endpoints and Electra attestations.
+- PeerDAS: Added proto for `DataColumnIdentifier`, `DataColumnSidecar`, `DataColumnSidecarsByRangeRequest` and `MetadataV2`.
 
 ### Changed
 
@@ -50,6 +55,13 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
 - Capella blocks are execution.
 - Fixed panic when http request to subscribe to event stream fails.
 - Return early for blob reconstructor during capella fork
+- Return early for blob reconstructor during capella fork.
+- Updated block endpoint from V1 to V2.
+- Rename instances of "deposit receipts" to "deposit requests".
+- Non-blocking payload attribute event handling in beacon api [pr](https://github.com/prysmaticlabs/prysm/pull/14644).
+- Updated light client protobufs. [PR](https://github.com/prysmaticlabs/prysm/pull/14650)
+- Added `Eth-Consensus-Version` header to `ListAttestationsV2` and `GetAggregateAttestationV2` endpoints.
+- Updated light client consensus types. [PR](https://github.com/prysmaticlabs/prysm/pull/14652)
 - Add more efficient method of computing the cache key for unaggregated attestations.
 
 ### Deprecated
@@ -60,6 +72,7 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
 
 - Removed finalized validator index cache, no longer needed.
 - Removed validator queue position log on key reload and wait for activation.
+- Removed outdated spectest exclusions for EIP-6110.
 
 ### Fixed
 
@@ -74,6 +87,11 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
 - Fix keymanager API so that get keys returns an empty response instead of a 500 error when using an unsupported keystore.
 - Small log imporvement, removing some redundant or duplicate logs
 - EIP7521 - Fixes withdrawal bug by accounting for pending partial withdrawals and deducting already withdrawn amounts from the sweep balance. [PR](https://github.com/prysmaticlabs/prysm/pull/14578)
+- unskip electra merkle spec test
+- Fix panic in validator REST mode when checking status after removing all keys
+- Fix panic on attestation interface since we call data before validation
+- corrects nil check on some interface attestation types
+- temporary solution to handling electra attesation and attester_slashing events. [pr](14655)
 
 
 ### Security
