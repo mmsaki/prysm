@@ -95,7 +95,6 @@ func (s *Service) validateCommitteeIndexBeaconAttestation(ctx context.Context, p
 		att = singleAtt.ToAttestation(committee)
 	}
 
-	// TODO: Send single or not?
 	// Broadcast the unaggregated attestation on a feed to notify other services in the beacon node
 	// of a received unaggregated attestation.
 	s.cfg.attestationNotifier.OperationFeed().Send(&feed.Event{
