@@ -12,6 +12,7 @@ import (
 	"github.com/prysmaticlabs/prysm/v5/crypto/bls"
 	"github.com/prysmaticlabs/prysm/v5/monitoring/tracing/trace"
 	ethpb "github.com/prysmaticlabs/prysm/v5/proto/prysm/v1alpha1"
+	"github.com/prysmaticlabs/prysm/v5/runtime/version"
 	"github.com/prysmaticlabs/prysm/v5/time/slots"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -44,7 +45,8 @@ func (vs *Server) ProposeAttestation(ctx context.Context, att *ethpb.Attestation
 	ctx, span := trace.StartSpan(ctx, "AttesterServer.ProposeAttestation")
 	defer span.End()
 
-	resp, err := vs.proposeAtt(ctx, att, att.GetData().CommitteeIndex)
+	// TODO: is there a cleaner way than to pass nil here?
+	resp, err := vs.proposeAtt(ctx, att, nil, att.GetData().CommitteeIndex)
 	if err != nil {
 		return nil, err
 	}
@@ -71,23 +73,22 @@ func (vs *Server) ProposeAttestationElectra(ctx context.Context, att *ethpb.Sing
 		return nil, err
 	}
 
-	resp, err := vs.proposeAtt(ctx, att, committeeIndex)
+	targetState, err := vs.AttestationStateFetcher.AttestationTargetState(ctx, att.Data.Target)
+	if err != nil {
+		return nil, status.Error(codes.Internal, "Could not get target state for proposed attestation")
+	}
+	committee, err := helpers.BeaconCommitteeFromState(ctx, targetState, att.Data.Slot, committeeIndex)
+	if err != nil {
+		return nil, status.Error(codes.Internal, "Could not get committee for proposed attestation")
+	}
+
+	resp, err := vs.proposeAtt(ctx, att, committee, committeeIndex)
 	if err != nil {
 		return nil, err
 	}
 
 	go func() {
 		ctx = trace.NewContext(context.Background(), trace.FromContext(ctx))
-		preState, err := vs.AttestationStateFetcher.AttestationTargetState(ctx, att.Data.Target)
-		if err != nil {
-			log.WithError(err).Error("Could not get target state for proposed attestation")
-			return
-		}
-		committee, err := helpers.BeaconCommitteeFromState(ctx, preState, att.Data.Slot, committeeIndex)
-		if err != nil {
-			log.WithError(err).Error("Could not get committee for proposed attestation")
-			return
-		}
 		if err := vs.AttPool.SaveUnaggregatedAttestation(att.ToAttestation(committee)); err != nil {
 			log.WithError(err).Error("Could not save unaggregated attestation")
 			return
@@ -145,7 +146,12 @@ func (vs *Server) SubscribeCommitteeSubnets(ctx context.Context, req *ethpb.Comm
 	return &emptypb.Empty{}, nil
 }
 
-func (vs *Server) proposeAtt(ctx context.Context, att ethpb.Att, committee primitives.CommitteeIndex) (*ethpb.AttestResponse, error) {
+func (vs *Server) proposeAtt(
+	ctx context.Context,
+	att ethpb.Att,
+	committee []primitives.ValidatorIndex,
+	committeeIndex primitives.CommitteeIndex,
+) (*ethpb.AttestResponse, error) {
 	if _, err := bls.SignatureFromBytes(att.GetSignature()); err != nil {
 		return nil, status.Error(codes.InvalidArgument, "Incorrect attestation signature")
 	}
@@ -155,7 +161,16 @@ func (vs *Server) proposeAtt(ctx context.Context, att ethpb.Att, committee primi
 		return nil, status.Errorf(codes.Internal, "Could not tree hash attestation: %v", err)
 	}
 
-	// TODO: Send single or not?
+	var singleAtt *ethpb.SingleAttestation
+	if att.Version() >= version.Electra {
+		var ok bool
+		singleAtt, ok = att.(*ethpb.SingleAttestation)
+		if !ok {
+			return nil, status.Errorf(codes.Internal, "Attestation has wrong type (expected %T, got %T)", &ethpb.SingleAttestation{}, att)
+		}
+		att = singleAtt.ToAttestation(committee)
+	}
+
 	// Broadcast the unaggregated attestation on a feed to notify other services in the beacon node
 	// of a received unaggregated attestation.
 	vs.OperationNotifier.OperationFeed().Send(&feed.Event{
@@ -171,10 +186,10 @@ func (vs *Server) proposeAtt(ctx context.Context, att ethpb.Att, committee primi
 	if err != nil {
 		return nil, err
 	}
-	subnet := helpers.ComputeSubnetFromCommitteeAndSlot(uint64(len(vals)), committee, att.GetData().Slot)
+	subnet := helpers.ComputeSubnetFromCommitteeAndSlot(uint64(len(vals)), committeeIndex, att.GetData().Slot)
 
 	// Broadcast the new attestation to the network.
-	if err := vs.P2P.BroadcastAttestation(ctx, subnet, att); err != nil {
+	if err := vs.P2P.BroadcastAttestation(ctx, subnet, singleAtt); err != nil {
 		return nil, status.Errorf(codes.Internal, "Could not broadcast attestation: %v", err)
 	}
 

@@ -311,8 +311,16 @@ func (s *Server) handleAttestationsElectra(
 		validAttestations = append(validAttestations, att)
 	}
 
-	// TODO: Send single or not?
 	for i, att := range validAttestations {
+		targetState, err := s.AttestationStateFetcher.AttestationTargetState(ctx, att.Data.Target)
+		if err != nil {
+			return nil, nil, errors.Wrap(err, "could not get target state for attestation")
+		}
+		committee, err := corehelpers.BeaconCommitteeFromState(ctx, targetState, att.Data.Slot, att.CommitteeId)
+		if err != nil {
+			return nil, nil, errors.Wrap(err, "could not get committee for attestation")
+		}
+
 		// Broadcast the unaggregated attestation on a feed to notify other services in the beacon node
 		// of a received unaggregated attestation.
 		// Note we can't send for aggregated att because we don't have selection proof.
@@ -320,7 +328,7 @@ func (s *Server) handleAttestationsElectra(
 			s.OperationNotifier.OperationFeed().Send(&feed.Event{
 				Type: operation.UnaggregatedAttReceived,
 				Data: &operation.UnAggregatedAttReceivedData{
-					Attestation: att,
+					Attestation: att.ToAttestation(committee),
 				},
 			})
 		}
