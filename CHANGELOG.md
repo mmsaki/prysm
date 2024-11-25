@@ -64,6 +64,7 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
 - Updated light client consensus types. [PR](https://github.com/prysmaticlabs/prysm/pull/14652)
 - Update earliest exit epoch for upgrade to electra
 - Add missed exit checks to consolidation processing
+- Fixed pending deposits processing on Electra.
 
 ### Deprecated
 
