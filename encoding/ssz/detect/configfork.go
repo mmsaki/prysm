@@ -101,72 +101,15 @@ func FromForkVersion(cv [fieldparams.VersionLength]byte) (*VersionedUnmarshaler,
 // UnmarshalBeaconState uses internal knowledge in the VersionedUnmarshaler to pick the right concrete BeaconState type,
 // then Unmarshal()s the type and returns an instance of state.BeaconState if successful.
 func (cf *VersionedUnmarshaler) UnmarshalBeaconState(marshaled []byte) (s state.BeaconState, err error) {
-	forkName := version.String(cf.Fork)
-	switch fork := cf.Fork; fork {
-	case version.Phase0:
-		st := &ethpb.BeaconState{}
-		err = st.UnmarshalSSZ(marshaled)
-		if err != nil {
-			return nil, errors.Wrapf(err, "failed to unmarshal state, detected fork=%s", forkName)
-		}
-		s, err = state_native.InitializeFromProtoUnsafePhase0(st)
-		if err != nil {
-			return nil, errors.Wrapf(err, "failed to init state trie from state, detected fork=%s", forkName)
-		}
-	case version.Altair:
-		st := &ethpb.BeaconStateAltair{}
-		err = st.UnmarshalSSZ(marshaled)
-		if err != nil {
-			return nil, errors.Wrapf(err, "failed to unmarshal state, detected fork=%s", forkName)
-		}
-		s, err = state_native.InitializeFromProtoUnsafeAltair(st)
-		if err != nil {
-			return nil, errors.Wrapf(err, "failed to init state trie from state, detected fork=%s", forkName)
-		}
-	case version.Bellatrix:
-		st := &ethpb.BeaconStateBellatrix{}
-		err = st.UnmarshalSSZ(marshaled)
-		if err != nil {
-			return nil, errors.Wrapf(err, "failed to unmarshal state, detected fork=%s", forkName)
-		}
-		s, err = state_native.InitializeFromProtoUnsafeBellatrix(st)
-		if err != nil {
-			return nil, errors.Wrapf(err, "failed to init state trie from state, detected fork=%s", forkName)
-		}
-	case version.Capella:
-		st := &ethpb.BeaconStateCapella{}
-		err = st.UnmarshalSSZ(marshaled)
-		if err != nil {
-			return nil, errors.Wrapf(err, "failed to unmarshal state, detected fork=%s", forkName)
-		}
-		s, err = state_native.InitializeFromProtoUnsafeCapella(st)
-		if err != nil {
-			return nil, errors.Wrapf(err, "failed to init state trie from state, detected fork=%s", forkName)
-		}
-	case version.Deneb:
-		st := &ethpb.BeaconStateDeneb{}
-		err = st.UnmarshalSSZ(marshaled)
-		if err != nil {
-			return nil, errors.Wrapf(err, "failed to unmarshal state, detected fork=%s", forkName)
-		}
-		s, err = state_native.InitializeFromProtoUnsafeDeneb(st)
-		if err != nil {
-			return nil, errors.Wrapf(err, "failed to init state trie from state, detected fork=%s", forkName)
-		}
-	case version.Electra:
-		st := &ethpb.BeaconStateElectra{}
-		err = st.UnmarshalSSZ(marshaled)
-		if err != nil {
-			return nil, errors.Wrapf(err, "failed to unmarshal state, detected fork=%s", forkName)
-		}
-		s, err = state_native.InitializeFromProtoUnsafeElectra(st)
-		if err != nil {
-			return nil, errors.Wrapf(err, "failed to init state trie from state, detected fork=%s", forkName)
-		}
-	default:
-		return nil, fmt.Errorf("unable to initialize BeaconState for fork version=%s", forkName)
+	st := &ethpb.BeaconStateElectra{}
+	err = st.UnmarshalSSZ(marshaled)
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to unmarshal state, detected fork=%s", "makong")
 	}
-
+	s, err = state_native.InitializeFromProtoUnsafeElectra(st)
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to init state trie from state, detected fork=%s", "makong")
+	}
 	return s, nil
 }
 
@@ -199,24 +142,7 @@ func (cf *VersionedUnmarshaler) UnmarshalBeaconBlock(marshaled []byte) (interfac
 		return nil, err
 	}
 
-	var blk ssz.Unmarshaler
-	switch cf.Fork {
-	case version.Phase0:
-		blk = &ethpb.SignedBeaconBlock{}
-	case version.Altair:
-		blk = &ethpb.SignedBeaconBlockAltair{}
-	case version.Bellatrix:
-		blk = &ethpb.SignedBeaconBlockBellatrix{}
-	case version.Capella:
-		blk = &ethpb.SignedBeaconBlockCapella{}
-	case version.Deneb:
-		blk = &ethpb.SignedBeaconBlockDeneb{}
-	case version.Electra:
-		blk = &ethpb.SignedBeaconBlockElectra{}
-	default:
-		forkName := version.String(cf.Fork)
-		return nil, fmt.Errorf("unable to initialize ReadOnlyBeaconBlock for fork version=%s at slot=%d", forkName, slot)
-	}
+	blk := &ethpb.SignedBeaconBlockElectra{}
 	err = blk.UnmarshalSSZ(marshaled)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to unmarshal ReadOnlySignedBeaconBlock in UnmarshalSSZ")

@@ -70,7 +70,7 @@ var prettyCommand = &cli.Command{
 		case "block":
 			data = &ethpb.BeaconBlock{}
 		case "signed_block":
-			data = &ethpb.SignedBeaconBlock{}
+			data = &ethpb.SignedBeaconBlockElectra{}
 		case "blinded_block":
 			data = &ethpb.BlindedBeaconBlockBellatrix{}
 		case "attestation":
@@ -333,9 +333,7 @@ func detectState(fPath string) (state.BeaconState, error) {
 		return nil, err
 	}
 	vu, err := detect.FromState(rawFile)
-	if err != nil {
-		return nil, errors.Wrap(err, "error detecting state from file")
-	}
+	fmt.Println(err)
 	s, err := vu.UnmarshalBeaconState(rawFile)
 	if err != nil {
 		return nil, errors.Wrap(err, "error unmarshalling state")
