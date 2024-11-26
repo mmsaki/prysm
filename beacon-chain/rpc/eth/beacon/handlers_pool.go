@@ -87,7 +87,7 @@ func (s *Server) ListAttestations(w http.ResponseWriter, r *http.Request) {
 // ListAttestationsV2 retrieves attestations known by the node but
 // not necessarily incorporated into any block. Allows filtering by committee index or slot.
 func (s *Server) ListAttestationsV2(w http.ResponseWriter, r *http.Request) {
-	ctx, span := trace.StartSpan(r.Context(), "beacon.ListAttestationsV2")
+	_, span := trace.StartSpan(r.Context(), "beacon.ListAttestationsV2")
 	defer span.End()
 
 	rawSlot, slot, ok := shared.UintFromQuery(w, r, "slot", false)
@@ -98,13 +98,10 @@ func (s *Server) ListAttestationsV2(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-
-	headState, err := s.ChainInfoFetcher.HeadStateReadOnly(ctx)
-	if err != nil {
-		httputil.HandleError(w, "Could not get head state: "+err.Error(), http.StatusInternalServerError)
-		return
+	v := slots.ToForkVersion(primitives.Slot(slot))
+	if rawSlot == "" {
+		v = slots.ToForkVersion(s.TimeFetcher.CurrentSlot())
 	}
-
 	attestations := s.AttestationsPool.AggregatedAttestations()
 	unaggAtts, err := s.AttestationsPool.UnaggregatedAttestations()
 	if err != nil {
@@ -116,7 +113,7 @@ func (s *Server) ListAttestationsV2(w http.ResponseWriter, r *http.Request) {
 	filteredAtts := make([]interface{}, 0, len(attestations))
 	for _, att := range attestations {
 		var includeAttestation bool
-		if headState.Version() >= version.Electra {
+		if v >= version.Electra && att.Version() >= version.Electra {
 			attElectra, ok := att.(*eth.AttestationElectra)
 			if !ok {
 				httputil.HandleError(w, fmt.Sprintf("Unable to convert attestation of type %T", att), http.StatusInternalServerError)
@@ -128,7 +125,7 @@ func (s *Server) ListAttestationsV2(w http.ResponseWriter, r *http.Request) {
 				attStruct := structs.AttElectraFromConsensus(attElectra)
 				filteredAtts = append(filteredAtts, attStruct)
 			}
-		} else {
+		} else if v < version.Electra && att.Version() < version.Electra {
 			attOld, ok := att.(*eth.Attestation)
 			if !ok {
 				httputil.HandleError(w, fmt.Sprintf("Unable to convert attestation of type %T", att), http.StatusInternalServerError)
@@ -149,9 +146,9 @@ func (s *Server) ListAttestationsV2(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Header().Set(api.VersionHeader, version.String(headState.Version()))
+	w.Header().Set(api.VersionHeader, version.String(v))
 	httputil.WriteJson(w, &structs.ListAttestationsResponse{
-		Version: version.String(headState.Version()),
+		Version: version.String(v),
 		Data:    attsData,
 	})
 }
@@ -738,6 +735,7 @@ func (s *Server) GetAttesterSlashingsV2(w http.ResponseWriter, r *http.Request) 
 	ctx, span := trace.StartSpan(r.Context(), "beacon.GetAttesterSlashingsV2")
 	defer span.End()
 
+	v := slots.ToForkVersion(s.TimeFetcher.CurrentSlot())
 	headState, err := s.ChainInfoFetcher.HeadStateReadOnly(ctx)
 	if err != nil {
 		httputil.HandleError(w, "Could not get head state: "+err.Error(), http.StatusInternalServerError)
@@ -746,22 +744,25 @@ func (s *Server) GetAttesterSlashingsV2(w http.ResponseWriter, r *http.Request) 
 	var attStructs []interface{}
 	sourceSlashings := s.SlashingsPool.PendingAttesterSlashings(ctx, headState, true /* return unlimited slashings */)
 	for _, slashing := range sourceSlashings {
-		if slashing.Version() >= version.Electra {
+		var attStruct interface{}
+		if v >= version.Electra && slashing.Version() >= version.Electra {
 			a, ok := slashing.(*eth.AttesterSlashingElectra)
 			if !ok {
 				httputil.HandleError(w, fmt.Sprintf("Unable to convert electra slashing of type %T to an Electra slashing", slashing), http.StatusInternalServerError)
 				return
 			}
-			attStruct := structs.AttesterSlashingElectraFromConsensus(a)
-			attStructs = append(attStructs, attStruct)
-		} else {
+			attStruct = structs.AttesterSlashingElectraFromConsensus(a)
+		} else if v < version.Electra && slashing.Version() < version.Electra {
 			a, ok := slashing.(*eth.AttesterSlashing)
 			if !ok {
 				httputil.HandleError(w, fmt.Sprintf("Unable to convert slashing of type %T to a Phase0 slashing", slashing), http.StatusInternalServerError)
 				return
 			}
-			attStruct := structs.AttesterSlashingFromConsensus(a)
-			attStructs = append(attStructs, attStruct)
+			attStruct = structs.AttesterSlashingFromConsensus(a)
+		} else {
+			continue
+		}
+		attStructs = append(attStructs, attStruct)
 		}
 	}
 	attBytes, err := json.Marshal(attStructs)
@@ -770,9 +771,10 @@ func (s *Server) GetAttesterSlashingsV2(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 	resp := &structs.GetAttesterSlashingsResponse{
-		Version: version.String(sourceSlashings[0].Version()),
+		Version: version.String(v),
 		Data:    attBytes,
 	}
+	w.Header().Set(api.VersionHeader, version.String(v))
 	httputil.WriteJson(w, resp)
 }
 
