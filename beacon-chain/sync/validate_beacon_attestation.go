@@ -309,7 +309,7 @@ func (s *Service) validateUnaggregatedAttWithState(ctx context.Context, a eth.At
 }
 
 func validateAttestingIndex(ctx context.Context, a *eth.SingleAttestation, committee []primitives.ValidatorIndex) (pubsub.ValidationResult, error) {
-	ctx, span := trace.StartSpan(ctx, "sync.validateSingleAttWithState")
+	_, span := trace.StartSpan(ctx, "sync.validateAttestingIndex")
 	defer span.End()
 
 	// _[REJECT]_ The attester is a member of the committee -- i.e.

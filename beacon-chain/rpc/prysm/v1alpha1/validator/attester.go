@@ -189,8 +189,14 @@ func (vs *Server) proposeAtt(
 	subnet := helpers.ComputeSubnetFromCommitteeAndSlot(uint64(len(vals)), committeeIndex, att.GetData().Slot)
 
 	// Broadcast the new attestation to the network.
-	if err := vs.P2P.BroadcastAttestation(ctx, subnet, singleAtt); err != nil {
-		return nil, status.Errorf(codes.Internal, "Could not broadcast attestation: %v", err)
+	if singleAtt != nil {
+		if err := vs.P2P.BroadcastAttestation(ctx, subnet, singleAtt); err != nil {
+			return nil, status.Errorf(codes.Internal, "Could not broadcast attestation: %v", err)
+		}
+	} else {
+		if err := vs.P2P.BroadcastAttestation(ctx, subnet, att); err != nil {
+			return nil, status.Errorf(codes.Internal, "Could not broadcast attestation: %v", err)
+		}
 	}
 
 	return &ethpb.AttestResponse{
