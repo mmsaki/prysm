@@ -280,6 +280,10 @@ type BeaconChainConfig struct {
 	AttestationSubnetPrefixBits     uint64          `yaml:"ATTESTATION_SUBNET_PREFIX_BITS" spec:"true"`     // AttestationSubnetPrefixBits is defined as (ceillog2(ATTESTATION_SUBNET_COUNT) + ATTESTATION_SUBNET_EXTRA_BITS).
 	SubnetsPerNode                  uint64          `yaml:"SUBNETS_PER_NODE" spec:"true"`                   // SubnetsPerNode is the number of long-lived subnets a beacon node should be subscribed to.
 	NodeIdBits                      uint64          `yaml:"NODE_ID_BITS" spec:"true"`                       // NodeIdBits defines the bit length of a node id.
+
+	// Blobs Values
+	MaxBlobsPerBlock        uint64 `yaml:"MAX_BLOBS_PER_BLOCK" spec:"true"`         // MaxBlobsPerBlock defines the max blobs could exist in a block.
+	MaxBlobsPerBlockElectra uint64 `yaml:"MAX_BLOBS_PER_BLOCK_ELECTRA" spec:"true"` // MaxBlobsPerBlockElectra defines the max blobs could exist in a block post Electra hard fork.
 }
 
 // InitializeForkSchedule initializes the schedules forks baked into the config.
@@ -355,6 +359,24 @@ func (b *BeaconChainConfig) RespTimeoutDuration() time.Duration {
 // MaximumGossipClockDisparityDuration returns the time duration of the clock disparity.
 func (b *BeaconChainConfig) MaximumGossipClockDisparityDuration() time.Duration {
 	return time.Duration(b.MaximumGossipClockDisparity) * time.Millisecond
+}
+
+// TargetBlobCount returns the target number of blobs per block for the given slot,
+// accounting for changes introduced by the Electra fork.
+func (b *BeaconChainConfig) TargetBlobCount(slot primitives.Slot) uint64 {
+	if primitives.Epoch(slot.DivSlot(32)) >= b.ElectraForkEpoch {
+		return b.MaxBlobsPerBlockElectra / 2
+	}
+	return b.MaxBlobsPerBlock / 2
+}
+
+// MaxBlobCount returns the maximum number of blobs per block for the given slot,
+// adjusting for the Electra fork.
+func (b *BeaconChainConfig) MaxBlobCount(slot primitives.Slot) uint64 {
+	if primitives.Epoch(slot.DivSlot(32)) >= b.ElectraForkEpoch {
+		return b.MaxBlobsPerBlockElectra
+	}
+	return b.MaxBlobsPerBlock
 }
 
 // DenebEnabled centralizes the check to determine if code paths

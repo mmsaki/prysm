@@ -264,13 +264,14 @@ func (vs *Server) getPayloadHeaderFromBuilder(ctx context.Context, slot primitiv
 		return nil, errors.Wrap(err, "could not validate builder signature")
 	}
 
+	maxBlobsPerBlock := params.BeaconConfig().MaxBlobCount(slot)
 	var kzgCommitments [][]byte
 	if bid.Version() >= version.Deneb {
 		kzgCommitments, err = bid.BlobKzgCommitments()
 		if err != nil {
 			return nil, errors.Wrap(err, "could not get blob kzg commitments")
 		}
-		if len(kzgCommitments) > fieldparams.MaxBlobsPerBlock {
+		if uint64(len(kzgCommitments)) > maxBlobsPerBlock {
 			return nil, fmt.Errorf("builder returned too many kzg commitments: %d", len(kzgCommitments))
 		}
 		for _, c := range kzgCommitments {

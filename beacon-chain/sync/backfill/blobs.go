@@ -44,7 +44,7 @@ func newBlobSync(current primitives.Slot, vbs verifiedROBlocks, cfg *blobSyncCon
 	return &blobSync{current: current, expected: expected, bbv: bbv, store: as}, nil
 }
 
-type blobVerifierMap map[[32]byte][fieldparams.MaxBlobsPerBlock]verification.BlobVerifier
+type blobVerifierMap map[[32]byte][]verification.BlobVerifier
 
 type blobSync struct {
 	store    das.AvailabilityStore
