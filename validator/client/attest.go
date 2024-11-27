@@ -199,6 +199,7 @@ func (v *validator) SubmitAttestation(ctx context.Context, slot primitives.Slot,
 		trace.Int64Attribute("targetEpoch", int64(data.Target.Epoch)),
 	)
 	if postElectra {
+		span.SetAttributes(trace.Int64Attribute("attesterIndex", int64(duty.ValidatorIndex)))
 		span.SetAttributes(trace.Int64Attribute("committeeIndex", int64(duty.CommitteeIndex)))
 	} else {
 		span.SetAttributes(trace.StringAttribute("aggregationBitfield", fmt.Sprintf("%#x", aggregationBitfield)))

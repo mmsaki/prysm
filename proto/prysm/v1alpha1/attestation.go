@@ -326,7 +326,8 @@ func (a *SingleAttestation) GetCommitteeIndex() (primitives.CommitteeIndex, erro
 	return a.CommitteeId, nil
 }
 
-func (a *SingleAttestation) ToAttestation(committee []primitives.ValidatorIndex) *AttestationElectra {
+// ToAttestationElectra converts the attestation to an AttestationElectra.
+func (a *SingleAttestation) ToAttestationElectra(committee []primitives.ValidatorIndex) *AttestationElectra {
 	cb := primitives.NewAttestationCommitteeBits()
 	cb.SetBitAt(uint64(a.CommitteeId), true)
 

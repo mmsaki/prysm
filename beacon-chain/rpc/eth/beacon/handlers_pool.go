@@ -325,7 +325,7 @@ func (s *Server) handleAttestationsElectra(
 			s.OperationNotifier.OperationFeed().Send(&feed.Event{
 				Type: operation.UnaggregatedAttReceived,
 				Data: &operation.UnAggregatedAttReceivedData{
-					Attestation: att.ToAttestation(committee),
+					Attestation: att.ToAttestationElectra(committee),
 				},
 			})
 		}
@@ -347,13 +347,13 @@ func (s *Server) handleAttestationsElectra(
 			continue
 		}
 
-		// TODO: convert to AttestationElectra
+		electraAtt := att.ToAttestationElectra(committee)
 		if corehelpers.IsAggregated(att) {
-			if err = s.AttestationsPool.SaveAggregatedAttestation(att); err != nil {
+			if err = s.AttestationsPool.SaveAggregatedAttestation(electraAtt); err != nil {
 				log.WithError(err).Error("could not save aggregated attestation")
 			}
 		} else {
-			if err = s.AttestationsPool.SaveUnaggregatedAttestation(att); err != nil {
+			if err = s.AttestationsPool.SaveUnaggregatedAttestation(electraAtt); err != nil {
 				log.WithError(err).Error("could not save unaggregated attestation")
 			}
 		}

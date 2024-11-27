@@ -45,7 +45,6 @@ func (vs *Server) ProposeAttestation(ctx context.Context, att *ethpb.Attestation
 	ctx, span := trace.StartSpan(ctx, "AttesterServer.ProposeAttestation")
 	defer span.End()
 
-	// TODO: is there a cleaner way than to pass nil here?
 	resp, err := vs.proposeAtt(ctx, att, nil, att.GetData().CommitteeIndex)
 	if err != nil {
 		return nil, err
@@ -68,18 +67,17 @@ func (vs *Server) ProposeAttestationElectra(ctx context.Context, att *ethpb.Sing
 	ctx, span := trace.StartSpan(ctx, "AttesterServer.ProposeAttestationElectra")
 	defer span.End()
 
-	committeeIndex, err := att.GetCommitteeIndex()
-	if err != nil {
-		return nil, err
-	}
-
 	targetState, err := vs.AttestationStateFetcher.AttestationTargetState(ctx, att.Data.Target)
 	if err != nil {
-		return nil, status.Error(codes.Internal, "Could not get target state for proposed attestation")
+		return nil, status.Error(codes.Internal, "Could not get target state")
+	}
+	committeeIndex, err := att.GetCommitteeIndex()
+	if err != nil {
+		return nil, status.Error(codes.Internal, "Could not get committee index")
 	}
 	committee, err := helpers.BeaconCommitteeFromState(ctx, targetState, att.Data.Slot, committeeIndex)
 	if err != nil {
-		return nil, status.Error(codes.Internal, "Could not get committee for proposed attestation")
+		return nil, status.Error(codes.Internal, "Could not get committee")
 	}
 
 	resp, err := vs.proposeAtt(ctx, att, committee, committeeIndex)
@@ -89,7 +87,7 @@ func (vs *Server) ProposeAttestationElectra(ctx context.Context, att *ethpb.Sing
 
 	go func() {
 		ctx = trace.NewContext(context.Background(), trace.FromContext(ctx))
-		if err := vs.AttPool.SaveUnaggregatedAttestation(att.ToAttestation(committee)); err != nil {
+		if err := vs.AttPool.SaveUnaggregatedAttestation(att.ToAttestationElectra(committee)); err != nil {
 			log.WithError(err).Error("Could not save unaggregated attestation")
 			return
 		}
@@ -149,7 +147,7 @@ func (vs *Server) SubscribeCommitteeSubnets(ctx context.Context, req *ethpb.Comm
 func (vs *Server) proposeAtt(
 	ctx context.Context,
 	att ethpb.Att,
-	committee []primitives.ValidatorIndex,
+	committee []primitives.ValidatorIndex, // required post-Electra
 	committeeIndex primitives.CommitteeIndex,
 ) (*ethpb.AttestResponse, error) {
 	if _, err := bls.SignatureFromBytes(att.GetSignature()); err != nil {
@@ -158,7 +156,7 @@ func (vs *Server) proposeAtt(
 
 	root, err := att.GetData().HashTreeRoot()
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "Could not tree hash attestation: %v", err)
+		return nil, status.Errorf(codes.Internal, "Could not get attestation root: %v", err)
 	}
 
 	var singleAtt *ethpb.SingleAttestation
@@ -168,7 +166,7 @@ func (vs *Server) proposeAtt(
 		if !ok {
 			return nil, status.Errorf(codes.Internal, "Attestation has wrong type (expected %T, got %T)", &ethpb.SingleAttestation{}, att)
 		}
-		att = singleAtt.ToAttestation(committee)
+		att = singleAtt.ToAttestationElectra(committee)
 	}
 
 	// Broadcast the unaggregated attestation on a feed to notify other services in the beacon node
@@ -189,14 +187,14 @@ func (vs *Server) proposeAtt(
 	subnet := helpers.ComputeSubnetFromCommitteeAndSlot(uint64(len(vals)), committeeIndex, att.GetData().Slot)
 
 	// Broadcast the new attestation to the network.
+	var attToBroadcast ethpb.Att
 	if singleAtt != nil {
-		if err := vs.P2P.BroadcastAttestation(ctx, subnet, singleAtt); err != nil {
-			return nil, status.Errorf(codes.Internal, "Could not broadcast attestation: %v", err)
-		}
+		attToBroadcast = singleAtt
 	} else {
-		if err := vs.P2P.BroadcastAttestation(ctx, subnet, att); err != nil {
-			return nil, status.Errorf(codes.Internal, "Could not broadcast attestation: %v", err)
-		}
+		attToBroadcast = att
+	}
+	if err := vs.P2P.BroadcastAttestation(ctx, subnet, attToBroadcast); err != nil {
+		return nil, status.Errorf(codes.Internal, "Could not broadcast attestation: %v", err)
 	}
 
 	return &ethpb.AttestResponse{
