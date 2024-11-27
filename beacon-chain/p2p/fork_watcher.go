@@ -2,6 +2,7 @@ package p2p
 
 import (
 	"github.com/prysmaticlabs/prysm/v5/config/params"
+	"github.com/prysmaticlabs/prysm/v5/consensus-types/primitives"
 	"github.com/prysmaticlabs/prysm/v5/time/slots"
 )
 
@@ -14,11 +15,17 @@ func (s *Service) forkWatcher() {
 		select {
 		case currSlot := <-slotTicker.C():
 			currEpoch := slots.ToEpoch(currSlot)
-			if currEpoch == params.BeaconConfig().AltairForkEpoch ||
-				currEpoch == params.BeaconConfig().BellatrixForkEpoch ||
-				currEpoch == params.BeaconConfig().CapellaForkEpoch ||
-				currEpoch == params.BeaconConfig().DenebForkEpoch ||
-				currEpoch == params.BeaconConfig().ElectraForkEpoch {
+
+			forkEpochs := map[primitives.Epoch]bool{
+				params.BeaconConfig().AltairForkEpoch:    true,
+				params.BeaconConfig().BellatrixForkEpoch: true,
+				params.BeaconConfig().CapellaForkEpoch:   true,
+				params.BeaconConfig().DenebForkEpoch:     true,
+				params.BeaconConfig().ElectraForkEpoch:   true,
+				params.BeaconConfig().Eip7594ForkEpoch:   true,
+			}
+
+			if forkEpochs[currEpoch] {
 				// If we are in the fork epoch, we update our enr with
 				// the updated fork digest. These repeatedly does
 				// this over the epoch, which might be slightly wasteful

@@ -88,6 +88,8 @@ func FromForkVersion(cv [fieldparams.VersionLength]byte) (*VersionedUnmarshaler,
 		fork = version.Deneb
 	case bytesutil.ToBytes4(cfg.ElectraForkVersion):
 		fork = version.Electra
+	case bytesutil.ToBytes4(cfg.Eip7594ForkVersion):
+		fork = version.EIP7594
 	default:
 		return nil, errors.Wrapf(ErrForkNotFound, "version=%#x", cv)
 	}
@@ -153,7 +155,7 @@ func (cf *VersionedUnmarshaler) UnmarshalBeaconState(marshaled []byte) (s state.
 		if err != nil {
 			return nil, errors.Wrapf(err, "failed to init state trie from state, detected fork=%s", forkName)
 		}
-	case version.Electra:
+	case version.Electra, version.EIP7594:
 		st := &ethpb.BeaconStateElectra{}
 		err = st.UnmarshalSSZ(marshaled)
 		if err != nil {

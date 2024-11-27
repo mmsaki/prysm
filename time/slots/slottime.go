@@ -86,6 +86,8 @@ func ToEpoch(slot primitives.Slot) primitives.Epoch {
 func ToForkVersion(slot primitives.Slot) int {
 	epoch := ToEpoch(slot)
 	switch {
+	case epoch >= params.BeaconConfig().Eip7594ForkEpoch:
+		return version.EIP7594
 	case epoch >= params.BeaconConfig().ElectraForkEpoch:
 		return version.Electra
 	case epoch >= params.BeaconConfig().DenebForkEpoch:

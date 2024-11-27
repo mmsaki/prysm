@@ -350,6 +350,8 @@ func (s *PremineGenesisConfig) setFork(g state.BeaconState) error {
 		pv, cv = params.BeaconConfig().CapellaForkVersion, params.BeaconConfig().DenebForkVersion
 	case version.Electra:
 		pv, cv = params.BeaconConfig().ElectraForkVersion, params.BeaconConfig().ElectraForkVersion
+	case version.EIP7594:
+		pv, cv = params.BeaconConfig().Eip7594ForkVersion, params.BeaconConfig().Eip7594ForkVersion
 	default:
 		return errUnsupportedVersion
 	}

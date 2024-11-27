@@ -11,6 +11,7 @@ const (
 	Capella
 	Deneb
 	Electra
+	EIP7594
 )
 
 var versionToString = map[int]string{
@@ -20,6 +21,7 @@ var versionToString = map[int]string{
 	Capella:   "capella",
 	Deneb:     "deneb",
 	Electra:   "electra",
+	EIP7594:   "eip7594",
 }
 
 // stringToVersion and allVersions are populated in init()

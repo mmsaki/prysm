@@ -108,7 +108,7 @@ func testBlindedBlockFixtures(t *testing.T) *blindedBlockFixtures {
 }
 
 func TestPayloadBodiesViaUnblinder(t *testing.T) {
-	defer util.HackElectraMaxuint(t)()
+	defer util.HackElectraEIP7549Maxuint(t)()
 	fx := testBlindedBlockFixtures(t)
 	t.Run("mix of non-empty and empty", func(t *testing.T) {
 		cli, srv := newMockEngine(t)
@@ -145,7 +145,7 @@ func TestPayloadBodiesViaUnblinder(t *testing.T) {
 }
 
 func TestFixtureEquivalence(t *testing.T) {
-	defer util.HackElectraMaxuint(t)()
+	defer util.HackElectraEIP7549Maxuint(t)()
 	fx := testBlindedBlockFixtures(t)
 	t.Run("full and blinded block equivalence", func(t *testing.T) {
 		testAssertReconstructedEquivalent(t, fx.denebBlock.blinded.block, fx.denebBlock.full)
@@ -248,7 +248,7 @@ func TestComputeRanges(t *testing.T) {
 }
 
 func TestReconstructBlindedBlockBatchFallbackToRange(t *testing.T) {
-	defer util.HackElectraMaxuint(t)()
+	defer util.HackElectraEIP7549Maxuint(t)()
 	ctx := context.Background()
 	t.Run("fallback fails", func(t *testing.T) {
 		cli, srv := newMockEngine(t)
@@ -334,7 +334,7 @@ func TestReconstructBlindedBlockBatchFallbackToRange(t *testing.T) {
 }
 
 func TestReconstructBlindedBlockBatchDenebAndElectra(t *testing.T) {
-	defer util.HackElectraMaxuint(t)()
+	defer util.HackElectraEIP7549Maxuint(t)()
 	t.Run("deneb and electra", func(t *testing.T) {
 		cli, srv := newMockEngine(t)
 		fx := testBlindedBlockFixtures(t)

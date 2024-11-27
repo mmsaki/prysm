@@ -29,7 +29,6 @@ var placeholderFields = []string{
 	"EIP6110_FORK_VERSION",
 	"EIP7002_FORK_EPOCH",
 	"EIP7002_FORK_VERSION",
-	"EIP7594_FORK_VERSION",
 	"EIP7732_FORK_EPOCH",
 	"EIP7732_FORK_VERSION",
 	"FIELD_ELEMENTS_PER_BLOB",              // Compile time constant.

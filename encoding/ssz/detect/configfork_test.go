@@ -46,7 +46,7 @@ func TestSlotFromBlock(t *testing.T) {
 }
 
 func TestByState(t *testing.T) {
-	undo := util.HackElectraMaxuint(t)
+	undo := util.HackElectraEIP7549Maxuint(t)
 	defer undo()
 	bc := params.BeaconConfig()
 	altairSlot, err := slots.EpochStart(bc.AltairForkEpoch)
@@ -58,6 +58,8 @@ func TestByState(t *testing.T) {
 	denebSlot, err := slots.EpochStart(bc.DenebForkEpoch)
 	require.NoError(t, err)
 	electraSlot, err := slots.EpochStart(bc.ElectraForkEpoch)
+	require.NoError(t, err)
+	eip7594Slot, err := slots.EpochStart(bc.Eip7594ForkEpoch)
 	require.NoError(t, err)
 	cases := []struct {
 		name        string
@@ -100,6 +102,12 @@ func TestByState(t *testing.T) {
 			version:     version.Electra,
 			slot:        electraSlot,
 			forkversion: bytesutil.ToBytes4(bc.ElectraForkVersion),
+		},
+		{
+			name:        "eip7594",
+			version:     version.EIP7594,
+			slot:        eip7594Slot,
+			forkversion: bytesutil.ToBytes4(bc.Eip7594ForkVersion),
 		},
 	}
 	for _, c := range cases {
@@ -133,7 +141,7 @@ func stateForVersion(v int) (state.BeaconState, error) {
 		return util.NewBeaconStateCapella()
 	case version.Deneb:
 		return util.NewBeaconStateDeneb()
-	case version.Electra:
+	case version.Electra, version.EIP7594:
 		return util.NewBeaconStateElectra()
 	default:
 		return nil, fmt.Errorf("unrecognized version %d", v)
@@ -142,7 +150,7 @@ func stateForVersion(v int) (state.BeaconState, error) {
 
 func TestUnmarshalState(t *testing.T) {
 	ctx := context.Background()
-	undo := util.HackElectraMaxuint(t)
+	undo := util.HackElectraEIP7549Maxuint(t)
 	defer undo()
 	bc := params.BeaconConfig()
 	altairSlot, err := slots.EpochStart(bc.AltairForkEpoch)
@@ -154,6 +162,8 @@ func TestUnmarshalState(t *testing.T) {
 	denebSlot, err := slots.EpochStart(bc.DenebForkEpoch)
 	require.NoError(t, err)
 	electraSlot, err := slots.EpochStart(bc.ElectraForkEpoch)
+	require.NoError(t, err)
+	eip7594Slot, err := slots.EpochStart(bc.Eip7594ForkEpoch)
 	require.NoError(t, err)
 	cases := []struct {
 		name        string
@@ -197,6 +207,12 @@ func TestUnmarshalState(t *testing.T) {
 			slot:        electraSlot,
 			forkversion: bytesutil.ToBytes4(bc.ElectraForkVersion),
 		},
+		{
+			name:        "eip7594",
+			version:     version.EIP7594,
+			slot:        eip7594Slot,
+			forkversion: bytesutil.ToBytes4(bc.Eip7594ForkVersion),
+		},
 	}
 	for _, c := range cases {
 		st, err := stateForVersion(c.version)
@@ -222,7 +238,7 @@ func TestUnmarshalState(t *testing.T) {
 }
 
 func TestDetectAndUnmarshalBlock(t *testing.T) {
-	undo := util.HackElectraMaxuint(t)
+	undo := util.HackElectraEIP7549Maxuint(t)
 	defer undo()
 	altairS, err := slots.EpochStart(params.BeaconConfig().AltairForkEpoch)
 	require.NoError(t, err)
@@ -320,7 +336,7 @@ func TestDetectAndUnmarshalBlock(t *testing.T) {
 }
 
 func TestUnmarshalBlock(t *testing.T) {
-	undo := util.HackElectraMaxuint(t)
+	undo := util.HackElectraEIP7549Maxuint(t)
 	defer undo()
 	genv := bytesutil.ToBytes4(params.BeaconConfig().GenesisForkVersion)
 	altairv := bytesutil.ToBytes4(params.BeaconConfig().AltairForkVersion)
@@ -442,7 +458,7 @@ func TestUnmarshalBlock(t *testing.T) {
 }
 
 func TestUnmarshalBlindedBlock(t *testing.T) {
-	undo := util.HackElectraMaxuint(t)
+	undo := util.HackElectraEIP7549Maxuint(t)
 	defer undo()
 	genv := bytesutil.ToBytes4(params.BeaconConfig().GenesisForkVersion)
 	altairv := bytesutil.ToBytes4(params.BeaconConfig().AltairForkVersion)

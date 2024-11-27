@@ -12,6 +12,7 @@ func InteropConfig() *BeaconChainConfig {
 	c.CapellaForkVersion = []byte{3, 0, 0, 235}
 	c.DenebForkVersion = []byte{4, 0, 0, 235}
 	c.ElectraForkVersion = []byte{5, 0, 0, 235}
+	c.Eip7594ForkVersion = []byte{6, 0, 0, 235}
 
 	c.InitializeForkSchedule()
 	return c
