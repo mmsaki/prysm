@@ -211,11 +211,16 @@ func (s *Service) validateBeaconBlockPubSub(ctx context.Context, pid peer.ID, ms
 
 	// Log the arrival time of the accepted block
 	graffiti := blk.Block().Body().Graffiti()
+	exec, err := blk.Block().Body().Execution()
+	if err != nil {
+		log.WithError(err)
+	}
 	startTime, err := slots.ToTime(genesisTime, blk.Block().Slot())
 	logFields := logrus.Fields{
 		"blockSlot":     blk.Block().Slot(),
 		"proposerIndex": blk.Block().ProposerIndex(),
 		"graffiti":      string(graffiti[:]),
+		"extraData":     string(exec.ExtraData()),
 	}
 	if err != nil {
 		log.WithError(err).WithFields(logFields).Warn("Received block, could not report timing information.")
