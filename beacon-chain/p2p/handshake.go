@@ -37,44 +37,6 @@ func (s *Service) connectToPeer(conn network.Conn) {
 	}).Debug("Initiate peer connection")
 }
 
-func (s *Service) disconnectFromPeer(
-	conn network.Conn,
-	goodByeFunc func(ctx context.Context, id peer.ID) error,
-	badPeerErr error,
-) {
-	// Get the remote peer ID.
-	remotePeerID := conn.RemotePeer()
-
-	// Get the direction of the connection.
-	direction := conn.Stat().Direction.String()
-
-	// Get the remote peer multiaddr.
-	remotePeerMultiAddr := peerMultiaddrString(conn)
-
-	// Set the peer to disconnecting state.
-	s.peers.SetConnectionState(remotePeerID, peers.Disconnecting)
-
-	// Only attempt a goodbye if we are still connected to the peer.
-	if s.host.Network().Connectedness(remotePeerID) == network.Connected {
-		if err := goodByeFunc(context.TODO(), remotePeerID); err != nil {
-			log.WithError(err).Error("Unable to disconnect from peer")
-		}
-	}
-
-	// Get the remaining active peers.
-	activePeerCount := len(s.peers.Active())
-	log.
-		WithError(badPeerErr).
-		WithFields(logrus.Fields{
-			"multiaddr":            remotePeerMultiAddr,
-			"direction":            direction,
-			"remainingActivePeers": activePeerCount,
-		}).
-		Debug("Initiate peer disconnection")
-
-	s.peers.SetConnectionState(remotePeerID, peers.Disconnected)
-}
-
 func (s *Service) disconnectFromPeerOnError(
 	conn network.Conn,
 	goodByeFunc func(ctx context.Context, id peer.ID) error,
