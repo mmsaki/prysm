@@ -635,7 +635,7 @@ func TestSecondsUntilNextEpochStart(t *testing.T) {
 }
 
 func TestToForkVersion(t *testing.T) {
-	t.Run("EIP7954 fork version", func(t *testing.T) {
+	t.Run("EIP7594 fork version", func(t *testing.T) {
 		params.SetupTestConfigCleanup(t)
 		config := params.BeaconConfig()
 		config.Eip7594ForkEpoch = 200

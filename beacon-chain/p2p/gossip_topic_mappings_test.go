@@ -30,17 +30,20 @@ func TestGossipTopicMappings_CorrectType(t *testing.T) {
 	capellaForkEpoch := primitives.Epoch(300)
 	denebForkEpoch := primitives.Epoch(400)
 	electraForkEpoch := primitives.Epoch(500)
+	eip7594ForkEpoch := primitives.Epoch(600)
 
 	bCfg.AltairForkEpoch = altairForkEpoch
 	bCfg.BellatrixForkEpoch = bellatrixForkEpoch
 	bCfg.CapellaForkEpoch = capellaForkEpoch
 	bCfg.DenebForkEpoch = denebForkEpoch
 	bCfg.ElectraForkEpoch = electraForkEpoch
-	bCfg.ForkVersionSchedule[bytesutil.ToBytes4(bCfg.AltairForkVersion)] = primitives.Epoch(100)
-	bCfg.ForkVersionSchedule[bytesutil.ToBytes4(bCfg.BellatrixForkVersion)] = primitives.Epoch(200)
-	bCfg.ForkVersionSchedule[bytesutil.ToBytes4(bCfg.CapellaForkVersion)] = primitives.Epoch(300)
-	bCfg.ForkVersionSchedule[bytesutil.ToBytes4(bCfg.DenebForkVersion)] = primitives.Epoch(400)
-	bCfg.ForkVersionSchedule[bytesutil.ToBytes4(bCfg.ElectraForkVersion)] = primitives.Epoch(500)
+	bCfg.Eip7594ForkEpoch = eip7594ForkEpoch
+	bCfg.ForkVersionSchedule[bytesutil.ToBytes4(bCfg.AltairForkVersion)] = altairForkEpoch
+	bCfg.ForkVersionSchedule[bytesutil.ToBytes4(bCfg.BellatrixForkVersion)] = bellatrixForkEpoch
+	bCfg.ForkVersionSchedule[bytesutil.ToBytes4(bCfg.CapellaForkVersion)] = capellaForkEpoch
+	bCfg.ForkVersionSchedule[bytesutil.ToBytes4(bCfg.DenebForkVersion)] = denebForkEpoch
+	bCfg.ForkVersionSchedule[bytesutil.ToBytes4(bCfg.ElectraForkVersion)] = electraForkEpoch
+	bCfg.ForkVersionSchedule[bytesutil.ToBytes4(bCfg.Eip7594ForkVersion)] = eip7594ForkEpoch
 	params.OverrideBeaconConfig(bCfg)
 
 	// Phase 0
@@ -206,5 +209,38 @@ func TestGossipTopicMappings_CorrectType(t *testing.T) {
 	assert.Equal(t, true, ok)
 	pMessage = GossipTopicMappings(BlobSubnetTopicFormat, electraForkEpoch)
 	_, ok = pMessage.(*ethpb.BlobSidecar)
+	assert.Equal(t, true, ok)
+
+	// EIP-7594 Fork
+	pMessage = GossipTopicMappings(BlockSubnetTopicFormat, eip7594ForkEpoch)
+	_, ok = pMessage.(*ethpb.SignedBeaconBlockElectra)
+	assert.Equal(t, true, ok)
+	pMessage = GossipTopicMappings(AttestationSubnetTopicFormat, eip7594ForkEpoch)
+	_, ok = pMessage.(*ethpb.AttestationElectra)
+	assert.Equal(t, true, ok)
+	pMessage = GossipTopicMappings(AttesterSlashingSubnetTopicFormat, eip7594ForkEpoch)
+	_, ok = pMessage.(*ethpb.AttesterSlashingElectra)
+	assert.Equal(t, true, ok)
+	pMessage = GossipTopicMappings(ProposerSlashingSubnetTopicFormat, eip7594ForkEpoch)
+	_, ok = pMessage.(*ethpb.ProposerSlashing)
+	assert.Equal(t, true, ok)
+	pMessage = GossipTopicMappings(AggregateAndProofSubnetTopicFormat, eip7594ForkEpoch)
+	_, ok = pMessage.(*ethpb.SignedAggregateAttestationAndProofElectra)
+	assert.Equal(t, true, ok)
+	pMessage = GossipTopicMappings(ExitSubnetTopicFormat, eip7594ForkEpoch)
+	_, ok = pMessage.(*ethpb.SignedVoluntaryExit)
+	assert.Equal(t, true, ok)
+	pMessage = GossipTopicMappings(SyncCommitteeSubnetTopicFormat, eip7594ForkEpoch)
+	_, ok = pMessage.(*ethpb.SyncCommitteeMessage)
+	assert.Equal(t, true, ok)
+	pMessage = GossipTopicMappings(SyncContributionAndProofSubnetTopicFormat, eip7594ForkEpoch)
+	_, ok = pMessage.(*ethpb.SignedContributionAndProof)
+	assert.Equal(t, true, ok)
+	pMessage = GossipTopicMappings(BlsToExecutionChangeSubnetTopicFormat, eip7594ForkEpoch)
+	_, ok = pMessage.(*ethpb.SignedBLSToExecutionChange)
+	assert.Equal(t, true, ok)
+	// Note: BlobSidecar removal from EIP-7594 fork.
+	pMessage = GossipTopicMappings(DataColumnSubnetTopicFormat, eip7594ForkEpoch)
+	_, ok = pMessage.(*ethpb.DataColumnSidecar)
 	assert.Equal(t, true, ok)
 }

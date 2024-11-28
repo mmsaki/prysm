@@ -29,8 +29,8 @@ const (
 	mainnetDenebForkEpoch = 269568 // March 13, 2024, 13:55:35 UTC
 	// Electra Fork Epoch for mainnet config
 	mainnetElectraForkEpoch = math.MaxUint64 // Far future / to be defined
-	// EIP-7954 Fork Epoch for mainnet config
-	mainnetEIP7954ForkEpoch = math.MaxUint64 // Far future / to be defined
+	// EIP-7594 Fork Epoch for mainnet config
+	mainnetEIP7594ForkEpoch = math.MaxUint64 // Far future / to be defined
 )
 
 var mainnetNetworkConfig = &NetworkConfig{
@@ -220,7 +220,7 @@ var mainnetBeaconConfig = &BeaconChainConfig{
 	ElectraForkVersion:   []byte{5, 0, 0, 0},
 	ElectraForkEpoch:     mainnetElectraForkEpoch,
 	Eip7594ForkVersion:   []byte{6, 0, 0, 0},
-	Eip7594ForkEpoch:     mainnetEIP7954ForkEpoch,
+	Eip7594ForkEpoch:     mainnetEIP7594ForkEpoch,
 
 	// New values introduced in Altair hard fork 1.
 	// Participation flag indices.
