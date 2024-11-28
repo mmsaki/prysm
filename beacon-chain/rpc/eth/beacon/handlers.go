@@ -17,7 +17,6 @@ import (
 	"github.com/prysmaticlabs/prysm/v5/api/server/structs"
 	"github.com/prysmaticlabs/prysm/v5/beacon-chain/cache/depositsnapshot"
 	corehelpers "github.com/prysmaticlabs/prysm/v5/beacon-chain/core/helpers"
-	"github.com/prysmaticlabs/prysm/v5/beacon-chain/core/transition"
 	"github.com/prysmaticlabs/prysm/v5/beacon-chain/db/filters"
 	"github.com/prysmaticlabs/prysm/v5/beacon-chain/rpc/eth/helpers"
 	"github.com/prysmaticlabs/prysm/v5/beacon-chain/rpc/eth/shared"
@@ -1027,63 +1026,6 @@ func unmarshalStrict(data []byte, v interface{}) error {
 	dec := json.NewDecoder(bytes.NewReader(data))
 	dec.DisallowUnknownFields()
 	return dec.Decode(v)
-}
-
-func (s *Server) validateBroadcast(ctx context.Context, r *http.Request, blk *eth.GenericSignedBeaconBlock) error {
-	switch r.URL.Query().Get(broadcastValidationQueryParam) {
-	case broadcastValidationConsensus:
-		b, err := blocks.NewSignedBeaconBlock(blk.Block)
-		if err != nil {
-			return errors.Wrapf(err, "could not create signed beacon block")
-		}
-		if err = s.validateConsensus(ctx, b); err != nil {
-			return errors.Wrap(err, "consensus validation failed")
-		}
-	case broadcastValidationConsensusAndEquivocation:
-		b, err := blocks.NewSignedBeaconBlock(blk.Block)
-		if err != nil {
-			return errors.Wrapf(err, "could not create signed beacon block")
-		}
-		if err = s.validateConsensus(r.Context(), b); err != nil {
-			return errors.Wrap(err, "consensus validation failed")
-		}
-		if err = s.validateEquivocation(b.Block()); err != nil {
-			return errors.Wrap(err, "equivocation validation failed")
-		}
-	default:
-		return nil
-	}
-	return nil
-}
-
-func (s *Server) validateConsensus(ctx context.Context, blk interfaces.ReadOnlySignedBeaconBlock) error {
-	parentBlockRoot := blk.Block().ParentRoot()
-	parentBlock, err := s.Blocker.Block(ctx, parentBlockRoot[:])
-	if err != nil {
-		return errors.Wrap(err, "could not get parent block")
-	}
-
-	if err := blocks.BeaconBlockIsNil(blk); err != nil {
-		return errors.Wrap(err, "could not validate block")
-	}
-
-	parentStateRoot := parentBlock.Block().StateRoot()
-	parentState, err := s.Stater.State(ctx, parentStateRoot[:])
-	if err != nil {
-		return errors.Wrap(err, "could not get parent state")
-	}
-	_, err = transition.ExecuteStateTransition(ctx, parentState, blk)
-	if err != nil {
-		return errors.Wrap(err, "could not execute state transition")
-	}
-	return nil
-}
-
-func (s *Server) validateEquivocation(blk interfaces.ReadOnlyBeaconBlock) error {
-	if s.ForkchoiceFetcher.HighestReceivedBlockSlot() == blk.Slot() {
-		return errors.Wrapf(errEquivocatedBlock, "block for slot %d already exists in fork choice", blk.Slot())
-	}
-	return nil
 }
 
 // GetBlockRoot retrieves the root of a block.

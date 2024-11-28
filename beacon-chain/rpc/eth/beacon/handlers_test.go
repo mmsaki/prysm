@@ -19,10 +19,8 @@ import (
 	"github.com/prysmaticlabs/prysm/v5/api/server/structs"
 	chainMock "github.com/prysmaticlabs/prysm/v5/beacon-chain/blockchain/testing"
 	"github.com/prysmaticlabs/prysm/v5/beacon-chain/cache/depositsnapshot"
-	"github.com/prysmaticlabs/prysm/v5/beacon-chain/core/transition"
 	"github.com/prysmaticlabs/prysm/v5/beacon-chain/db"
 	dbTest "github.com/prysmaticlabs/prysm/v5/beacon-chain/db/testing"
-	doublylinkedtree "github.com/prysmaticlabs/prysm/v5/beacon-chain/forkchoice/doubly-linked-tree"
 	mockp2p "github.com/prysmaticlabs/prysm/v5/beacon-chain/p2p/testing"
 	rpctesting "github.com/prysmaticlabs/prysm/v5/beacon-chain/rpc/eth/shared/testing"
 	"github.com/prysmaticlabs/prysm/v5/beacon-chain/rpc/lookup"
@@ -2907,69 +2905,6 @@ func TestPublishBlindedBlockV2SSZ(t *testing.T) {
 		server.PublishBlindedBlockV2(writer, request)
 		assert.Equal(t, http.StatusServiceUnavailable, writer.Code)
 		assert.StringContains(t, "Beacon node is currently syncing and not serving request on that endpoint", writer.Body.String())
-	})
-}
-
-func TestValidateConsensus(t *testing.T) {
-	ctx := context.Background()
-
-	parentState, privs := util.DeterministicGenesisState(t, params.MinimalSpecConfig().MinGenesisActiveValidatorCount)
-	parentBlock, err := util.GenerateFullBlock(parentState, privs, util.DefaultBlockGenConfig(), parentState.Slot())
-	require.NoError(t, err)
-	parentSbb, err := blocks.NewSignedBeaconBlock(parentBlock)
-	require.NoError(t, err)
-	st, err := transition.ExecuteStateTransition(ctx, parentState, parentSbb)
-	require.NoError(t, err)
-	block, err := util.GenerateFullBlock(st, privs, util.DefaultBlockGenConfig(), st.Slot())
-	require.NoError(t, err)
-	sbb, err := blocks.NewSignedBeaconBlock(block)
-	require.NoError(t, err)
-	parentRoot, err := parentSbb.Block().HashTreeRoot()
-	require.NoError(t, err)
-	server := &Server{
-		Blocker: &testutil.MockBlocker{RootBlockMap: map[[32]byte]interfaces.ReadOnlySignedBeaconBlock{parentRoot: parentSbb}},
-		Stater:  &testutil.MockStater{StatesByRoot: map[[32]byte]state.BeaconState{bytesutil.ToBytes32(parentBlock.Block.StateRoot): parentState}},
-	}
-
-	require.NoError(t, server.validateConsensus(ctx, sbb))
-}
-
-func TestValidateEquivocation(t *testing.T) {
-	t.Run("ok", func(t *testing.T) {
-		st, err := util.NewBeaconState()
-		require.NoError(t, err)
-		require.NoError(t, st.SetSlot(10))
-		blk, err := blocks.NewSignedBeaconBlock(util.NewBeaconBlock())
-		require.NoError(t, err)
-		roblock, err := blocks.NewROBlockWithRoot(blk, bytesutil.ToBytes32([]byte("root")))
-		require.NoError(t, err)
-		fc := doublylinkedtree.New()
-		require.NoError(t, fc.InsertNode(context.Background(), st, roblock))
-		server := &Server{
-			ForkchoiceFetcher: &chainMock.ChainService{ForkChoiceStore: fc},
-		}
-		blk.SetSlot(st.Slot() + 1)
-
-		require.NoError(t, server.validateEquivocation(blk.Block()))
-	})
-	t.Run("block already exists", func(t *testing.T) {
-		st, err := util.NewBeaconState()
-		require.NoError(t, err)
-		require.NoError(t, st.SetSlot(10))
-		blk, err := blocks.NewSignedBeaconBlock(util.NewBeaconBlock())
-		require.NoError(t, err)
-		blk.SetSlot(st.Slot())
-		roblock, err := blocks.NewROBlockWithRoot(blk, bytesutil.ToBytes32([]byte("root")))
-		require.NoError(t, err)
-
-		fc := doublylinkedtree.New()
-		require.NoError(t, fc.InsertNode(context.Background(), st, roblock))
-		server := &Server{
-			ForkchoiceFetcher: &chainMock.ChainService{ForkChoiceStore: fc},
-		}
-		err = server.validateEquivocation(blk.Block())
-		assert.ErrorContains(t, "already exists", err)
-		require.ErrorIs(t, err, errEquivocatedBlock)
 	})
 }
 
