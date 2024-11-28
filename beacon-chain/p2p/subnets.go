@@ -26,12 +26,14 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-var attestationSubnetCount = params.BeaconConfig().AttestationSubnetCount
-var syncCommsSubnetCount = params.BeaconConfig().SyncCommitteeSubnetCount
+var (
+	attestationSubnetCount = params.BeaconConfig().AttestationSubnetCount
+	syncCommsSubnetCount   = params.BeaconConfig().SyncCommitteeSubnetCount
 
-var attSubnetEnrKey = params.BeaconNetworkConfig().AttSubnetKey
-var syncCommsSubnetEnrKey = params.BeaconNetworkConfig().SyncCommsSubnetKey
-var custodySubnetCountEnrKey = params.BeaconNetworkConfig().CustodySubnetCountKey
+	attSubnetEnrKey          = params.BeaconNetworkConfig().AttSubnetKey
+	syncCommsSubnetEnrKey    = params.BeaconNetworkConfig().SyncCommsSubnetKey
+	custodySubnetCountEnrKey = params.BeaconNetworkConfig().CustodySubnetCountKey
+)
 
 // The value used with the subnet, in order
 // to create an appropriate key to retrieve

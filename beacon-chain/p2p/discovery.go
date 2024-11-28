@@ -15,8 +15,6 @@ import (
 	ma "github.com/multiformats/go-multiaddr"
 	"github.com/pkg/errors"
 	"github.com/prysmaticlabs/go-bitfield"
-	"github.com/sirupsen/logrus"
-
 	"github.com/prysmaticlabs/prysm/v5/beacon-chain/cache"
 	"github.com/prysmaticlabs/prysm/v5/beacon-chain/core/peerdas"
 	"github.com/prysmaticlabs/prysm/v5/cmd/beacon-chain/flags"
@@ -25,6 +23,7 @@ import (
 	ecdsaprysm "github.com/prysmaticlabs/prysm/v5/crypto/ecdsa"
 	"github.com/prysmaticlabs/prysm/v5/runtime/version"
 	"github.com/prysmaticlabs/prysm/v5/time/slots"
+	"github.com/sirupsen/logrus"
 )
 
 type ListenerRebooter interface {
@@ -139,8 +138,7 @@ func (l *listenerWrapper) RebootListener() error {
 }
 
 // RefreshPersistentSubnets checks that we are tracking our local persistent subnets for a variety of gossip topics.
-// This routine checks for our attestation, sync committee and data column subnets and updates them if they have
-// been rotated.
+// This routine verifies and updates our attestation and sync committee subnets if they have been rotated.
 func (s *Service) RefreshPersistentSubnets() {
 	// Return early if discv5 service isn't running.
 	if s.dv5Listener == nil || !s.isInitialized() {

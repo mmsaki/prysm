@@ -754,24 +754,38 @@ func (s *Service) subscribeDynamicWithColumnSubnets(
 	handle subHandler,
 	digest [4]byte,
 ) {
-	genRoot := s.cfg.clock.GenesisValidatorsRoot()
-	_, e, err := forks.RetrieveForkDataFromDigest(digest, genRoot[:])
+	genesisValidatorsRoot := s.cfg.clock.GenesisValidatorsRoot()
+	_, epoch, err := forks.RetrieveForkDataFromDigest(digest, genesisValidatorsRoot[:])
 	if err != nil {
 		panic(err)
 	}
-	base := p2p.GossipTopicMappings(topicFormat, e)
+
+	// Retrieve the base protobuf message.
+	base := p2p.GossipTopicMappings(topicFormat, epoch)
 	if base == nil {
 		panic(fmt.Sprintf("%s is not mapped to any message in GossipTopicMappings", topicFormat))
 	}
+
 	subscriptions := make(map[uint64]*pubsub.Subscription, params.BeaconConfig().DataColumnSidecarSubnetCount)
-	genesis := s.cfg.clock.GenesisTime()
-	ticker := slots.NewSlotTicker(genesis, params.BeaconConfig().SecondsPerSlot)
+
+	// Retrieve the genesis time.
+	genesisTime := s.cfg.clock.GenesisTime()
+
+	// Define a ticker ticking every slot.
+	secondsPerSlot := params.BeaconConfig().SecondsPerSlot
+	ticker := slots.NewSlotTicker(genesisTime, secondsPerSlot)
+
+	// Retrieve the current slot.
+	currentSlot := s.cfg.clock.CurrentSlot()
 
 	wantedSubs := s.retrieveActiveColumnSubnets()
 	for _, idx := range wantedSubs {
 		s.subscribeWithBase(s.addDigestAndIndexToTopic(topicFormat, digest, idx), validate, handle)
 	}
 	go func() {
+		// Subscribe to the sync subnets.
+		s.subscribeToSyncSubnets(topicFormat, digest, genesisValidatorsRoot, genesisTime, subscriptions, currentSlot, validate, handle)
+
 		for {
 			select {
 			case <-s.ctx.Done():
@@ -781,7 +795,7 @@ func (s *Service) subscribeDynamicWithColumnSubnets(
 				if s.chainStarted.IsSet() && s.cfg.initialSync.Syncing() {
 					continue
 				}
-				valid, err := isDigestValid(digest, genesis, genRoot)
+				valid, err := isDigestValid(digest, genesisTime, genesisValidatorsRoot)
 				if err != nil {
 					log.Error(err)
 					continue
