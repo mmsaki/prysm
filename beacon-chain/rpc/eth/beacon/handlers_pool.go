@@ -763,8 +763,8 @@ func (s *Server) GetAttesterSlashingsV2(w http.ResponseWriter, r *http.Request) 
 			continue
 		}
 		attStructs = append(attStructs, attStruct)
-		}
 	}
+
 	attBytes, err := json.Marshal(attStructs)
 	if err != nil {
 		httputil.HandleError(w, fmt.Sprintf("Failed to marshal slashing: %v", err), http.StatusInternalServerError)
