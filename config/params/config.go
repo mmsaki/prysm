@@ -282,8 +282,9 @@ type BeaconChainConfig struct {
 	NodeIdBits                      uint64          `yaml:"NODE_ID_BITS" spec:"true"`                       // NodeIdBits defines the bit length of a node id.
 
 	// Blobs Values
-	MaxBlobsPerBlock        uint64 `yaml:"MAX_BLOBS_PER_BLOCK" spec:"true"`         // MaxBlobsPerBlock defines the max blobs could exist in a block.
-	MaxBlobsPerBlockElectra uint64 `yaml:"MAX_BLOBS_PER_BLOCK_ELECTRA" spec:"true"` // MaxBlobsPerBlockElectra defines the max blobs could exist in a block post Electra hard fork.
+	MaxBlobsPerBlock           uint64 `yaml:"MAX_BLOBS_PER_BLOCK" spec:"true"`            // MaxBlobsPerBlock defines the max blobs could exist in a block.
+	MaxBlobsPerBlockElectra    uint64 `yaml:"MAX_BLOBS_PER_BLOCK_ELECTRA" spec:"true"`    // MaxBlobsPerBlockElectra defines the max blobs could exist in a block post Electra hard fork.
+	TargetBlobsPerBlockElectra uint64 `yaml:"TARGET_BLOBS_PER_BLOCK_ELECTRA" spec:"true"` // TargetBlobsPerBlockElectra defines the target number of blobs per block post Electra hard fork.
 }
 
 // InitializeForkSchedule initializes the schedules forks baked into the config.
@@ -365,7 +366,7 @@ func (b *BeaconChainConfig) MaximumGossipClockDisparityDuration() time.Duration 
 // accounting for changes introduced by the Electra fork.
 func (b *BeaconChainConfig) TargetBlobCount(slot primitives.Slot) uint64 {
 	if primitives.Epoch(slot.DivSlot(32)) >= b.ElectraForkEpoch {
-		return b.MaxBlobsPerBlockElectra / 2
+		return b.TargetBlobsPerBlockElectra
 	}
 	return b.MaxBlobsPerBlock / 2
 }
