@@ -27,9 +27,12 @@ type LightClientBootstrap interface {
 	ssz.Marshaler
 	Version() int
 	Header() LightClientHeader
+	SetHeader(header LightClientHeader) error
 	CurrentSyncCommittee() *pb.SyncCommittee
+	SetCurrentSyncCommittee(sc *pb.SyncCommittee) error
 	CurrentSyncCommitteeBranch() (LightClientSyncCommitteeBranch, error)
 	CurrentSyncCommitteeBranchElectra() (LightClientSyncCommitteeBranchElectra, error)
+	SetCurrentSyncCommitteeBranch(branch [][]byte) error
 }
 
 type LightClientUpdate interface {

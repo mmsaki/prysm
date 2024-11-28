@@ -5,12 +5,11 @@ import (
 	"fmt"
 	"time"
 
-	lightclient "github.com/prysmaticlabs/prysm/v5/beacon-chain/core/light-client"
-
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/pkg/errors"
 	"github.com/prysmaticlabs/prysm/v5/beacon-chain/core/feed"
 	statefeed "github.com/prysmaticlabs/prysm/v5/beacon-chain/core/feed/state"
+	lightclient "github.com/prysmaticlabs/prysm/v5/beacon-chain/core/light-client"
 	"github.com/prysmaticlabs/prysm/v5/beacon-chain/core/transition"
 	doublylinkedtree "github.com/prysmaticlabs/prysm/v5/beacon-chain/forkchoice/doubly-linked-tree"
 	forkchoicetypes "github.com/prysmaticlabs/prysm/v5/beacon-chain/forkchoice/types"
@@ -126,6 +125,107 @@ func (s *Service) sendLightClientFeeds(cfg *postBlockProcessConfig) {
 
 		// LightClientFinalityUpdate needs super majority
 		s.tryPublishLightClientFinalityUpdate(cfg.ctx, cfg.roblock, finalized, cfg.postState)
+	}
+}
+
+// saveLightClientUpdate saves the light client update for this block
+// if it's better than the already saved one, when feature flag is enabled.
+func (s *Service) saveLightClientUpdate(cfg *postBlockProcessConfig) {
+	//if !features.Get().EnableLightClient {
+	//	return
+	//}
+
+	attestedRoot := cfg.roblock.Block().ParentRoot()
+	attestedBlock, err := s.getBlock(cfg.ctx, attestedRoot)
+	if err != nil {
+		log.WithError(err).Error("Saving light client update failed: Could not get attested block")
+		return
+	}
+	if attestedBlock == nil || attestedBlock.IsNil() {
+		log.Error("Saving light client update failed: Attested block is nil")
+		return
+	}
+	attestedState, err := s.cfg.StateGen.StateByRoot(cfg.ctx, attestedRoot)
+	if err != nil {
+		log.WithError(err).Error("Saving light client update failed: Could not get attested state")
+		return
+	}
+	if attestedState == nil || attestedState.IsNil() {
+		log.Error("Saving light client update failed: Attested state is nil")
+		return
+	}
+
+	finalizedRoot := attestedState.FinalizedCheckpoint().Root
+	finalizedBlock, err := s.getBlock(cfg.ctx, [32]byte(finalizedRoot))
+	if err != nil {
+		log.WithError(err).Error("Saving light client update failed: Could not get finalized block")
+		return
+	}
+
+	update, err := lightclient.NewLightClientUpdateFromBeaconState(
+		cfg.ctx,
+		s.CurrentSlot(),
+		cfg.postState,
+		cfg.roblock,
+		attestedState,
+		attestedBlock,
+		finalizedBlock,
+	)
+	if err != nil {
+		log.WithError(err).Error("Saving light client update failed: Could not create light client update")
+		return
+	}
+
+	period := slots.SyncCommitteePeriod(slots.ToEpoch(attestedState.Slot()))
+
+	oldUpdate, err := s.cfg.BeaconDB.LightClientUpdate(cfg.ctx, period)
+	if err != nil {
+		log.WithError(err).Error("Saving light client update failed: Could not get current light client update")
+		return
+	}
+
+	if oldUpdate == nil {
+		if err := s.cfg.BeaconDB.SaveLightClientUpdate(cfg.ctx, period, update); err != nil {
+			log.WithError(err).Error("Saving light client update failed: Could not save light client update")
+		} else {
+			log.WithField("period", period).Debug("Saving light client update: Saved new update")
+		}
+		return
+	}
+
+	isNewUpdateBetter, err := lightclient.IsBetterUpdate(update, oldUpdate)
+	if err != nil {
+		log.WithError(err).Error("Saving light client update failed: Could not compare light client updates")
+		return
+	}
+
+	if isNewUpdateBetter {
+		if err := s.cfg.BeaconDB.SaveLightClientUpdate(cfg.ctx, period, update); err != nil {
+			log.WithError(err).Error("Saving light client update failed: Could not save light client update")
+		} else {
+			log.WithField("period", period).Debug("Saving light client update: Saved new update")
+		}
+	} else {
+		log.WithField("period", period).Debug("Saving light client update: New update is not better than the current one. Skipping save.")
+	}
+}
+
+// saveLightClientBootstrap saves a light client bootstrap for this block
+// when feature flag is enabled.
+func (s *Service) saveLightClientBootstrap(cfg *postBlockProcessConfig) {
+	//if !features.Get().EnableLightClient {
+	//	return
+	//}
+
+	blockRoot := cfg.roblock.Root()
+	bootstrap, err := lightclient.CreateLightClientBootstrap(cfg.ctx, s.CurrentSlot(), cfg.postState, cfg.roblock)
+	if err != nil {
+		log.WithError(err).Error("Saving light client bootstrap failed: Could not create light client bootstrap")
+		return
+	}
+	err = s.cfg.BeaconDB.SaveLightClientBootstrap(cfg.ctx, blockRoot[:], bootstrap)
+	if err != nil {
+		log.WithError(err).Error("Saving light client bootstrap failed: Could not save light client bootstrap in DB")
 	}
 }
 

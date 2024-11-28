@@ -171,9 +171,59 @@ func lightClientHeaderToJSON(header interfaces.LightClientHeader) (json.RawMessa
 			Execution:       execution,
 			ExecutionBranch: branchToJSON(executionBranch[:]),
 		}
+	case version.Electra:
+		exInterface, err := header.Execution()
+		if err != nil {
+			return nil, err
+		}
+		ex, ok := exInterface.Proto().(*enginev1.ExecutionPayloadHeaderElectra)
+		if !ok {
+			return nil, fmt.Errorf("execution data is not %T", &enginev1.ExecutionPayloadHeaderElectra{})
+		}
+		execution, err := ExecutionPayloadHeaderElectraFromConsensus(ex)
+		if err != nil {
+			return nil, err
+		}
+		executionBranch, err := header.ExecutionBranch()
+		if err != nil {
+			return nil, err
+		}
+		result = &LightClientHeaderDeneb{
+			Beacon:          BeaconBlockHeaderFromConsensus(header.Beacon()),
+			Execution:       execution,
+			ExecutionBranch: branchToJSON(executionBranch[:]),
+		}
 	default:
 		return nil, fmt.Errorf("unsupported header version %s", version.String(v))
 	}
 
 	return json.Marshal(result)
+}
+
+func LightClientBootstrapFromConsensus(bootstrap interfaces.LightClientBootstrap) (*LightClientBootstrap, error) {
+	header, err := lightClientHeaderToJSON(bootstrap.Header())
+	if err != nil {
+		return nil, errors.Wrap(err, "could not marshal light client header")
+	}
+
+	var scBranch [][32]byte
+	if bootstrap.Version() >= version.Electra {
+		b, err := bootstrap.CurrentSyncCommitteeBranchElectra()
+		if err != nil {
+			return nil, err
+		}
+		scBranch = b[:]
+	} else {
+		b, err := bootstrap.CurrentSyncCommitteeBranch()
+		if err != nil {
+			return nil, err
+		}
+		scBranch = b[:]
+	}
+
+	return &LightClientBootstrap{
+		Header:                     header,
+		CurrentSyncCommittee:       SyncCommitteeFromConsensus(bootstrap.CurrentSyncCommittee()),
+		CurrentSyncCommitteeBranch: branchToJSON(scBranch),
+	}, nil
 }
