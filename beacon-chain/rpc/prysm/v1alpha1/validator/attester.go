@@ -89,7 +89,7 @@ func (vs *Server) ProposeAttestationElectra(ctx context.Context, att *ethpb.Sing
 
 	go func() {
 		ctx = trace.NewContext(context.Background(), trace.FromContext(ctx))
-		if err := vs.AttPool.SaveUnaggregatedAttestation(att.ToAttestation(committee)); err != nil {
+		if err := vs.AttPool.SaveUnaggregatedAttestation(att.ToAttestationElectra(committee)); err != nil {
 			log.WithError(err).Error("Could not save unaggregated attestation")
 			return
 		}
@@ -168,7 +168,7 @@ func (vs *Server) proposeAtt(
 		if !ok {
 			return nil, status.Errorf(codes.Internal, "Attestation has wrong type (expected %T, got %T)", &ethpb.SingleAttestation{}, att)
 		}
-		att = singleAtt.ToAttestation(committee)
+		att = singleAtt.ToAttestationElectra(committee)
 	}
 
 	// Broadcast the unaggregated attestation on a feed to notify other services in the beacon node

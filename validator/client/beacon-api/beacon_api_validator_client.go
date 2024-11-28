@@ -155,7 +155,9 @@ func (c *beaconApiValidatorClient) ProposeAttestation(ctx context.Context, in *e
 }
 
 func (c *beaconApiValidatorClient) ProposeAttestationElectra(ctx context.Context, in *ethpb.SingleAttestation) (*ethpb.AttestResponse, error) {
-	return nil, errors.New("ProposeAttestationElectra is not implemented")
+	return wrapInMetrics[*ethpb.AttestResponse]("ProposeAttestationElectra", func() (*ethpb.AttestResponse, error) {
+		return c.proposeAttestationElectra(ctx, in)
+	})
 }
 
 func (c *beaconApiValidatorClient) ProposeBeaconBlock(ctx context.Context, in *ethpb.GenericSignedBeaconBlock) (*ethpb.ProposeResponse, error) {

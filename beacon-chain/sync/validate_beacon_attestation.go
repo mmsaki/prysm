@@ -92,7 +92,7 @@ func (s *Service) validateCommitteeIndexBeaconAttestation(ctx context.Context, p
 		if !ok {
 			return pubsub.ValidationIgnore, fmt.Errorf("attestation has wrong type (expected %T, got %T)", &eth.SingleAttestation{}, att)
 		}
-		att = singleAtt.ToAttestation(committee)
+		att = singleAtt.ToAttestationElectra(committee)
 	}
 
 	// Broadcast the unaggregated attestation on a feed to notify other services in the beacon node
