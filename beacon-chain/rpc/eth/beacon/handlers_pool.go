@@ -347,13 +347,12 @@ func (s *Server) handleAttestationsElectra(
 			continue
 		}
 
-		electraAtt := att.ToAttestationElectra(committee)
 		if corehelpers.IsAggregated(att) {
-			if err = s.AttestationsPool.SaveAggregatedAttestation(electraAtt); err != nil {
+			if err = s.AttestationsPool.SaveAggregatedAttestation(att.ToAttestationElectra(committee)); err != nil {
 				log.WithError(err).Error("could not save aggregated attestation")
 			}
 		} else {
-			if err = s.AttestationsPool.SaveUnaggregatedAttestation(electraAtt); err != nil {
+			if err = s.AttestationsPool.SaveUnaggregatedAttestation(att.ToAttestationElectra(committee)); err != nil {
 				log.WithError(err).Error("could not save unaggregated attestation")
 			}
 		}
