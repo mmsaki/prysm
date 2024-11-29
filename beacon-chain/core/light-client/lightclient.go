@@ -672,7 +672,7 @@ func IsBetterUpdate(newUpdate, oldUpdate interfaces.LightClientUpdate) (bool, er
 	return newUpdate.SignatureSlot() < oldUpdate.SignatureSlot(), nil
 }
 
-func CreateLightClientBootstrap(
+func NewLightClientBootstrapFromBeaconState(
 	ctx context.Context,
 	currentSlot primitives.Slot,
 	state state.BeaconState,
@@ -709,7 +709,7 @@ func CreateLightClientBootstrap(
 		return nil, fmt.Errorf("latest block header root %#x not equal to block root %#x", latestBlockHeaderRoot, beaconBlockRoot)
 	}
 
-	bootstrap, err := CreateDefaultLightClientBootstrap(currentSlot)
+	bootstrap, err := createDefaultLightClientBootstrap(currentSlot)
 	if err != nil {
 		return nil, errors.Wrap(err, "could not create default light client bootstrap")
 	}
@@ -747,7 +747,7 @@ func CreateLightClientBootstrap(
 	return bootstrap, nil
 }
 
-func CreateDefaultLightClientBootstrap(currentSlot primitives.Slot) (interfaces.LightClientBootstrap, error) {
+func createDefaultLightClientBootstrap(currentSlot primitives.Slot) (interfaces.LightClientBootstrap, error) {
 	currentEpoch := slots.ToEpoch(currentSlot)
 	syncCommitteeSize := params.BeaconConfig().SyncCommitteeSize
 	pubKeys := make([][]byte, syncCommitteeSize)

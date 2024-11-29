@@ -61,7 +61,7 @@ func (s *Server) GetLightClientBootstrap(w http.ResponseWriter, req *http.Reques
 		}
 		httputil.WriteSsz(w, ssz, "light_client_bootstrap.ssz")
 	} else {
-		data, err := structs.LightClientBootsrapFromConsensus(bootstrap)
+		data, err := structs.LightClientBootstrapFromConsensus(bootstrap)
 		if err != nil {
 			httputil.HandleError(w, "could not marshal bootstrap to JSON: "+err.Error(), http.StatusInternalServerError)
 			return

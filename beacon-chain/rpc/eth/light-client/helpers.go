@@ -17,7 +17,7 @@ func createLightClientBootstrap(
 	state state.BeaconState,
 	block interfaces.ReadOnlySignedBeaconBlock,
 ) (*structs.LightClientBootstrap, error) {
-	bootstrap, err := lightclient.CreateLightClientBootstrap(ctx, currentSlot, state, block)
+	bootstrap, err := lightclient.NewLightClientBootstrapFromBeaconState(ctx, currentSlot, state, block)
 	if err != nil {
 		return nil, err
 	}

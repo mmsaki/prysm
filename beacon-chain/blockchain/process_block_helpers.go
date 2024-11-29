@@ -211,7 +211,7 @@ func (s *Service) saveLightClientBootstrap(cfg *postBlockProcessConfig) {
 	//}
 
 	blockRoot := cfg.roblock.Root()
-	bootstrap, err := lightclient.CreateLightClientBootstrap(cfg.ctx, s.CurrentSlot(), cfg.postState, cfg.roblock)
+	bootstrap, err := lightclient.NewLightClientBootstrapFromBeaconState(cfg.ctx, s.CurrentSlot(), cfg.postState, cfg.roblock)
 	if err != nil {
 		log.WithError(err).Error("Saving light client bootstrap failed: Could not create light client bootstrap")
 		return
@@ -220,107 +220,6 @@ func (s *Service) saveLightClientBootstrap(cfg *postBlockProcessConfig) {
 	if err != nil {
 		log.WithError(err).Error("Saving light client bootstrap failed: Could not save light client bootstrap in DB")
 	}
-}
-
-func (s *Service) tryPublishLightClientFinalityUpdate(
-	ctx context.Context,
-	signed interfaces.ReadOnlySignedBeaconBlock,
-	finalized *forkchoicetypes.Checkpoint,
-	postState state.BeaconState,
-) {
-	if finalized.Epoch <= s.lastPublishedLightClientEpoch {
-		return
-	}
-
-	config := params.BeaconConfig()
-	if finalized.Epoch < config.AltairForkEpoch {
-		return
-	}
-	if err := s.saveLightClientUpdate(cfg); err != nil {
-		log.WithError(err).Error("Failed to save light client update")
-	}
-}
-
-// saveLightClientUpdate saves the light client update for a block
-// if it's better than the already saved one.
-func (s *Service) saveLightClientUpdate(cfg *postBlockProcessConfig) error {
-	log.Info("LC: saving light client update")
-
-	attestedRoot := cfg.roblock.Block().ParentRoot()
-	attestedBlock, err := s.getBlock(cfg.ctx, attestedRoot)
-	if err != nil {
-		return errors.Wrap(err, "could not get attested block")
-	}
-	if attestedBlock == nil || attestedBlock.IsNil() {
-		return errors.New("attested block is nil")
-	}
-	attestedState, err := s.cfg.StateGen.StateByRoot(cfg.ctx, attestedRoot)
-	if err != nil {
-		return errors.Wrap(err, "could not get attested state")
-	}
-	if attestedState == nil || attestedState.IsNil() {
-		return errors.New("attested state is nil")
-	}
-	finalizedRoot := cfg.postState.FinalizedCheckpoint().Root
-	finalizedBlock, err := s.getBlock(cfg.ctx, [32]byte(finalizedRoot))
-	if err != nil {
-		return errors.Wrap(err, "could not get finalized block")
-	}
-
-	update, err := lightclient.NewLightClientUpdateFromBeaconState(
-		cfg.ctx,
-		s.CurrentSlot(),
-		cfg.postState,
-		cfg.roblock,
-		attestedState,
-		attestedBlock,
-		finalizedBlock,
-	)
-	if err != nil {
-		return errors.Wrap(err, "could not create light client update")
-	}
-
-	period := uint64(attestedState.Slot()) / (uint64(params.BeaconConfig().SlotsPerEpoch) * uint64(params.BeaconConfig().EpochsPerSyncCommitteePeriod))
-
-	oldUpdate, err := s.cfg.BeaconDB.LightClientUpdate(cfg.ctx, period)
-	if err != nil {
-		return errors.Wrap(err, "could not get current light client update")
-	}
-	if oldUpdate == nil {
-		if err = s.cfg.BeaconDB.SaveLightClientUpdate(cfg.ctx, period, update); err != nil {
-			return errors.Wrap(err, "could not save light client update")
-		}
-	} else {
-		isNewUpdateBetter, err := lightclient.IsBetterUpdate(update, oldUpdate)
-		if err != nil {
-			return errors.Wrap(err, "could not compare light client updates")
-		}
-		if isNewUpdateBetter {
-			if err = s.cfg.BeaconDB.SaveLightClientUpdate(cfg.ctx, period, update); err != nil {
-				return errors.Wrap(err, "could not save light client update")
-			}
-			log.Info("LC: saved light client update")
-		} else {
-			log.Info("LC: skipped saving light client update")
-		}
-	}
-
-	return nil
-}
-
-// saveLightClientBootstrap saves a light client bootstrap for a block.
-func (s *Service) saveLightClientBootstrap(cfg *postBlockProcessConfig) error {
-	log.Info("LC: saving light client bootstrap")
-	blockRoot := cfg.roblock.Root()
-	bootstrap, err := lightclient.CreateLightClientBootstrap(cfg.ctx, s.CurrentSlot(), cfg.postState, cfg.roblock)
-	if err != nil {
-		return errors.Wrap(err, "could not create light client bootstrap")
-	}
-	if err = s.cfg.BeaconDB.SaveLightClientBootstrap(cfg.ctx, blockRoot[:], bootstrap); err != nil {
-		return errors.Wrap(err, "could not save light client bootstrap")
-	}
-	log.Infof("LC: saved light client bootstrap for root %#x", blockRoot)
-	return nil
 }
 
 func (s *Service) processLightClientFinalityUpdate(
@@ -383,7 +282,6 @@ func (s *Service) processLightClientFinalityUpdate(
 		}
 	}
 
-	log.Info("LC: storing new finality update post-block")
 	s.lcStore.LastLCFinalityUpdate = update
 
 	if err = s.cfg.P2p.BroadcastLightClientFinalityUpdate(ctx, update); err != nil {
@@ -430,7 +328,6 @@ func (s *Service) processLightClientOptimisticUpdate(ctx context.Context, signed
 		}
 	}
 
-	log.Info("LC: storing new optimistic update post-block")
 	s.lcStore.LastLCOptimisticUpdate = update
 
 	if err = s.cfg.P2p.BroadcastLightClientOptimisticUpdate(ctx, update); err != nil {
