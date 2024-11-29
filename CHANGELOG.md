@@ -29,6 +29,7 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
 - PeerDAS: Added proto for `DataColumnIdentifier`, `DataColumnSidecar`, `DataColumnSidecarsByRangeRequest` and `MetadataV2`.
 - Better attestation packing for Electra. [PR](https://github.com/prysmaticlabs/prysm/pull/14534)
 - P2P: Add logs when a peer is (dis)connected. Add the reason of the disconnection when we initiate it.
+- Added a Prometheus error counter metric for HTTP requests to track beacon node requests.
 
 ### Changed
 
@@ -65,6 +66,8 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
 - Updated light client consensus types. [PR](https://github.com/prysmaticlabs/prysm/pull/14652)
 - Fixed pending deposits processing on Electra.
 - Modified `ListAttestationsV2`, `GetAttesterSlashingsV2` and `GetAggregateAttestationV2` endpoints to use slot to determine fork version.
+- Improvements to HTTP response handling. [pr](https://github.com/prysmaticlabs/prysm/pull/14673)
+- Updated `Blobs` endpoint to return additional metadata fields.
 - Add more efficient method of computing the cache key for unaggregated attestations.
 
 ### Deprecated
@@ -97,6 +100,7 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
 - corrects nil check on some interface attestation types
 - temporary solution to handling electra attesation and attester_slashing events. [pr](14655)
 - Diverse log improvements and comment additions.
+- P2P: Avoid infinite loop when looking for peers in small networks.
 
 
 ### Security
