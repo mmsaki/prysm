@@ -3,7 +3,6 @@ package lookup
 import (
 	"context"
 	"fmt"
-	"math"
 	"strconv"
 	"strings"
 
@@ -470,26 +469,30 @@ func (p *BeaconDbBlocker) Blobs(ctx context.Context, id string, indices map[uint
 	// Get the slot of the block.
 	blockSlot := b.Block().Slot()
 
-	// Get the first peerDAS epoch.
-	eip7594ForkEpoch := params.BeaconConfig().Eip7594ForkEpoch
-
-	// Compute the first peerDAS slot.
-	peerDASStartSlot := primitives.Slot(math.MaxUint64)
-	if eip7594ForkEpoch != primitives.Epoch(math.MaxUint64) {
-		peerDASStartSlot, err = slots.EpochStart(eip7594ForkEpoch)
-		if err != nil {
-			return nil, &core.RpcError{Err: errors.Wrap(err, "could not calculate peerDAS start slot"), Reason: core.Internal}
-		}
-	}
-
-	// Is peerDAS enabled for this block?
-	isPeerDASEnabledForBlock := blockSlot >= peerDASStartSlot
-
+	// Create indices if needed.
 	if indices == nil {
 		indices = make(map[uint64]bool)
 	}
 
-	if !isPeerDASEnabledForBlock {
+	if params.PeerDASEnabled() {
+		// Get the first peerDAS epoch.
+		eip7594ForkEpoch := params.BeaconConfig().Eip7594ForkEpoch
+
+		// Calculate the slot at which peerDAS starts.
+		peerDASStartSlot, err := slots.EpochStart(eip7594ForkEpoch)
+		if err != nil {
+			return nil, &core.RpcError{Err: errors.Wrap(err, "could not calculate peerDAS start slot"), Reason: core.Internal}
+		}
+
+		// Is peerDAS active for this block?
+		isPeerDASActiveForBlock := blockSlot >= peerDASStartSlot
+
+		// If peerDAS is active for this block, then the database contains data columns.
+		if isPeerDASActiveForBlock {
+			return p.blobsFromStoredDataColumns(indices, root)
+		}
+
+		// Else, the database contains blobs.
 		return p.blobsFromStoredBlobs(indices, root)
 	}
 
