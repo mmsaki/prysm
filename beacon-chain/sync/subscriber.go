@@ -55,52 +55,30 @@ func (s *Service) noopValidator(_ context.Context, _ peer.ID, msg *pubsub.Messag
 
 // Register PubSub subscribers
 func (s *Service) registerSubscribers(epoch primitives.Epoch, digest [4]byte) {
-	s.subscribe(
-		p2p.BlockSubnetTopicFormat,
-		s.validateBeaconBlockPubSub,
-		s.beaconBlockSubscriber,
-		digest,
-	)
-	s.subscribe(
-		p2p.AggregateAndProofSubnetTopicFormat,
-		s.validateAggregateAndProof,
-		s.beaconAggregateProofSubscriber,
-		digest,
-	)
-	s.subscribe(
-		p2p.ExitSubnetTopicFormat,
-		s.validateVoluntaryExit,
-		s.voluntaryExitSubscriber,
-		digest,
-	)
-	s.subscribe(
-		p2p.ProposerSlashingSubnetTopicFormat,
-		s.validateProposerSlashing,
-		s.proposerSlashingSubscriber,
-		digest,
-	)
-	s.subscribe(
-		p2p.AttesterSlashingSubnetTopicFormat,
-		s.validateAttesterSlashing,
-		s.attesterSlashingSubscriber,
-		digest,
-	)
+	s.subscribe(p2p.BlockSubnetTopicFormat, s.validateBeaconBlockPubSub, s.beaconBlockSubscriber, digest)
+	s.subscribe(p2p.AggregateAndProofSubnetTopicFormat, s.validateAggregateAndProof, s.beaconAggregateProofSubscriber, digest)
+	s.subscribe(p2p.ExitSubnetTopicFormat, s.validateVoluntaryExit, s.voluntaryExitSubscriber, digest)
+	s.subscribe(p2p.ProposerSlashingSubnetTopicFormat, s.validateProposerSlashing, s.proposerSlashingSubscriber, digest)
+	s.subscribe(p2p.AttesterSlashingSubnetTopicFormat, s.validateAttesterSlashing, s.attesterSlashingSubscriber, digest)
+
 	if flags.Get().SubscribeToAllSubnets {
 		s.subscribeStaticWithSubnets(
 			p2p.AttestationSubnetTopicFormat,
-			s.validateCommitteeIndexBeaconAttestation,   /* validator */
-			s.committeeIndexBeaconAttestationSubscriber, /* message handler */
+			s.validateCommitteeIndexBeaconAttestation,
+			s.committeeIndexBeaconAttestationSubscriber,
 			digest,
+			"Attestation",
 			params.BeaconConfig().AttestationSubnetCount,
 		)
 	} else {
 		s.subscribeDynamicWithSubnets(
 			p2p.AttestationSubnetTopicFormat,
-			s.validateCommitteeIndexBeaconAttestation,   /* validator */
-			s.committeeIndexBeaconAttestationSubscriber, /* message handler */
+			s.validateCommitteeIndexBeaconAttestation,
+			s.committeeIndexBeaconAttestationSubscriber,
 			digest,
 		)
 	}
+
 	// Altair Fork Version
 	if epoch >= params.BeaconConfig().AltairForkEpoch {
 		s.subscribe(
@@ -109,12 +87,15 @@ func (s *Service) registerSubscribers(epoch primitives.Epoch, digest [4]byte) {
 			s.syncContributionAndProofSubscriber,
 			digest,
 		)
+
 		if flags.Get().SubscribeToAllSubnets {
-			s.subscribeStaticWithSyncSubnets(
+			s.subscribeStaticWithSubnets(
 				p2p.SyncCommitteeSubnetTopicFormat,
-				s.validateSyncCommitteeMessage,   /* validator */
-				s.syncCommitteeMessageSubscriber, /* message handler */
+				s.validateSyncCommitteeMessage,
+				s.syncCommitteeMessageSubscriber,
 				digest,
+				"Sync committee",
+				params.BeaconConfig().SyncCommitteeSubnetCount,
 			)
 		} else {
 			s.subscribeDynamicWithSyncSubnets(
@@ -143,6 +124,7 @@ func (s *Service) registerSubscribers(epoch primitives.Epoch, digest [4]byte) {
 			s.validateBlob,   /* validator */
 			s.blobSubscriber, /* message handler */
 			digest,
+			"Blob sidecar",
 			params.BeaconConfig().BlobsidecarSubnetCount,
 		)
 	}
@@ -326,23 +308,43 @@ func (s *Service) wrapAndReportValidation(topic string, v wrappedVal) (string, p
 
 // subscribe to a static subnet with the given topic and index. A given validator and subscription handler is
 // used to handle messages from the subnet. The base protobuf message is used to initialize new messages for decoding.
-func (s *Service) subscribeStaticWithSubnets(topic string, validator wrappedVal, handle subHandler, digest [4]byte, subnetCount uint64) {
-	genRoot := s.cfg.clock.GenesisValidatorsRoot()
-	_, e, err := forks.RetrieveForkDataFromDigest(digest, genRoot[:])
+func (s *Service) subscribeStaticWithSubnets(
+	topic string,
+	validator wrappedVal,
+	handle subHandler,
+	digest [4]byte,
+	humanDescription string,
+	subnetCount uint64,
+) {
+	// Retrieve the genesis validators root.
+	genesisValidatorsRoot := s.cfg.clock.GenesisValidatorsRoot()
+
+	// Retrieve the epoch of the fork corresponding to the digest.
+	_, epoch, err := forks.RetrieveForkDataFromDigest(digest, genesisValidatorsRoot[:])
 	if err != nil {
 		// Impossible condition as it would mean digest does not exist.
 		panic(err)
 	}
-	base := p2p.GossipTopicMappings(topic, e)
+
+	// Retrieve the base protobuf message.
+	base := p2p.GossipTopicMappings(topic, epoch)
 	if base == nil {
 		// Impossible condition as it would mean topic does not exist.
 		panic(fmt.Sprintf("%s is not mapped to any message in GossipTopicMappings", topic))
 	}
-	for i := uint64(0); i < subnetCount; i++ {
-		s.subscribeWithBase(s.addDigestAndIndexToTopic(topic, digest, i), validator, handle)
+
+	// Subscribe to all subnets.
+	for i := range subnetCount {
+		fullTopic := s.addDigestAndIndexToTopic(topic, digest, i)
+		s.subscribeWithBase(fullTopic, validator, handle)
 	}
-	genesis := s.cfg.clock.GenesisTime()
-	ticker := slots.NewSlotTicker(genesis, params.BeaconConfig().SecondsPerSlot)
+
+	// Define a ticker ticking every slot.
+	genesisTime := s.cfg.clock.GenesisTime()
+	secondsPerSlot := params.BeaconConfig().SecondsPerSlot
+	ticker := slots.NewSlotTicker(genesisTime, secondsPerSlot)
+
+	minimumPeersPerSubnet := flags.Get().MinimumPeersPerSubnet
 
 	go func() {
 		for {
@@ -350,35 +352,38 @@ func (s *Service) subscribeStaticWithSubnets(topic string, validator wrappedVal,
 			case <-s.ctx.Done():
 				ticker.Done()
 				return
+
 			case <-ticker.C():
 				if s.chainStarted.IsSet() && s.cfg.initialSync.Syncing() {
 					continue
 				}
-				valid, err := isDigestValid(digest, genesis, genRoot)
+
+				valid, err := isDigestValid(digest, genesisTime, genesisValidatorsRoot)
 				if err != nil {
 					log.Error(err)
 					continue
 				}
+
 				if !valid {
-					log.Warnf("Attestation subnets with digest %#x are no longer valid, unsubscribing from all of them.", digest)
+					message := fmt.Sprintf("%s subnets with this digest are no longer valid, unsubscribing from all of them.", humanDescription)
+					log.WithField("digest", fmt.Sprintf("%#x", digest)).Warning(message)
+
 					// Unsubscribes from all our current subnets.
-					for i := uint64(0); i < subnetCount; i++ {
+					for i := range subnetCount {
 						fullTopic := fmt.Sprintf(topic, digest, i) + s.cfg.p2p.Encoding().ProtocolSuffix()
 						s.unSubscribeFromTopic(fullTopic)
 					}
+
 					ticker.Done()
 					return
 				}
-				// Check every slot that there are enough peers
-				for i := uint64(0); i < subnetCount; i++ {
-					if !s.enoughPeersAreConnected(s.addDigestAndIndexToTopic(topic, digest, i)) {
-						_, err := s.cfg.p2p.FindPeersWithSubnet(
-							s.ctx,
-							s.addDigestAndIndexToTopic(topic, digest, i),
-							i,
-							flags.Get().MinimumPeersPerSubnet,
-						)
-						if err != nil {
+
+				// Check that all subnets have enough peers.
+				for i := range subnetCount {
+					fullTopic := s.addDigestAndIndexToTopic(topic, digest, i)
+
+					if !s.enoughPeersAreConnected(fullTopic) {
+						if _, err := s.cfg.p2p.FindPeersWithSubnet(s.ctx, fullTopic, i, minimumPeersPerSubnet); err != nil {
 							log.WithError(err).Debug("Could not search for peers")
 							return
 						}
@@ -499,69 +504,6 @@ func (s *Service) subscribeAggregatorSubnet(
 			log.WithError(err).Debug("Could not search for peers")
 		}
 	}
-}
-
-// subscribe to a static subnet with the given topic and index. A given validator and subscription handler is
-// used to handle messages from the subnet. The base protobuf message is used to initialize new messages for decoding.
-func (s *Service) subscribeStaticWithSyncSubnets(topic string, validator wrappedVal, handle subHandler, digest [4]byte) {
-	genRoot := s.cfg.clock.GenesisValidatorsRoot()
-	_, e, err := forks.RetrieveForkDataFromDigest(digest, genRoot[:])
-	if err != nil {
-		panic(err)
-	}
-	base := p2p.GossipTopicMappings(topic, e)
-	if base == nil {
-		panic(fmt.Sprintf("%s is not mapped to any message in GossipTopicMappings", topic))
-	}
-	for i := uint64(0); i < params.BeaconConfig().SyncCommitteeSubnetCount; i++ {
-		s.subscribeWithBase(s.addDigestAndIndexToTopic(topic, digest, i), validator, handle)
-	}
-	genesis := s.cfg.clock.GenesisTime()
-	ticker := slots.NewSlotTicker(genesis, params.BeaconConfig().SecondsPerSlot)
-
-	go func() {
-		for {
-			select {
-			case <-s.ctx.Done():
-				ticker.Done()
-				return
-			case <-ticker.C():
-				if s.chainStarted.IsSet() && s.cfg.initialSync.Syncing() {
-					continue
-				}
-				valid, err := isDigestValid(digest, genesis, genRoot)
-				if err != nil {
-					log.Error(err)
-					continue
-				}
-				if !valid {
-					log.Warnf("Sync subnets with digest %#x are no longer valid, unsubscribing from all of them.", digest)
-					// Unsubscribes from all our current subnets.
-					for i := uint64(0); i < params.BeaconConfig().SyncCommitteeSubnetCount; i++ {
-						fullTopic := fmt.Sprintf(topic, digest, i) + s.cfg.p2p.Encoding().ProtocolSuffix()
-						s.unSubscribeFromTopic(fullTopic)
-					}
-					ticker.Done()
-					return
-				}
-				// Check every slot that there are enough peers
-				for i := uint64(0); i < params.BeaconConfig().SyncCommitteeSubnetCount; i++ {
-					if !s.enoughPeersAreConnected(s.addDigestAndIndexToTopic(topic, digest, i)) {
-						_, err := s.cfg.p2p.FindPeersWithSubnet(
-							s.ctx,
-							s.addDigestAndIndexToTopic(topic, digest, i),
-							i,
-							flags.Get().MinimumPeersPerSubnet,
-						)
-						if err != nil {
-							log.WithError(err).Debug("Could not search for peers")
-							return
-						}
-					}
-				}
-			}
-		}
-	}()
 }
 
 // subscribeToSyncSubnets subscribes to needed sync subnets, unsubscribe from unneeded ones and search for more peers if needed.
