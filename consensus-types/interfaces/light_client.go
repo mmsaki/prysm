@@ -27,9 +27,12 @@ type LightClientBootstrap interface {
 	ssz.Marshaler
 	Version() int
 	Header() LightClientHeader
+	SetHeader(header LightClientHeader) error
 	CurrentSyncCommittee() *pb.SyncCommittee
+	SetCurrentSyncCommittee(sc *pb.SyncCommittee) error
 	CurrentSyncCommitteeBranch() (LightClientSyncCommitteeBranch, error)
 	CurrentSyncCommitteeBranchElectra() (LightClientSyncCommitteeBranchElectra, error)
+	SetCurrentSyncCommitteeBranch(branch [][]byte) error
 }
 
 type LightClientUpdate interface {
@@ -43,6 +46,7 @@ type LightClientUpdate interface {
 	NextSyncCommitteeBranch() (LightClientSyncCommitteeBranch, error)
 	SetNextSyncCommitteeBranch(branch [][]byte) error
 	NextSyncCommitteeBranchElectra() (LightClientSyncCommitteeBranchElectra, error)
+	SetNextSyncCommitteeBranchElectra(branch [][]byte) error
 	FinalizedHeader() LightClientHeader
 	SetFinalizedHeader(header LightClientHeader) error
 	FinalityBranch() (LightClientFinalityBranch, error)
@@ -56,6 +60,7 @@ type LightClientUpdate interface {
 
 type LightClientFinalityUpdate interface {
 	ssz.Marshaler
+	ssz.Unmarshaler
 	Proto() proto.Message
 	Version() int
 	AttestedHeader() LightClientHeader
@@ -68,6 +73,7 @@ type LightClientFinalityUpdate interface {
 
 type LightClientOptimisticUpdate interface {
 	ssz.Marshaler
+	ssz.Unmarshaler
 	Proto() proto.Message
 	Version() int
 	AttestedHeader() LightClientHeader
