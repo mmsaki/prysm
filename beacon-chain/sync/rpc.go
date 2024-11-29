@@ -97,6 +97,22 @@ func (s *Service) registerRPCHandlersAltair() {
 		p2p.RPCMetaDataTopicV2,
 		s.metaDataHandler,
 	)
+	s.registerRPC(
+		p2p.RPCLightClientBootstrapTopicV1,
+		s.lightClientBootstrapRPCHandler,
+	)
+	s.registerRPC(
+		p2p.RPCLightClientUpdatesByRangeTopicV1,
+		s.lightClientUpdatesByRangeRPCHandler,
+	)
+	s.registerRPC(
+		p2p.RPCLightClientFinalityUpdateTopicV1,
+		s.lightClientFinalityUpdateRPCHandler,
+	)
+	s.registerRPC(
+		p2p.RPCLightClientOptimisticUpdateTopicV1,
+		s.lightClientOptimisticUpdateRPCHandler,
+	)
 }
 
 func (s *Service) registerRPCHandlersDeneb() {
@@ -195,9 +211,12 @@ func (s *Service) registerRPC(baseTopic string, handle rpcHandler) {
 		// Increment message received counter.
 		messageReceivedCounter.WithLabelValues(topic).Inc()
 
-		// since metadata requests do not have any data in the payload, we
+		// since some requests do not have any data in the payload, we
 		// do not decode anything.
-		if baseTopic == p2p.RPCMetaDataTopicV1 || baseTopic == p2p.RPCMetaDataTopicV2 {
+		if baseTopic == p2p.RPCMetaDataTopicV1 ||
+			baseTopic == p2p.RPCMetaDataTopicV2 ||
+			baseTopic == p2p.RPCLightClientFinalityUpdateTopicV1 ||
+			baseTopic == p2p.RPCLightClientOptimisticUpdateTopicV1 {
 			if err := handle(ctx, base, stream); err != nil {
 				messageFailedProcessingCounter.WithLabelValues(topic).Inc()
 				if !errors.Is(err, p2ptypes.ErrWrongForkDigestVersion) {

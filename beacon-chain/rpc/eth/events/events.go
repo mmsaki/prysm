@@ -23,13 +23,11 @@ import (
 	chaintime "github.com/prysmaticlabs/prysm/v5/beacon-chain/core/time"
 	"github.com/prysmaticlabs/prysm/v5/config/params"
 	"github.com/prysmaticlabs/prysm/v5/consensus-types/interfaces"
-	payloadattribute "github.com/prysmaticlabs/prysm/v5/consensus-types/payload-attribute"
 	"github.com/prysmaticlabs/prysm/v5/consensus-types/primitives"
 	"github.com/prysmaticlabs/prysm/v5/monitoring/tracing/trace"
 	"github.com/prysmaticlabs/prysm/v5/network/httputil"
 	engine "github.com/prysmaticlabs/prysm/v5/proto/engine/v1"
 	ethpb "github.com/prysmaticlabs/prysm/v5/proto/eth/v1"
-	ethpbv2 "github.com/prysmaticlabs/prysm/v5/proto/eth/v2"
 	eth "github.com/prysmaticlabs/prysm/v5/proto/prysm/v1alpha1"
 	"github.com/prysmaticlabs/prysm/v5/runtime/version"
 	"github.com/prysmaticlabs/prysm/v5/time/slots"
@@ -432,9 +430,9 @@ func topicForEvent(event *feed.Event) string {
 		return HeadTopic
 	case *ethpb.EventFinalizedCheckpoint:
 		return FinalizedCheckpointTopic
-	case *ethpbv2.LightClientFinalityUpdateWithVersion:
+	case interfaces.LightClientFinalityUpdate:
 		return LightClientFinalityUpdateTopic
-	case *ethpbv2.LightClientOptimisticUpdateWithVersion:
+	case interfaces.LightClientOptimisticUpdate:
 		return LightClientOptimisticUpdateTopic
 	case *ethpb.EventChainReorg:
 		return ChainReorgTopic

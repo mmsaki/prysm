@@ -760,16 +760,13 @@ func CreateDefaultLightClientBootstrap(currentSlot primitives.Slot) (interfaces.
 	}
 
 	var currentSyncCommitteeBranch [][]byte
-	if currentEpoch < params.BeaconConfig().ElectraForkEpoch {
-		currentSyncCommitteeBranch = make([][]byte, fieldparams.SyncCommitteeBranchDepth)
-		for i := 0; i < len(currentSyncCommitteeBranch); i++ {
-			currentSyncCommitteeBranch[i] = make([]byte, fieldparams.RootLength)
-		}
-	} else {
+	if currentEpoch >= params.BeaconConfig().ElectraForkEpoch {
 		currentSyncCommitteeBranch = make([][]byte, fieldparams.SyncCommitteeBranchDepthElectra)
-		for i := 0; i < len(currentSyncCommitteeBranch); i++ {
-			currentSyncCommitteeBranch[i] = make([]byte, fieldparams.RootLength)
-		}
+	} else {
+		currentSyncCommitteeBranch = make([][]byte, fieldparams.SyncCommitteeBranchDepth)
+	}
+	for i := 0; i < len(currentSyncCommitteeBranch); i++ {
+		currentSyncCommitteeBranch[i] = make([]byte, fieldparams.RootLength)
 	}
 
 	executionBranch := make([][]byte, fieldparams.ExecutionBranchDepth)
@@ -777,6 +774,7 @@ func CreateDefaultLightClientBootstrap(currentSlot primitives.Slot) (interfaces.
 		executionBranch[i] = make([]byte, 32)
 	}
 
+	// TODO: can this be based on the current epoch?
 	var m proto.Message
 	if currentEpoch < params.BeaconConfig().CapellaForkEpoch {
 		m = &pb.LightClientBootstrapAltair{
@@ -817,5 +815,6 @@ func CreateDefaultLightClientBootstrap(currentSlot primitives.Slot) (interfaces.
 			CurrentSyncCommitteeBranch: currentSyncCommitteeBranch,
 		}
 	}
+
 	return light_client.NewWrappedBootstrap(m)
 }

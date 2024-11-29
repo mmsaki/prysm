@@ -22,6 +22,8 @@ var gossipTopicMappings = map[string]func() proto.Message{
 	SyncCommitteeSubnetTopicFormat:            func() proto.Message { return &ethpb.SyncCommitteeMessage{} },
 	BlsToExecutionChangeSubnetTopicFormat:     func() proto.Message { return &ethpb.SignedBLSToExecutionChange{} },
 	BlobSubnetTopicFormat:                     func() proto.Message { return &ethpb.BlobSidecar{} },
+	LightClientFinalityUpdateTopicFormat:      func() proto.Message { return &ethpb.LightClientFinalityUpdateAltair{} },
+	LightClientOptimisticUpdateTopicFormat:    func() proto.Message { return &ethpb.LightClientOptimisticUpdateAltair{} },
 }
 
 // GossipTopicMappings is a function to return the assigned data type
@@ -58,6 +60,25 @@ func GossipTopicMappings(topic string, epoch primitives.Epoch) proto.Message {
 	case AggregateAndProofSubnetTopicFormat:
 		if epoch >= params.BeaconConfig().ElectraForkEpoch {
 			return &ethpb.SignedAggregateAttestationAndProofElectra{}
+		}
+		return gossipMessage(topic)
+	case LightClientFinalityUpdateTopicFormat:
+		if epoch >= params.BeaconConfig().ElectraForkEpoch {
+			return &ethpb.LightClientFinalityUpdateElectra{}
+		}
+		if epoch >= params.BeaconConfig().DenebForkEpoch {
+			return &ethpb.LightClientFinalityUpdateDeneb{}
+		}
+		if epoch >= params.BeaconConfig().CapellaForkEpoch {
+			return &ethpb.LightClientFinalityUpdateCapella{}
+		}
+		return gossipMessage(topic)
+	case LightClientOptimisticUpdateTopicFormat:
+		if epoch >= params.BeaconConfig().DenebForkEpoch {
+			return &ethpb.LightClientOptimisticUpdateDeneb{}
+		}
+		if epoch >= params.BeaconConfig().CapellaForkEpoch {
+			return &ethpb.LightClientOptimisticUpdateCapella{}
 		}
 		return gossipMessage(topic)
 	default:
@@ -97,11 +118,16 @@ func init() {
 	GossipTypeMapping[reflect.TypeOf(&ethpb.SignedBeaconBlockBellatrix{})] = BlockSubnetTopicFormat
 	// Specially handle Capella objects.
 	GossipTypeMapping[reflect.TypeOf(&ethpb.SignedBeaconBlockCapella{})] = BlockSubnetTopicFormat
+	GossipTypeMapping[reflect.TypeOf(&ethpb.LightClientOptimisticUpdateCapella{})] = LightClientOptimisticUpdateTopicFormat
+	GossipTypeMapping[reflect.TypeOf(&ethpb.LightClientFinalityUpdateCapella{})] = LightClientFinalityUpdateTopicFormat
 	// Specially handle Deneb objects.
 	GossipTypeMapping[reflect.TypeOf(&ethpb.SignedBeaconBlockDeneb{})] = BlockSubnetTopicFormat
+	GossipTypeMapping[reflect.TypeOf(&ethpb.LightClientOptimisticUpdateDeneb{})] = LightClientOptimisticUpdateTopicFormat
+	GossipTypeMapping[reflect.TypeOf(&ethpb.LightClientFinalityUpdateDeneb{})] = LightClientFinalityUpdateTopicFormat
 	// Specially handle Electra objects.
 	GossipTypeMapping[reflect.TypeOf(&ethpb.SignedBeaconBlockElectra{})] = BlockSubnetTopicFormat
 	GossipTypeMapping[reflect.TypeOf(&ethpb.AttestationElectra{})] = AttestationSubnetTopicFormat
 	GossipTypeMapping[reflect.TypeOf(&ethpb.AttesterSlashingElectra{})] = AttesterSlashingSubnetTopicFormat
 	GossipTypeMapping[reflect.TypeOf(&ethpb.SignedAggregateAttestationAndProofElectra{})] = AggregateAndProofSubnetTopicFormat
+	GossipTypeMapping[reflect.TypeOf(&ethpb.LightClientFinalityUpdateElectra{})] = LightClientFinalityUpdateTopicFormat
 }

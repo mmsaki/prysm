@@ -87,6 +87,10 @@ func extractValidDataTypeFromTopic(topic string, digest []byte, clock *startup.C
 		return extractDataTypeFromTypeMap(types.AttestationMap, digest, clock)
 	case p2p.AggregateAndProofSubnetTopicFormat:
 		return extractDataTypeFromTypeMap(types.AggregateAttestationMap, digest, clock)
+	case p2p.LightClientOptimisticUpdateTopicFormat:
+		return extractDataTypeFromTypeMap(types.LightClientOptimisticUpdateMap, digest, clock)
+	case p2p.LightClientFinalityUpdateTopicFormat:
+		return extractDataTypeFromTypeMap(types.LightClientFinalityUpdateMap, digest, clock)
 	}
 	return nil, nil
 }

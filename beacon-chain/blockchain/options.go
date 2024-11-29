@@ -8,6 +8,7 @@ import (
 	"github.com/prysmaticlabs/prysm/v5/beacon-chain/db/filesystem"
 	"github.com/prysmaticlabs/prysm/v5/beacon-chain/execution"
 	"github.com/prysmaticlabs/prysm/v5/beacon-chain/forkchoice"
+	light_client "github.com/prysmaticlabs/prysm/v5/beacon-chain/light-client"
 	"github.com/prysmaticlabs/prysm/v5/beacon-chain/operations/attestations"
 	"github.com/prysmaticlabs/prysm/v5/beacon-chain/operations/blstoexec"
 	"github.com/prysmaticlabs/prysm/v5/beacon-chain/operations/slashings"
@@ -202,6 +203,13 @@ func WithBlobStorage(b *filesystem.BlobStorage) Option {
 func WithSyncChecker(checker Checker) Option {
 	return func(s *Service) error {
 		s.cfg.SyncChecker = checker
+		return nil
+	}
+}
+
+func WithLightClientStore(lcs *light_client.Store) Option {
+	return func(s *Service) error {
+		s.lcStore = lcs
 		return nil
 	}
 }
